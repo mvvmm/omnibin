@@ -15,7 +15,7 @@
   <mp:PhoneIdentity PhoneProductId="14e89a23-2d83-4af9-89e7-7beadcae82fe" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>omnibox</DisplayName>
+    <DisplayName>omnibin</DisplayName>
     <PublisherDisplayName>mvm</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -34,8 +34,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="omnibox"
-        Description="omnibox"
+        DisplayName="omnibin"
+        Description="omnibin"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">

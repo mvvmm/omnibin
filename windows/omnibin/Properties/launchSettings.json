@@ -1,9 +1,9 @@
 {
   "profiles": {
-    "omnibox (Package)": {
+    "omnibin (Package)": {
       "commandName": "MsixPackage"
     },
-    "omnibox (Unpackaged)": {
+    "omnibin (Unpackaged)": {
       "commandName": "Project"
     }
   }

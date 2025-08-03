@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36327.8 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "omnibox", "omnibox.csproj", "{72F313FB-39C8-491F-9A03-3E02F45CF5CA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "omnibin", "omnibin.csproj", "{72F313FB-39C8-491F-9A03-3E02F45CF5CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
