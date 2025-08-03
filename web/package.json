@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "install": "pnpm install",
+    "add": "pnpm add",
+    "remove": "pnpm remove"
   },
   "dependencies": {
     "react": "19.1.0",
