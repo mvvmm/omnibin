@@ -1,0 +1,38 @@
+{
+	"name": "@omnibin/db",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"prisma"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"prisma": "prisma",
+		"prisma:generate": "prisma generate",
+		"prisma:migrate": "prisma migrate dev",
+		"prisma:deploy": "prisma migrate deploy",
+		"prisma:push": "prisma db push",
+		"prisma:studio": "prisma studio",
+		"db:up": "docker compose up -d",
+		"db:down": "docker compose down"
+	},
+	"dependencies": {
+		"@prisma/client": "^5.22.0"
+	},
+	"devDependencies": {
+		"prisma": "^5.22.0",
+		"typescript": "^5.5.4",
+		"@types/node": "^20"
+	},
+	"packageManager": "pnpm@9.15.4"
+}
