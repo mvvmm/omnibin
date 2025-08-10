@@ -14,12 +14,18 @@ export default function Home() {
 		>
 			{/* decorative background blobs */}
 			<div
-				className="pointer-events-none absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl opacity-20"
-				style={{ backgroundColor: "var(--blob-1)" }}
+				className="pointer-events-none absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl"
+				style={{
+					backgroundColor: "var(--blob-1)",
+					opacity: "var(--blob-opacity)",
+				}}
 			/>
 			<div
-				className="pointer-events-none absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl opacity-20"
-				style={{ backgroundColor: "var(--blob-2)" }}
+				className="pointer-events-none absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl"
+				style={{
+					backgroundColor: "var(--blob-2)",
+					opacity: "var(--blob-opacity)",
+				}}
 			/>
 
 			{/* subtle grid overlay */}
