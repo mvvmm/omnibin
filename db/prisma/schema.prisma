@@ -12,10 +12,10 @@ model User {
   auth0Id   String           @unique
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
-  entries   ClipboardEntry[]
+  entries   BinItem[]
 }
 
-model ClipboardEntry {
+model BinItem {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
