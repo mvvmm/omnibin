@@ -1,10 +1,18 @@
 import { LogIn } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { auth0 } from "@/lib/auth0";
 
-export default function Home() {
+export default async function Home() {
+	const session = await auth0.getSession();
+
+	if (session) {
+		return redirect("/bin");
+	}
+
 	return (
 		<div
 			className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br"
