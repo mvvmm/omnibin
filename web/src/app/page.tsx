@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
 
-export default async function Home() {
+export default async function Home({
+	searchParams,
+}: {
+	searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+	const { stay } = searchParams ?? {};
 	const session = await auth0.getSession();
 
-	if (session) {
+	if (session && !stay) {
 		return redirect("/bin");
 	}
 

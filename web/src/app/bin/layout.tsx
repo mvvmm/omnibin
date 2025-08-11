@@ -18,7 +18,7 @@ export default async function Layout({
 		<>
 			<div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-start p-4">
 				<div className="pointer-events-auto">
-					<Link href="/" aria-label="Go to home">
+					<Link href="/?stay=true" aria-label="Go to home">
 						<Image
 							src="/omnibin-logo6.png"
 							alt="omnibin logo"
