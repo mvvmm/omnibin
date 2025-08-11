@@ -9,9 +9,10 @@ import { auth0 } from "@/lib/auth0";
 export default async function Home({
 	searchParams,
 }: {
-	searchParams?: { [key: string]: string | string[] | undefined };
+	searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	const { stay } = searchParams ?? {};
+	const sp = (await searchParams) ?? {};
+	const { stay } = sp;
 	const session = await auth0.getSession();
 
 	if (session && !stay) {
