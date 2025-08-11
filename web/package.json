@@ -9,17 +9,29 @@
 		"lint": "biome lint .",
 		"format": "biome format --write .",
 		"check": "biome check --write .",
-		"sort-classes": "biome check --write --unsafe src/"
+		"sort-classes": "biome check --write --unsafe src/",
+		"prisma": "prisma",
+		"prisma:generate": "prisma generate",
+		"prisma:migrate": "prisma migrate dev",
+		"prisma:deploy": "prisma migrate deploy",
+		"prisma:push": "prisma db push",
+		"prisma:studio": "prisma studio",
+		"db:up": "docker compose up -d",
+		"db:down": "docker compose down"
 	},
 	"dependencies": {
 		"@auth0/nextjs-auth0": "^4.9.0",
-		"@omnibin/db": "workspace:*",
-		"firebase": "^12.0.0",
+		"@prisma/client": "^6.13.0",
+		"@radix-ui/react-slot": "^1.2.3",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"jose": "^5.8.0",
 		"lucide-react": "^0.539.0",
 		"next": "15.4.5",
 		"next-themes": "^0.3.0",
 		"react": "19.1.0",
-		"react-dom": "19.1.0"
+		"react-dom": "19.1.0",
+		"tailwind-merge": "^3.3.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.1.3",
@@ -27,8 +39,14 @@
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"dotenv": "^17.2.1",
+		"dotenv-cli": "^10.0.0",
+		"prisma": "^6.13.0",
+		"server-only": "^0.0.1",
 		"tailwindcss": "^4",
+		"tw-animate-css": "^1.3.6",
 		"typescript": "^5"
 	},
-	"packageManager": "pnpm@9.15.4"
+	"postinstall": "prisma generate",
+	"packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
 }

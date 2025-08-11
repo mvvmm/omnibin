@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth0 } from "@/lib/auth0";
 
@@ -12,5 +14,23 @@ export default async function Layout({
 		redirect("/auth/login");
 	}
 
-	return <>{children}</>;
+	return (
+		<>
+			<div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-start p-4">
+				<div className="pointer-events-auto">
+					<Link href="/" aria-label="Go to home">
+						<Image
+							src="/omnibin-logo6.png"
+							alt="omnibin logo"
+							width={340}
+							height={100}
+							className="h-8 w-auto transition-transform duration-300 hover:scale-[1.02]"
+							priority
+						/>
+					</Link>
+				</div>
+			</div>
+			{children}
+		</>
+	);
 }

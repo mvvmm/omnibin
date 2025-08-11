@@ -1,6 +1,7 @@
 import { LogIn } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export default function Home() {
@@ -45,6 +46,7 @@ export default function Home() {
 					style={{
 						backgroundColor: "var(--card-bg)",
 						borderColor: "var(--border)",
+						gap: "0px",
 					}}
 				>
 					<div className="flex items-center justify-center">
@@ -73,13 +75,15 @@ export default function Home() {
 					</p>
 
 					<div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-						<Link
-							href="/auth/login"
-							className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-accent-primary/30 transition-transform duration-200 hover:scale-[1.02] hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+						<Button
+							asChild
+							className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-accent-primary/30 transition-transform duration-300 hover:scale-[1.02] hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
 						>
-							Login to sync
-							<LogIn className="ml-2 h-5 w-5" aria-hidden="true" />
-						</Link>
+							<Link href="/bin">
+								Login to sync
+								<LogIn className="ml-2 h-5 w-5" aria-hidden="true" />
+							</Link>
+						</Button>
 					</div>
 
 					<div className="mt-10 grid grid-cols-1 gap-4 text-left sm:grid-cols-3">
