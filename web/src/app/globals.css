@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@variant dark (&:where([data-theme="dark"] *));
+
 :root {
 	/* base light mode (overridden by dark media or explicit data-theme) */ /* zinc-50 */ /* neutral-900 */
 
