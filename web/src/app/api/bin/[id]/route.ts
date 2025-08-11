@@ -4,14 +4,14 @@ import { verifyAccessToken } from "@/lib/verifyAccessToken";
 
 export async function DELETE(
 	req: Request,
-	{ params }: { params: { id: string } },
+	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
 		const payload = await verifyAccessToken(
 			req.headers.get("authorization") ?? undefined,
 		);
 		const auth0Sub = payload.sub;
-		const id = params.id;
+		const { id } = await params;
 
 		if (!id || typeof id !== "string") {
 			return NextResponse.json({ error: "Missing id" }, { status: 400 });
