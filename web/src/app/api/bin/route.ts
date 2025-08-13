@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createPresignedPutUrl, getBucketName } from "@/lib/s3";
+import { serializeForJson } from "@/lib/utils";
 import { verifyAccessToken } from "@/lib/verifyAccessToken";
 
 export async function GET(req: Request) {
@@ -24,7 +26,7 @@ export async function GET(req: Request) {
 			include: { textItem: true, fileItem: true },
 		});
 
-		return NextResponse.json({ items });
+		return NextResponse.json(serializeForJson({ items }));
 	} catch (error) {
 		const typed = error as Error & { statusCode?: number };
 		return NextResponse.json(
@@ -41,15 +43,16 @@ export async function POST(req: Request) {
 		);
 		const auth0Sub = payload.sub;
 
-		const body = await req.json().catch(() => undefined);
-		const content =
-			typeof body?.content === "string" ? body.content.trim() : "";
-		if (!content) {
-			return NextResponse.json(
-				{ error: "Field 'content' is required and must be a non-empty string" },
-				{ status: 400 },
-			);
-		}
+		const body = (await req.json().catch(() => undefined)) as
+			| {
+					content?: string;
+					file?: {
+						originalName: string;
+						contentType: string;
+						size: number;
+					};
+			  }
+			| undefined;
 
 		// Ensure user exists
 		const user = await prisma.user.upsert({
@@ -59,6 +62,45 @@ export async function POST(req: Request) {
 			select: { id: true },
 		});
 
+		// File flow
+		if (
+			body?.file?.originalName &&
+			body?.file?.contentType &&
+			(body?.file?.size ?? 0) > 0
+		) {
+			const objectKey = `${user.id}/${crypto.randomUUID()}`;
+			const uploadUrl = await createPresignedPutUrl({
+				key: objectKey,
+				contentType: body.file.contentType,
+			});
+			const file = await prisma.fileItem.create({
+				data: {
+					provider: "S3",
+					bucket: getBucketName(),
+					key: objectKey,
+					originalName: body.file.originalName,
+					contentType: body.file.contentType,
+					size: BigInt(body.file.size),
+				},
+			});
+			const bin = await prisma.binItem.create({
+				data: { userId: user.id, kind: "FILE", fileItemId: file.id },
+				include: { fileItem: true, textItem: true },
+			});
+			return NextResponse.json(serializeForJson({ item: bin, uploadUrl }), {
+				status: 201,
+			});
+		}
+
+		// Text flow
+		const content =
+			typeof body?.content === "string" ? body.content.trim() : "";
+		if (!content) {
+			return NextResponse.json(
+				{ error: "Provide 'content' (text) or 'file' metadata" },
+				{ status: 400 },
+			);
+		}
 		const text = await prisma.textItem.create({ data: { content } });
 		const item = await prisma.binItem.create({
 			data: {
@@ -69,7 +111,7 @@ export async function POST(req: Request) {
 			include: { textItem: true, fileItem: true },
 		});
 
-		return NextResponse.json(item, { status: 201 });
+		return NextResponse.json(serializeForJson(item), { status: 201 });
 	} catch (error) {
 		const typed = error as Error & { statusCode?: number };
 		return NextResponse.json(

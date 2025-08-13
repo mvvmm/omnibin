@@ -22,8 +22,11 @@
 	},
 	"dependencies": {
 		"@auth0/nextjs-auth0": "^4.9.0",
+		"@aws-sdk/client-s3": "^3.637.0",
+		"@aws-sdk/s3-request-presigner": "^3.637.0",
 		"@prisma/client": "^6.13.0",
 		"@radix-ui/react-slot": "^1.2.3",
+		"@vercel/functions": "^2.2.8",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"jose": "^5.8.0",

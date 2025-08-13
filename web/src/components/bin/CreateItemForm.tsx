@@ -15,6 +15,55 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
+	async function uploadPastedFile(file: File) {
+		setIsSubmitting(true);
+		setError(null);
+		try {
+			const meta = {
+				originalName: file.name || "pasted-file",
+				contentType: file.type || "application/octet-stream",
+				size: file.size,
+			};
+
+			const initRes = await fetch("/api/bin", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({ file: meta }),
+			});
+			if (!initRes.ok) {
+				const data = (await initRes.json().catch(() => ({}))) as {
+					error?: string;
+				};
+				throw new Error(
+					data.error || `Failed to init upload (${initRes.status})`,
+				);
+			}
+
+			const { uploadUrl } = (await initRes.json()) as {
+				uploadUrl: string;
+			};
+
+			const putRes = await fetch(uploadUrl, {
+				method: "PUT",
+				headers: { "Content-Type": meta.contentType },
+				body: file,
+			});
+			if (!putRes.ok) {
+				throw new Error(`Failed to upload to storage (${putRes.status})`);
+			}
+
+			router.refresh();
+		} catch (e) {
+			const err = e as Error;
+			setError(err.message);
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+
 	async function submitContent(text: string) {
 		if (isSubmitting) return;
 		setError(null);
@@ -63,7 +112,16 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 				value={content}
 				onChange={(e) => setContent(e.target.value)}
 				onPaste={async (e) => {
-					// Submit instantly on paste
+					const files = Array.from(e.clipboardData?.files ?? []);
+					if (files.length > 0) {
+						e.preventDefault();
+						for (const file of files) {
+							await uploadPastedFile(file);
+						}
+						return;
+					}
+
+					// Fallback to text paste: submit instantly
 					const pasted = e.clipboardData.getData("text");
 					if (!pasted) return;
 					e.preventDefault();
