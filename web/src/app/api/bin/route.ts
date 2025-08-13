@@ -21,6 +21,7 @@ export async function GET(req: Request) {
 			where: { userId: user.id },
 			orderBy: { createdAt: "desc" },
 			take: 100,
+			include: { textItem: true, fileItem: true },
 		});
 
 		return NextResponse.json({ items });
@@ -58,11 +59,14 @@ export async function POST(req: Request) {
 			select: { id: true },
 		});
 
+		const text = await prisma.textItem.create({ data: { content } });
 		const item = await prisma.binItem.create({
 			data: {
 				userId: user.id,
-				content,
+				kind: "TEXT",
+				textItemId: text.id,
 			},
+			include: { textItem: true, fileItem: true },
 		});
 
 		return NextResponse.json(item, { status: 201 });

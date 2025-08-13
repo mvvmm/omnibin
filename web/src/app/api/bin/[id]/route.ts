@@ -26,13 +26,23 @@ export async function DELETE(
 			return NextResponse.json({ error: "Item not found" }, { status: 404 });
 		}
 
-		const result = await prisma.binItem.deleteMany({
+		const item = await prisma.binItem.findFirst({
 			where: { id, userId: user.id },
+			include: { textItem: true, fileItem: true },
 		});
-
-		if (result.count === 0) {
+		if (!item) {
 			return NextResponse.json({ error: "Item not found" }, { status: 404 });
 		}
+
+		// Delete linked entities first (DB onDelete: Cascade would also handle, but be explicit)
+		if (item.textItemId) {
+			await prisma.textItem.delete({ where: { id: item.textItemId } });
+		}
+		if (item.fileItemId) {
+			await prisma.fileItem.delete({ where: { id: item.fileItemId } });
+		}
+
+		await prisma.binItem.delete({ where: { id: item.id } });
 
 		return new NextResponse(null, { status: 204 });
 	} catch (error) {

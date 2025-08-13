@@ -3,13 +3,7 @@ import { CreateItemForm } from "@/components/bin/CreateItemForm";
 import { Card } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
 
-type BinItem = {
-	id: string;
-	userId: string;
-	content: string;
-	createdAt: string;
-	updatedAt: string;
-};
+import type { BinItem } from "@/types/bin";
 
 export const dynamic = "force-dynamic";
 

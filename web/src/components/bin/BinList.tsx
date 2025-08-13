@@ -4,14 +4,7 @@ import { Check, Copy, Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-
-export type BinItem = {
-	id: string;
-	userId: string;
-	content: string;
-	createdAt: string;
-	updatedAt: string;
-};
+import type { BinItem } from "@/types/bin";
 
 export function BinList({ items, token }: { items: BinItem[]; token: string }) {
 	const router = useRouter();
@@ -51,8 +44,8 @@ export function BinList({ items, token }: { items: BinItem[]; token: string }) {
 				() => setCopiedId((prev) => (prev === id ? null : prev)),
 				1200,
 			);
-		} catch {
-			// ignore
+		} catch (error) {
+			console.error("Failed to copy to clipboard:", error);
 		}
 	}
 
@@ -69,7 +62,11 @@ export function BinList({ items, token }: { items: BinItem[]; token: string }) {
 					<div className="flex items-start justify-between gap-3">
 						<div className="min-w-0 flex-1">
 							<div className="whitespace-pre-wrap break-words text-foreground">
-								{item.content}
+								{item.kind === "TEXT" && item.textItem
+									? item.textItem.content
+									: item.kind === "FILE" && item.fileItem
+										? `${item.fileItem.originalName} (${item.fileItem.contentType}, ${typeof item.fileItem.size === "string" ? item.fileItem.size : `${item.fileItem.size} bytes`})`
+										: ""}
 							</div>
 							<div className="mt-1 text-xs text-muted-foreground">
 								{new Date(item.createdAt).toLocaleString()}
@@ -81,20 +78,24 @@ export function BinList({ items, token }: { items: BinItem[]; token: string }) {
 							) : null}
 						</div>
 						<div className="flex items-center gap-1.5">
-							<Button
-								variant="ghost"
-								size="icon"
-								className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-								aria-label="Copy to clipboard"
-								title="Copy"
-								onClick={() => handleCopy(item.id, item.content)}
-							>
-								{copiedId === item.id ? (
-									<Check className="h-4 w-4 text-emerald-600" />
-								) : (
-									<Copy className="h-4 w-4" />
-								)}
-							</Button>
+							{item.kind === "TEXT" && item.textItem ? (
+								<Button
+									variant="ghost"
+									size="icon"
+									className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+									aria-label="Copy to clipboard"
+									title="Copy"
+									onClick={() =>
+										item.textItem && handleCopy(item.id, item.textItem.content)
+									}
+								>
+									{copiedId === item.id ? (
+										<Check className="h-4 w-4 text-emerald-600" />
+									) : (
+										<Copy className="h-4 w-4" />
+									)}
+								</Button>
+							) : null}
 							<Button
 								variant="ghost"
 								size="icon"

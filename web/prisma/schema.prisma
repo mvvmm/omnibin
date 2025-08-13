@@ -8,6 +8,15 @@ datasource db {
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
+enum BinItemKind {
+  TEXT
+  FILE
+}
+
+enum StorageProvider {
+  S3
+}
+
 model User {
   id        String           @id @default(cuid())
   auth0Id   String           @unique
@@ -20,12 +29,49 @@ model BinItem {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  content   String
+  kind      BinItemKind @default(TEXT)
+
+  // Link to either TextItem or FileItem (exactly one should be non-null)
+  textItemId String?   @unique
+  textItem   TextItem? @relation(fields: [textItemId], references: [id], onDelete: Cascade)
+
+  fileItemId String?   @unique
+  fileItem   FileItem? @relation(fields: [fileItemId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model TextItem {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // back relation
+  binItem   BinItem?
+}
+
+model FileItem {
+  id            String           @id @default(cuid())
+  provider      StorageProvider  @default(S3)
+  bucket        String
+  key           String
+  originalName  String
+  contentType   String
+  size          BigInt
+  checksum      String?
+  preview       String?
+  expiresAt     DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // back relation
+  binItem       BinItem?
+
+  @@unique([bucket, key])
 }
 
 
