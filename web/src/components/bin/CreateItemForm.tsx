@@ -19,10 +19,26 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 		setIsSubmitting(true);
 		setError(null);
 		try {
+			let imageWidth: number | undefined;
+			let imageHeight: number | undefined;
+			if (file.type.startsWith("image/")) {
+				await new Promise<void>((resolve) => {
+					const img = new Image();
+					img.onload = () => {
+						imageWidth = img.naturalWidth || img.width;
+						imageHeight = img.naturalHeight || img.height;
+						resolve();
+					};
+					img.onerror = () => resolve();
+					img.src = URL.createObjectURL(file);
+				});
+			}
 			const meta = {
 				originalName: file.name || "pasted-file",
 				contentType: file.type || "application/octet-stream",
 				size: file.size,
+				imageWidth,
+				imageHeight,
 			};
 
 			const initRes = await fetch("/api/bin", {

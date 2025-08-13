@@ -208,21 +208,21 @@ export function BinList({ items, token }: { items: BinItem[]; token: string }) {
 										: ""}
 							</div>
 							{item.kind === "FILE" &&
-							item.fileItem &&
-							item.fileItem.contentType.startsWith("image/") ? (
-								<div className="mt-2">
-									{previewUrlById[item.id] ? (
-										<Image
-											src={previewUrlById[item.id] ?? ""}
-											alt={item.fileItem.originalName}
-											width={320}
-											height={240}
-											className="h-auto max-h-80 w-auto rounded border"
-											unoptimized
-										/>
-									) : null}
-								</div>
-							) : null}
+								item.fileItem &&
+								item.fileItem.contentType.startsWith("image/") && (
+									<div className="mt-2">
+										{previewUrlById[item.id] && (
+											<Image
+												src={previewUrlById[item.id] ?? ""}
+												alt={item.fileItem.originalName}
+												width={item.fileItem.imageWidth ?? 320}
+												height={item.fileItem.imageHeight ?? 240}
+												className="h-auto max-h-80 w-auto rounded"
+												quality={50}
+											/>
+										)}
+									</div>
+								)}
 							<div className="mt-1 text-xs text-muted-foreground">
 								<span>{new Date(item.createdAt).toLocaleString()}</span>
 								{item.kind === "FILE" && item.fileItem ? (

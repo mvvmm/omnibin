@@ -64,6 +64,8 @@ model FileItem {
   size          BigInt
   checksum      String?
   preview       String?
+  imageWidth    Int?
+  imageHeight   Int?
   expiresAt     DateTime?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt

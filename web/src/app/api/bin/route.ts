@@ -50,6 +50,8 @@ export async function POST(req: Request) {
 						originalName: string;
 						contentType: string;
 						size: number;
+						imageWidth?: number | null;
+						imageHeight?: number | null;
 					};
 			  }
 			| undefined;
@@ -81,6 +83,8 @@ export async function POST(req: Request) {
 					originalName: body.file.originalName,
 					contentType: body.file.contentType,
 					size: BigInt(body.file.size),
+					imageWidth: body.file.imageWidth ?? null,
+					imageHeight: body.file.imageHeight ?? null,
 				},
 			});
 			const bin = await prisma.binItem.create({

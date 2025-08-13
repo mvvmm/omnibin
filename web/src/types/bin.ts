@@ -11,6 +11,8 @@ export type FileItem = {
 	size: string | number;
 	checksum?: string | null;
 	preview?: string | null;
+	imageWidth?: number | null;
+	imageHeight?: number | null;
 	expiresAt?: string | null;
 };
 
