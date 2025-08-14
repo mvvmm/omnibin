@@ -1,14 +1,14 @@
 import { BinList } from "@/components/bin/BinList";
 import { CreateItemForm } from "@/components/bin/CreateItemForm";
 import { Card } from "@/components/ui/card";
-import { auth0 } from "@/lib/auth0";
+import { getAccessTokenOrReauth } from "@/lib/auth0";
 
 import type { BinItem } from "@/types/bin";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-	const { token } = await auth0.getAccessToken();
+	const token = await getAccessTokenOrReauth();
 
 	const res = await fetch(`${process.env.OMNIBIN_API_BASE_URL}/bin`, {
 		method: "GET",
