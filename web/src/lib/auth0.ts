@@ -15,6 +15,6 @@ export async function getAccessTokenOrReauth(): Promise<string> {
 		const { token } = await auth0.getAccessToken();
 		return token;
 	} catch (_error) {
-		redirect("/api/auth/login");
+		redirect("/auth/login");
 	}
 }
