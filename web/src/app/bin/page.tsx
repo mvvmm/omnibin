@@ -10,13 +10,16 @@ export const dynamic = "force-dynamic";
 export default async function Page() {
 	const token = await getAccessTokenOrReauth();
 
-	const res = await fetch(`${process.env.OMNIBIN_API_BASE_URL}/bin`, {
-		method: "GET",
-		headers: {
-			Authorization: `Bearer ${token}`,
+	const res = await fetch(
+		`${process.env.NEXT_PUBLIC_OMNIBIN_API_BASE_URL}/bin`,
+		{
+			method: "GET",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+			cache: "no-store",
 		},
-		cache: "no-store",
-	});
+	);
 
 	if (!res.ok) {
 		return (

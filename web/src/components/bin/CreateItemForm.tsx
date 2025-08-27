@@ -80,7 +80,7 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 		}
 	}
 
-	async function submitContent(text: string) {
+	async function uploadText(text: string) {
 		if (isSubmitting) return;
 		setError(null);
 		const trimmed = text.trim();
@@ -119,7 +119,25 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 
 	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		await submitContent(content);
+		await uploadText(content);
+	}
+
+	async function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+		const files = Array.from(e.clipboardData?.files ?? []);
+		if (files.length > 0) {
+			e.preventDefault();
+			for (const file of files) {
+				await uploadPastedFile(file);
+			}
+			return;
+		}
+
+		// Fallback to text paste: submit instantly
+		const pasted = e.clipboardData.getData("text");
+		if (!pasted) return;
+		e.preventDefault();
+		setContent(pasted);
+		await uploadText(pasted);
 	}
 
 	return (
@@ -127,23 +145,7 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 			<Textarea
 				value={content}
 				onChange={(e) => setContent(e.target.value)}
-				onPaste={async (e) => {
-					const files = Array.from(e.clipboardData?.files ?? []);
-					if (files.length > 0) {
-						e.preventDefault();
-						for (const file of files) {
-							await uploadPastedFile(file);
-						}
-						return;
-					}
-
-					// Fallback to text paste: submit instantly
-					const pasted = e.clipboardData.getData("text");
-					if (!pasted) return;
-					e.preventDefault();
-					setContent(pasted);
-					await submitContent(pasted);
-				}}
+				onPaste={handlePaste}
 				placeholder="Paste something..."
 				rows={3}
 			/>
