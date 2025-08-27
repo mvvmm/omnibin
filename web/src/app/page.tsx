@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
+import { OMNIBIN_ROUTES } from "@/routes";
 
 export default async function Home({
 	searchParams,
@@ -16,7 +17,7 @@ export default async function Home({
 	const session = await auth0.getSession();
 
 	if (session && !stay) {
-		return redirect("/bin");
+		return redirect(OMNIBIN_ROUTES.BIN);
 	}
 
 	return (

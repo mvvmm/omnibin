@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { OMNIBIN_API_ROUTES } from "@/routes";
 
 type CreateItemFormProps = {
 	token: string;
@@ -41,7 +42,11 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 				imageHeight,
 			};
 
-			const initRes = await fetch("/api/bin", {
+			const url = new URL(
+				OMNIBIN_API_ROUTES.BIN,
+				process.env.NEXT_PUBLIC_BASE_URL,
+			);
+			const initRes = await fetch(url, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -91,7 +96,11 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 
 		setIsSubmitting(true);
 		try {
-			const res = await fetch("/api/bin", {
+			const url = new URL(
+				OMNIBIN_API_ROUTES.BIN,
+				process.env.NEXT_PUBLIC_BASE_URL,
+			);
+			const res = await fetch(url, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

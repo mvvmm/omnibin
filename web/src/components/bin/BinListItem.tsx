@@ -4,6 +4,7 @@ import { Check, Copy, Download, Loader2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { OMNIBIN_API_ROUTES } from "@/routes";
 import type { BinItem } from "@/types/bin";
 import { Button } from "../ui/button";
 
@@ -29,7 +30,11 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 		setError(null);
 		setDeleting(true);
 		try {
-			const res = await fetch(`/api/bin/${id}`, {
+			const url = new URL(
+				OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: id }),
+				process.env.NEXT_PUBLIC_BASE_URL,
+			);
+			const res = await fetch(url, {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -51,7 +56,11 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 		setError(null);
 		setDownloading(true);
 		try {
-			const r = await fetch(`/api/bin/${id}`, {
+			const url = new URL(
+				OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: id }),
+				process.env.NEXT_PUBLIC_BASE_URL,
+			);
+			const r = await fetch(url, {
 				method: "GET",
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -80,7 +89,11 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 	async function handleCopyFile(id: string, expectedContentType?: string) {
 		try {
 			// Always fetch a fresh URL to avoid 403 due to expiry
-			const r = await fetch(`/api/bin/${id}`, {
+			const url = new URL(
+				OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: id }),
+				process.env.NEXT_PUBLIC_BASE_URL,
+			);
+			const r = await fetch(url, {
 				method: "GET",
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -227,7 +240,11 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 									// Try once; on 403, refresh URL then retry
 									const res = await fetch(url, { method: "HEAD" });
 									if (res.status === 403) {
-										const r = await fetch(`/api/bin/${item.id}`, {
+										const _url = new URL(
+											OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: item.id }),
+											process.env.NEXT_PUBLIC_BASE_URL,
+										);
+										const r = await fetch(_url, {
 											method: "GET",
 											headers: { Authorization: `Bearer ${token}` },
 										});

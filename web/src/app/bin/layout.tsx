@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth0 } from "@/lib/auth0";
+import { OMNIBIN_ROUTES } from "@/routes";
 
 export default async function Layout({
 	children,
@@ -11,7 +12,7 @@ export default async function Layout({
 	const session = await auth0.getSession();
 
 	if (!session) {
-		redirect("/auth/login");
+		redirect(OMNIBIN_ROUTES.LOGIN);
 	}
 
 	return (

@@ -1,5 +1,7 @@
 export const OMNIBIN_ROUTES = {
 	BIN: "/bin",
+	LOGIN: "/auth/login",
+	LOGOUT: "/auth/logout",
 };
 
 export const OMNIBIN_API_ROUTES = {
