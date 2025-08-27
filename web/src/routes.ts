@@ -1,8 +1,9 @@
 export const OMNIBIN_ROUTES = {
-	BIN: "/api/bin",
+	BIN: "/bin",
 };
 
 export const OMNIBIN_API_ROUTES = {
+	BIN: "/api/bin",
 	BIN_ITEM: getBilledInvoicesDataRoute,
 };
 

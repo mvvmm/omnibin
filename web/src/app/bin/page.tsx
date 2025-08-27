@@ -2,24 +2,22 @@ import { BinList } from "@/components/bin/BinList";
 import { CreateItemForm } from "@/components/bin/CreateItemForm";
 import { Card } from "@/components/ui/card";
 import { getAccessTokenOrReauth } from "@/lib/auth0";
+import { OMNIBIN_API_ROUTES } from "@/routes";
 
 import type { BinItem } from "@/types/bin";
-
-export const dynamic = "force-dynamic";
 
 export default async function Page() {
 	const token = await getAccessTokenOrReauth();
 
-	const res = await fetch(
-		`${process.env.NEXT_PUBLIC_OMNIBIN_API_BASE_URL}/bin`,
-		{
-			method: "GET",
-			headers: {
-				Authorization: `Bearer ${token}`,
-			},
-			cache: "no-store",
+	const url = new URL(OMNIBIN_API_ROUTES.BIN, process.env.NEXT_PUBLIC_BASE_URL);
+
+	const res = await fetch(url, {
+		method: "GET",
+		headers: {
+			Authorization: `Bearer ${token}`,
 		},
-	);
+		cache: "no-store",
+	});
 
 	if (!res.ok) {
 		return (
