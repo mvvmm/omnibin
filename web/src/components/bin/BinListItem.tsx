@@ -3,153 +3,141 @@
 import { Check, Copy, Download, Loader2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { deleteBinItem } from "@/actions/deleteBinItem";
+import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 import type { BinItem } from "@/types/bin";
+import { formatFileSize } from "@/utils/formatFileSize";
+import { isCopyableFile } from "@/utils/isCopyableFile";
 import { Button } from "../ui/button";
 
 // TODO: Remove token, use actions
 export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 	const router = useRouter();
-	const [deleting, setDeleting] = useState<boolean | null>(null);
+
 	const [error, setError] = useState<string | null>(null);
 	const [copied, setCopied] = useState<boolean | null>(null);
-	const [downloading, setDownloading] = useState<boolean | null>(null);
 
-	async function handleCopy(text: string) {
+	const [deleteIsTransitioning, startDeleteTransition] = useTransition();
+	const [downloadIsTransitioning, startDownloadTransition] = useTransition();
+	const [copyIsTransitioning, startCopyingTransition] = useTransition();
+
+	useEffect(() => {
+		if (copied) {
+			setTimeout(() => setCopied((prev) => (prev ? null : prev)), 1200);
+		}
+	}, [copied]);
+
+	const handleDelete = async (id: string) => {
+		startDeleteTransition(async () => {
+			try {
+				setError(null);
+				const { success, error } = await deleteBinItem(id);
+
+				if (success) {
+					router.refresh();
+				} else {
+					setError(error || "Failed to delete");
+				}
+			} catch (err) {
+				const error = err as Error;
+				setError(error.message);
+			}
+		});
+	};
+
+	const handleCopyText = async (text: string) => {
 		try {
+			setError(null);
 			await navigator.clipboard.writeText(text);
 			setCopied(true);
-			setTimeout(() => setCopied((prev) => (prev ? null : prev)), 1200);
-		} catch (error) {
-			console.error("Failed to copy to clipboard:", error);
-		}
-	}
-
-	async function handleDelete(id: string) {
-		setError(null);
-		setDeleting(true);
-		try {
-			const url = new URL(
-				OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: id }),
-				process.env.NEXT_PUBLIC_BASE_URL,
-			);
-			const res = await fetch(url, {
-				method: "DELETE",
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			if (!res.ok && res.status !== 204) {
-				const data = (await res.json().catch(() => ({}))) as { error?: string };
-				throw new Error(data.error || `Failed to delete (${res.status})`);
-			}
-
-			router.refresh();
-		} catch (e) {
-			const err = e as Error;
-			setError(err.message);
-		} finally {
-			setDeleting(null);
-		}
-	}
-
-	async function handleDownloadFile(id: string, suggestedName?: string) {
-		setError(null);
-		setDownloading(true);
-		try {
-			const url = new URL(
-				OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: id }),
-				process.env.NEXT_PUBLIC_BASE_URL,
-			);
-			const r = await fetch(url, {
-				method: "GET",
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			if (!r.ok) throw new Error(`Failed to get file URL (${r.status})`);
-			const d = (await r.json()) as { url?: string };
-			if (!d.url) throw new Error("Missing file URL");
-			const res = await fetch(d.url);
-			if (!res.ok) throw new Error(`Fetch file failed (${res.status})`);
-			const blob = await res.blob();
-			const objectUrl = URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = objectUrl;
-			a.download = suggestedName || "download";
-			document.body.appendChild(a);
-			a.click();
-			a.remove();
-			URL.revokeObjectURL(objectUrl);
-		} catch (error) {
-			const err = error as Error;
-			setError(err.message);
-		} finally {
-			setDownloading(null);
-		}
-	}
-
-	async function handleCopyFile(id: string, expectedContentType?: string) {
-		try {
-			// Always fetch a fresh URL to avoid 403 due to expiry
-			const url = new URL(
-				OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: id }),
-				process.env.NEXT_PUBLIC_BASE_URL,
-			);
-			const r = await fetch(url, {
-				method: "GET",
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			if (!r.ok) throw new Error(`Failed to get file URL (${r.status})`);
-			const d = (await r.json()) as { url?: string };
-			if (!d.url) throw new Error("Missing file URL");
-			if (item.fileItem) {
-				item.fileItem.preview = d.url;
-			}
-
-			const res = await fetch(d.url);
-			if (!res.ok) throw new Error(`Fetch file failed (${res.status})`);
-			const blob = await res.blob();
-			const mime =
-				blob.type || expectedContentType || "application/octet-stream";
-			// Write the file blob to clipboard
-			await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-			setCopied(true);
-			setTimeout(() => setCopied((prev) => (prev ? null : prev)), 1200);
 		} catch (error) {
 			const err = error as Error;
 			setError(err.message);
 		}
-	}
+	};
 
-	async function handleCopyImage(
+	const handleDownloadFile = async (id: string, suggestedName?: string) => {
+		startDownloadTransition(async () => {
+			try {
+				setError(null);
+				const { success, error, downloadUrl } =
+					await getFileItemDownloadUrl(id);
+				if (!success) {
+					setError(error || "Failed to get file URL");
+					return;
+				}
+				if (!downloadUrl) {
+					setError("Missing file URL");
+					return;
+				}
+				const res = await fetch(downloadUrl);
+				if (!res.ok) throw new Error(`Fetch file failed (${res.status})`);
+				const blob = await res.blob();
+				const objectUrl = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = objectUrl;
+				a.download = suggestedName || "download";
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(objectUrl);
+			} catch (err) {
+				const error = err as Error;
+				setError(error.message);
+			}
+		});
+	};
+
+	const handleCopyFile = async (
 		id: string,
-		imageUrl: string,
-		fallbackContentType: string,
-	) {
-		try {
-			const res = await fetch(imageUrl);
-			if (!res.ok) throw new Error(`Fetch preview failed (${res.status})`);
-			const blob = await res.blob();
-			const mime = blob.type || fallbackContentType || "image/png";
-			await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-			setCopied(true);
-			setTimeout(() => setCopied((prev) => (prev ? null : prev)), 1200);
-		} catch (error) {
-			const err = error as Error;
-			setError(err.message);
-		}
-	}
+		expectedContentType?: string,
+		existingUrl?: string,
+	) => {
+		startCopyingTransition(async () => {
+			try {
+				setError(null);
+				let url = existingUrl;
 
-	function formatFileSize(size: string | number): string {
-		const raw = typeof size === "string" ? Number.parseInt(size, 10) : size;
-		if (!Number.isFinite(raw)) return String(size);
-		let value = raw as number;
-		const units = ["B", "KB", "MB", "GB", "TB"] as const;
-		let unitIndex = 0;
-		while (value >= 1024 && unitIndex < units.length - 1) {
-			value /= 1024;
-			unitIndex += 1;
-		}
-		const digits = value >= 10 || unitIndex === 0 ? 0 : 1;
-		return `${value.toFixed(digits)} ${units[unitIndex]}`;
+				if (!url) {
+					const { success, error, downloadUrl } =
+						await getFileItemDownloadUrl(id);
+					if (!success) {
+						setError(error || "Failed to get file URL");
+						return;
+					} else {
+						url = downloadUrl;
+					}
+					// Update the preview URL for future use
+					if (item.fileItem) {
+						item.fileItem.preview = url;
+					}
+				}
+
+				if (!url) {
+					setError("No URL available");
+					return;
+				}
+
+				const res = await fetch(url);
+				if (!res.ok) throw new Error(`Fetch file failed (${res.status})`);
+				const blob = await res.blob();
+				const mime =
+					blob.type || expectedContentType || "application/octet-stream";
+
+				// Write the file blob to clipboard
+				await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
+				setCopied(true);
+			} catch (err) {
+				const error = err as Error;
+				setError(error.message);
+			}
+		});
+	};
+
+	if (deleteIsTransitioning) {
+		return null;
 	}
 
 	return (
@@ -211,7 +199,10 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 							className="text-muted-foreground hover:text-primary hover:bg-primary/10"
 							aria-label="Copy to clipboard"
 							title="Copy"
-							onClick={() => item.textItem && handleCopy(item.textItem.content)}
+							disabled={copyIsTransitioning}
+							onClick={() =>
+								item.textItem && handleCopyText(item.textItem.content)
+							}
 						>
 							{copied ? (
 								<Check className="h-4 w-4 text-emerald-600" />
@@ -222,69 +213,67 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 					) : null}
 					{item.kind === "FILE" &&
 					item.fileItem &&
-					item.fileItem.contentType.startsWith("image/") ? (
-						<Button
-							variant="ghost"
-							size="icon"
-							className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-							aria-label="Copy image to clipboard"
-							title="Copy image"
-							disabled={!item.fileItem?.preview}
-							onClick={() =>
-								(async () => {
-									const initialUrl = item.fileItem?.preview as
-										| string
-										| undefined;
-									let url = initialUrl;
-									if (!url) return;
-									// Try once; on 403, refresh URL then retry
-									const res = await fetch(url, { method: "HEAD" });
-									if (res.status === 403) {
-										const _url = new URL(
-											OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: item.id }),
-											process.env.NEXT_PUBLIC_BASE_URL,
-										);
-										const r = await fetch(_url, {
-											method: "GET",
-											headers: { Authorization: `Bearer ${token}` },
-										});
-										if (r.ok) {
-											const d = (await r.json()) as { url?: string };
-											if (d.url) {
-												if (item.fileItem) {
-													item.fileItem.preview = d.url;
-												}
-												url = d.url;
-											}
-										}
-									}
-									if (!url) return;
-									await handleCopyImage(
-										item.id,
-										url,
-										item.fileItem?.contentType ?? "image/png",
-									);
-								})()
-							}
-						>
-							{copied ? (
-								<Check className="h-4 w-4 text-emerald-600" />
-							) : (
-								<Copy className="h-4 w-4" />
-							)}
-						</Button>
-					) : item.kind === "FILE" && item.fileItem ? (
+					isCopyableFile(item.fileItem.contentType) ? (
 						<Button
 							variant="ghost"
 							size="icon"
 							className="text-muted-foreground hover:text-primary hover:bg-primary/10"
 							aria-label="Copy file to clipboard"
 							title="Copy file"
+							disabled={
+								item.fileItem.contentType.startsWith("image/") &&
+								!item.fileItem?.preview
+							}
 							onClick={() =>
-								handleCopyFile(item.id, item.fileItem?.contentType)
+								(async () => {
+									if (item.fileItem?.contentType.startsWith("image/")) {
+										// For images, try to use cached preview URL first
+										const initialUrl = item.fileItem?.preview as
+											| string
+											| undefined;
+										let url = initialUrl;
+										if (!url) return;
+										// Try once; on 403, refresh URL then retry
+										const res = await fetch(url, { method: "HEAD" });
+										if (res.status === 403) {
+											const _url = new URL(
+												OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: item.id }),
+												process.env.NEXT_PUBLIC_BASE_URL,
+											);
+											const r = await fetch(_url, {
+												method: "GET",
+												headers: { Authorization: `Bearer ${token}` },
+											});
+											if (r.ok) {
+												const d = (await r.json()) as { url?: string };
+												if (d.url) {
+													if (item.fileItem) {
+														item.fileItem.preview = d.url;
+													}
+													url = d.url;
+												}
+											}
+										}
+										if (!url) return;
+										await handleCopyFile(
+											item.id,
+											item.fileItem?.contentType ?? "image/png",
+											url,
+										);
+									} else {
+										// For non-image files, fetch fresh URL
+										await handleCopyFile(
+											item.id,
+											item.fileItem?.contentType,
+											undefined,
+										);
+									}
+								})()
 							}
 						>
-							{copied ? (
+							{copyIsTransitioning ? (
+								<Loader2 className="h-4 w-4 animate-spin" />
+							) : copied ? (
 								<Check className="h-4 w-4 text-emerald-600" />
 							) : (
 								<Copy className="h-4 w-4" />
@@ -298,12 +287,12 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 							className="text-muted-foreground hover:text-primary hover:bg-primary/10"
 							aria-label="Download file"
 							title="Download"
-							disabled={downloading ?? false}
+							disabled={downloadIsTransitioning}
 							onClick={() =>
 								handleDownloadFile(item.id, item.fileItem?.originalName)
 							}
 						>
-							{downloading ? (
+							{downloadIsTransitioning ? (
 								<Loader2 className="h-4 w-4 animate-spin" />
 							) : (
 								<Download className="h-4 w-4" />
@@ -316,14 +305,9 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 						className="text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
 						aria-label="Delete item"
 						title="Delete"
-						disabled={deleting ?? false}
 						onClick={() => handleDelete(item.id)}
 					>
-						{deleting ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
-						) : (
-							<Trash2 className="h-4 w-4" />
-						)}
+						<Trash2 className="h-4 w-4" />
 					</Button>
 				</div>
 			</div>
