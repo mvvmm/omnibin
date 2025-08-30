@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { deleteBinItem } from "@/actions/deleteBinItem";
 import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
-import { OMNIBIN_API_ROUTES } from "@/routes";
 import type { BinItem } from "@/types/bin";
 import { formatFileSize } from "@/utils/formatFileSize";
 import { isCopyableFile } from "@/utils/isCopyableFile";
