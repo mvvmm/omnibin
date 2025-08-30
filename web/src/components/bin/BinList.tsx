@@ -47,7 +47,7 @@ export async function BinList({
 	return (
 		<ul className="space-y-2">
 			{items.map((item) => (
-				<BinListItem key={item.id} item={item} token={token} />
+				<BinListItem key={item.id} item={item} />
 			))}
 		</ul>
 	);

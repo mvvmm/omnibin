@@ -12,8 +12,7 @@ import { formatFileSize } from "@/utils/formatFileSize";
 import { isCopyableFile } from "@/utils/isCopyableFile";
 import { Button } from "../ui/button";
 
-// TODO: Remove token, use actions
-export function BinListItem({ item, token }: { item: BinItem; token: string }) {
+export function BinListItem({ item }: { item: BinItem }) {
 	const router = useRouter();
 
 	const [error, setError] = useState<string | null>(null);
@@ -225,50 +224,11 @@ export function BinListItem({ item, token }: { item: BinItem; token: string }) {
 								!item.fileItem?.preview
 							}
 							onClick={() =>
-								(async () => {
-									if (item.fileItem?.contentType.startsWith("image/")) {
-										// For images, try to use cached preview URL first
-										const initialUrl = item.fileItem?.preview as
-											| string
-											| undefined;
-										let url = initialUrl;
-										if (!url) return;
-										// Try once; on 403, refresh URL then retry
-										const res = await fetch(url, { method: "HEAD" });
-										if (res.status === 403) {
-											const _url = new URL(
-												OMNIBIN_API_ROUTES.BIN_ITEM({ itemId: item.id }),
-												process.env.NEXT_PUBLIC_BASE_URL,
-											);
-											const r = await fetch(_url, {
-												method: "GET",
-												headers: { Authorization: `Bearer ${token}` },
-											});
-											if (r.ok) {
-												const d = (await r.json()) as { url?: string };
-												if (d.url) {
-													if (item.fileItem) {
-														item.fileItem.preview = d.url;
-													}
-													url = d.url;
-												}
-											}
-										}
-										if (!url) return;
-										await handleCopyFile(
-											item.id,
-											item.fileItem?.contentType ?? "image/png",
-											url,
-										);
-									} else {
-										// For non-image files, fetch fresh URL
-										await handleCopyFile(
-											item.id,
-											item.fileItem?.contentType,
-											undefined,
-										);
-									}
-								})()
+								handleCopyFile(
+									item.id,
+									item?.fileItem?.contentType,
+									item?.fileItem?.preview ?? undefined,
+								)
 							}
 						>
 							{copyIsTransitioning ? (
