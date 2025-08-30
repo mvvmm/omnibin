@@ -166,7 +166,7 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 				>
 					{isSubmitting ? "Adding..." : "Add"}
 				</Button>
-				{error ? <span className="text-sm text-red-600">{error}</span> : null}
+				{error && <span className="text-sm text-red-600">{error}</span>}
 			</div>
 		</form>
 	);

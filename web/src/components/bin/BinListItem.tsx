@@ -170,27 +170,25 @@ export function BinListItem({ item }: { item: BinItem }) {
 						)}
 					<div className="mt-1 text-xs text-muted-foreground">
 						<span>{new Date(item.createdAt).toLocaleString()}</span>
-						{item.kind === "FILE" && item.fileItem ? (
+						{item.kind === "FILE" && item.fileItem && (
 							<>
 								{" · "}
 								<span>{item.fileItem.contentType}</span>
 								{" · "}
 								<span>{formatFileSize(item.fileItem.size)}</span>
 							</>
-						) : null}
-						{item.kind === "TEXT" && item.textItem ? (
+						)}
+						{item.kind === "TEXT" && item.textItem && (
 							<>
 								{" · "}
 								<span>{item.textItem.content.length} chars</span>
 							</>
-						) : null}
+						)}
 					</div>
-					{error ? (
-						<div className="mt-1 text-xs text-red-600">{error}</div>
-					) : null}
+					{error && <div className="mt-1 text-xs text-red-600">{error}</div>}
 				</div>
 				<div className="flex items-center gap-1.5">
-					{item.kind === "TEXT" && item.textItem ? (
+					{item.kind === "TEXT" && item.textItem && (
 						<Button
 							variant="ghost"
 							size="icon"
@@ -208,38 +206,38 @@ export function BinListItem({ item }: { item: BinItem }) {
 								<Copy className="h-4 w-4" />
 							)}
 						</Button>
-					) : null}
+					)}
 					{item.kind === "FILE" &&
-					item.fileItem &&
-					isCopyableFile(item.fileItem.contentType) ? (
-						<Button
-							variant="ghost"
-							size="icon"
-							className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-							aria-label="Copy file to clipboard"
-							title="Copy file"
-							disabled={
-								item.fileItem.contentType.startsWith("image/") &&
-								!item.fileItem?.preview
-							}
-							onClick={() =>
-								handleCopyFile(
-									item.id,
-									item?.fileItem?.contentType,
-									item?.fileItem?.preview ?? undefined,
-								)
-							}
-						>
-							{copyIsTransitioning ? (
-								<Loader2 className="h-4 w-4 animate-spin" />
-							) : copied ? (
-								<Check className="h-4 w-4 text-emerald-600" />
-							) : (
-								<Copy className="h-4 w-4" />
-							)}
-						</Button>
-					) : null}
-					{item.kind === "FILE" && item.fileItem ? (
+						item.fileItem &&
+						isCopyableFile(item.fileItem.contentType) && (
+							<Button
+								variant="ghost"
+								size="icon"
+								className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+								aria-label="Copy file to clipboard"
+								title="Copy file"
+								disabled={
+									item.fileItem.contentType.startsWith("image/") &&
+									!item.fileItem?.preview
+								}
+								onClick={() =>
+									handleCopyFile(
+										item.id,
+										item?.fileItem?.contentType,
+										item?.fileItem?.preview ?? undefined,
+									)
+								}
+							>
+								{copyIsTransitioning ? (
+									<Loader2 className="h-4 w-4 animate-spin" />
+								) : copied ? (
+									<Check className="h-4 w-4 text-emerald-600" />
+								) : (
+									<Copy className="h-4 w-4" />
+								)}
+							</Button>
+						)}
+					{item.kind === "FILE" && item.fileItem && (
 						<Button
 							variant="ghost"
 							size="icon"
@@ -257,7 +255,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 								<Download className="h-4 w-4" />
 							)}
 						</Button>
-					) : null}
+					)}
 					<Button
 						variant="ghost"
 						size="icon"
