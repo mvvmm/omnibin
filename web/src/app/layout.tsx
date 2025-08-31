@@ -34,7 +34,7 @@ export default function RootLayout({
 					>
 						{/* Blob 1 */}
 						<div
-							className="pointer-events-none absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl"
+							className="pointer-events-none absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl z-10"
 							style={{
 								backgroundColor: "var(--blob-1)",
 								opacity: "var(--blob-opacity)",
@@ -43,7 +43,7 @@ export default function RootLayout({
 
 						{/* Blob 2 */}
 						<div
-							className="pointer-events-none absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl"
+							className="pointer-events-none absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl z-10"
 							style={{
 								backgroundColor: "var(--blob-2)",
 								opacity: "var(--blob-opacity)",
@@ -52,7 +52,7 @@ export default function RootLayout({
 
 						{/* Grid */}
 						<div
-							className="pointer-events-none absolute inset-0 opacity-20 [mask-image:radial-gradient(60rem_60rem_at_center,white,transparent)]"
+							className="pointer-events-none absolute inset-0 opacity-20 z-20 [mask-image:radial-gradient(60rem_60rem_at_center,white,transparent)]"
 							style={{
 								backgroundImage:
 									"linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px)",
@@ -60,7 +60,8 @@ export default function RootLayout({
 							}}
 						/>
 
-						{children}
+						{/* Content container with relative positioning */}
+						<div className="relative z-30">{children}</div>
 					</div>
 				</ThemeProvider>
 			</body>
