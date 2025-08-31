@@ -8,7 +8,7 @@ export function ThemeToggle() {
 
 	return (
 		<div
-			className="flex items-center gap-1 rounded-md border backdrop-blur-md"
+			className="flex items-center gap-1 rounded-md border backdrop-blur-md w-fit"
 			style={{
 				backgroundColor: "var(--card-bg)",
 				borderColor: "var(--border)",

@@ -25,12 +25,43 @@ export default function RootLayout({
 		>
 			<body className="antialiased">
 				<ThemeProvider>
-					<div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-end p-4">
-						<div className="pointer-events-auto">
-							<ThemeToggle />
-						</div>
+					<div
+						className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br"
+						style={{
+							backgroundImage:
+								"linear-gradient(to bottom right, var(--bg-from), var(--bg-via), var(--bg-to))",
+						}}
+					>
+						{/* Blob 1 */}
+						<div
+							className="pointer-events-none absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl"
+							style={{
+								backgroundColor: "var(--blob-1)",
+								opacity: "var(--blob-opacity)",
+							}}
+						/>
+
+						{/* Blob 2 */}
+						<div
+							className="pointer-events-none absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl"
+							style={{
+								backgroundColor: "var(--blob-2)",
+								opacity: "var(--blob-opacity)",
+							}}
+						/>
+
+						{/* Grid */}
+						<div
+							className="pointer-events-none absolute inset-0 opacity-20 [mask-image:radial-gradient(60rem_60rem_at_center,white,transparent)]"
+							style={{
+								backgroundImage:
+									"linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px)",
+								backgroundSize: "36px 36px",
+							}}
+						/>
+
+						{children}
 					</div>
-					{children}
 				</ThemeProvider>
 			</body>
 		</html>

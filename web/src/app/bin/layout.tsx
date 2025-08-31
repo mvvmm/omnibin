@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { auth0 } from "@/lib/auth0";
 import { OMNIBIN_ROUTES } from "@/routes";
 
@@ -17,19 +18,18 @@ export default async function Layout({
 
 	return (
 		<>
-			<div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-start p-4">
-				<div className="pointer-events-auto">
-					<Link href="/?stay=true" aria-label="Go to home">
-						<Image
-							src="/omnibin-logo6.png"
-							alt="omnibin logo"
-							width={340}
-							height={100}
-							className="h-8 w-auto transition-transform duration-300 hover:scale-[1.02]"
-							priority
-						/>
-					</Link>
-				</div>
+			<div className="flex justify-between items-center p-4">
+				<Link href="/?stay=true" aria-label="Go to home">
+					<Image
+						src="/omnibin-logo6.png"
+						alt="omnibin logo"
+						width={340}
+						height={100}
+						className="h-8 w-auto transition-transform duration-300 hover:scale-[1.02]"
+						priority
+					/>
+				</Link>
+				<ThemeToggle />
 			</div>
 			{children}
 		</>

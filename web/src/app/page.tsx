@@ -2,6 +2,7 @@ import { LogIn } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
@@ -21,41 +22,12 @@ export default async function Home({
 	}
 
 	return (
-		<div
-			className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br"
-			style={{
-				backgroundImage:
-					"linear-gradient(to bottom right, var(--bg-from), var(--bg-via), var(--bg-to))",
-			}}
-		>
-			{/* decorative background blobs */}
-			<div
-				className="pointer-events-none absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl"
-				style={{
-					backgroundColor: "var(--blob-1)",
-					opacity: "var(--blob-opacity)",
-				}}
-			/>
-			<div
-				className="pointer-events-none absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl"
-				style={{
-					backgroundColor: "var(--blob-2)",
-					opacity: "var(--blob-opacity)",
-				}}
-			/>
+		<>
+			<div className="flex justify-end p-4">
+				<ThemeToggle />
+			</div>
 
-			{/* subtle grid overlay */}
-			<div
-				className="pointer-events-none absolute inset-0 opacity-20 [mask-image:radial-gradient(60rem_60rem_at_center,white,transparent)]"
-				style={{
-					backgroundImage:
-						"linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px)",
-					backgroundSize: "36px 36px",
-				}}
-			/>
-
-			{/* content */}
-			<div className="relative z-10 mx-auto flex min-h-screen max-w-6xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+			<div className="relative z-10 mx-auto flex max-w-6xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
 				<Card
 					className="mx-auto w-full max-w-3xl p-8 text-center md:p-12"
 					style={{
@@ -144,6 +116,6 @@ export default async function Home({
 					</div>
 				</Card>
 			</div>
-		</div>
+		</>
 	);
 }
