@@ -16,6 +16,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 
 	const [error, setError] = useState<string | null>(null);
 	const [copied, setCopied] = useState<boolean | null>(null);
+	const [downloaded, setDownloaded] = useState<boolean | null>(null);
 
 	const [deleteIsTransitioning, startDeleteTransition] = useTransition();
 	const [downloadIsTransitioning, startDownloadTransition] = useTransition();
@@ -26,6 +27,12 @@ export function BinListItem({ item }: { item: BinItem }) {
 			setTimeout(() => setCopied((prev) => (prev ? null : prev)), 1200);
 		}
 	}, [copied]);
+
+	useEffect(() => {
+		if (downloaded) {
+			setTimeout(() => setDownloaded((prev) => (prev ? null : prev)), 1200);
+		}
+	}, [downloaded]);
 
 	const handleDelete = async (id: string) => {
 		startDeleteTransition(async () => {
@@ -95,6 +102,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 				a.click();
 				a.remove();
 				URL.revokeObjectURL(objectUrl);
+				setDownloaded(true);
 			} catch (err) {
 				const error = err as Error;
 				setError(error.message);
@@ -207,9 +215,10 @@ export function BinListItem({ item }: { item: BinItem }) {
 								aria-label="Copy to clipboard"
 								title="Copy"
 								disabled={copyIsTransitioning}
-								onClick={() =>
-									item.textItem && handleCopyText(item.textItem.content)
-								}
+								onClick={(e) => {
+									e.stopPropagation();
+									item.textItem && handleCopyText(item.textItem.content);
+								}}
 							>
 								{copied ? (
 									<Check className="h-4 w-4 text-emerald-600" />
@@ -233,13 +242,14 @@ export function BinListItem({ item }: { item: BinItem }) {
 										item.fileItem.contentType.startsWith("image/") &&
 										!item.fileItem?.preview
 									}
-									onClick={() =>
+									onClick={(e) => {
+										e.stopPropagation();
 										handleCopyFile(
 											item.id,
 											item?.fileItem?.contentType,
 											item?.fileItem?.preview ?? undefined,
-										)
-									}
+										);
+									}}
 								>
 									{copyIsTransitioning ? (
 										<Loader2 className="h-4 w-4 animate-spin" />
@@ -260,16 +270,19 @@ export function BinListItem({ item }: { item: BinItem }) {
 								aria-label="Download file"
 								title="Download"
 								disabled={downloadIsTransitioning}
-								onClick={() =>
+								onClick={(e) => {
+									e.stopPropagation();
 									handleDownloadFile(
 										item.id,
 										item.fileItem?.originalName,
 										item?.fileItem?.preview ?? undefined,
-									)
-								}
+									);
+								}}
 							>
 								{downloadIsTransitioning ? (
 									<Loader2 className="h-4 w-4 animate-spin" />
+								) : downloaded ? (
+									<Check className="h-4 w-4 text-emerald-600" />
 								) : (
 									<Download className="h-4 w-4" />
 								)}
@@ -283,7 +296,10 @@ export function BinListItem({ item }: { item: BinItem }) {
 							className="text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
 							aria-label="Delete item"
 							title="Delete"
-							onClick={() => handleDelete(item.id)}
+							onClick={(e) => {
+								e.stopPropagation();
+								handleDelete(item.id);
+							}}
 						>
 							<Trash2 className="h-4 w-4" />
 						</Button>
