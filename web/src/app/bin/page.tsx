@@ -86,7 +86,7 @@ export default async function Page() {
 			>
 				<h1 className="text-2xl font-semibold text-foreground">Your Bin</h1>
 				<div className="mt-4 space-y-4">
-					<CreateItemForm token={token} />
+					<CreateItemForm token={token} numItems={items.length} />
 					<BinList items={items} token={token} />
 				</div>
 			</Card>

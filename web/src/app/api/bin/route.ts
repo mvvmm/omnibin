@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
-import { MAX_CHAR_LIMIT, MAX_FILE_SIZE } from "@/constants/constants";
+import {
+	BIN_ITEMS_LIMIT,
+	MAX_CHAR_LIMIT,
+	MAX_FILE_SIZE,
+} from "@/constants/constants";
 import { prisma } from "@/lib/prisma";
-import { createPresignedPutUrl, getBucketName } from "@/lib/s3";
+import {
+	createPresignedPutUrl,
+	deleteObjectByKey,
+	getBucketName,
+} from "@/lib/s3";
 import { serializeForJson } from "@/lib/utils";
 import { verifyAccessToken } from "@/lib/verifyAccessToken";
 
@@ -64,6 +72,49 @@ export async function POST(req: Request) {
 			create: { auth0Id: auth0Sub },
 			select: { id: true },
 		});
+
+		// Check if adding this item would exceed the limit and delete oldest if necessary
+		const currentItemCount = await prisma.binItem.count({
+			where: { userId: user.id },
+		});
+
+		if (currentItemCount >= BIN_ITEMS_LIMIT) {
+			// Find and delete the oldest item
+			const oldestItem = await prisma.binItem.findFirst({
+				where: { userId: user.id },
+				orderBy: { createdAt: "asc" },
+				include: { fileItem: true, textItem: true },
+			});
+
+			if (oldestItem) {
+				// Capture related ids and keys up front
+				const textItemId = oldestItem.textItemId ?? undefined;
+				const fileItemId = oldestItem.fileItemId ?? undefined;
+				const fileKey = oldestItem.fileItem?.key ?? undefined;
+
+				// Delete file from S3 storage first (non-DB side effect)
+				if (fileKey) {
+					await deleteObjectByKey(fileKey);
+				}
+
+				// Delete the bin item record next to avoid onDelete cascades from child deletions
+				await prisma.binItem.delete({
+					where: { id: oldestItem.id },
+				});
+
+				// Finally, clean up linked entities (these will not cascade now)
+				if (textItemId) {
+					await prisma.textItem.delete({
+						where: { id: textItemId },
+					});
+				}
+				if (fileItemId) {
+					await prisma.fileItem.delete({
+						where: { id: fileItemId },
+					});
+				}
+			}
+		}
 
 		// File flow
 		if (

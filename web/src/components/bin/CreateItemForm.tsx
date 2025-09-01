@@ -4,14 +4,21 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MAX_CHAR_LIMIT, MAX_FILE_SIZE } from "@/constants/constants";
+import {
+	BIN_ITEMS_LIMIT,
+	MAX_CHAR_LIMIT,
+	MAX_FILE_SIZE,
+} from "@/constants/constants";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 
-type CreateItemFormProps = {
+// TODO: get rid of token, use actions
+export function CreateItemForm({
+	token,
+	numItems,
+}: {
 	token: string;
-};
-
-export function CreateItemForm({ token }: CreateItemFormProps) {
+	numItems: number;
+}) {
 	const router = useRouter();
 	const [content, setContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -167,14 +174,19 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 
 	return (
 		<form onSubmit={handleSubmit} className="space-y-2">
-			<Textarea
-				value={content}
-				onChange={(e) => setContent(e.target.value)}
-				onPaste={handlePaste}
-				placeholder="Paste something..."
-				rows={3}
-			/>
-			<div className="flex items-center gap-3">
+			<div className="mb-4">
+				<Textarea
+					value={content}
+					onChange={(e) => setContent(e.target.value)}
+					onPaste={handlePaste}
+					placeholder="Paste something..."
+					rows={3}
+					className="mb-1"
+				/>
+				{error && <div className="ml-2 text-sm text-red-600">{error}</div>}
+			</div>
+
+			<div className="flex items-end gap-3 justify-between">
 				<Button
 					disabled={isSubmitting}
 					type="submit"
@@ -182,7 +194,19 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 				>
 					{isSubmitting ? "Adding..." : "Add"}
 				</Button>
-				{error && <span className="text-sm text-red-600">{error}</span>}
+
+				<div className="flex flex-col items-end col-gap-1 mr-1">
+					<div
+						className={`text-xs text-muted-foreground ${numItems >= BIN_ITEMS_LIMIT && "text-red-600"}`}
+					>
+						Items: {numItems} / {BIN_ITEMS_LIMIT}
+					</div>
+					{numItems >= BIN_ITEMS_LIMIT && (
+						<div className="text-xs text-red-600">
+							Oldest item will be deleted on next add.
+						</div>
+					)}
+				</div>
 			</div>
 		</form>
 	);
