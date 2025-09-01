@@ -1,14 +1,11 @@
+import { getAccessTokenOrReauth } from "@/lib/auth0";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 import type { BinItem } from "@/types/bin";
 import { BinListItem } from "./BinListItem";
 
-export async function BinList({
-	items,
-	token,
-}: {
-	items: BinItem[];
-	token: string;
-}) {
+export async function BinList({ items }: { items: BinItem[] }) {
+	const token = await getAccessTokenOrReauth();
+
 	const getPreviewUrls = async () => {
 		const candidates = items.filter(
 			(i) =>
