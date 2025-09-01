@@ -56,22 +56,36 @@ export function BinListItem({ item }: { item: BinItem }) {
 		}
 	};
 
-	const handleDownloadFile = async (id: string, suggestedName?: string) => {
+	const handleDownloadFile = async (
+		id: string,
+		suggestedName?: string,
+		existingUrl?: string,
+	) => {
 		startDownloadTransition(async () => {
 			try {
 				setError(null);
-				const { success, error, downloadUrl } =
-					await getFileItemDownloadUrl(id);
-				if (!success) {
-					setError(error || "Failed to get file URL");
-					return;
+				let res: Response | undefined;
+
+				if (existingUrl) {
+					res = await fetch(existingUrl);
+					if (!res.ok) {
+						const { success, error, downloadUrl } =
+							await getFileItemDownloadUrl(id);
+						if (!success) {
+							setError(error || "Failed to get file URL");
+							return;
+						}
+						if (!downloadUrl) {
+							setError("Missing file URL");
+							return;
+						}
+						res = await fetch(downloadUrl);
+					}
 				}
-				if (!downloadUrl) {
-					setError("Missing file URL");
-					return;
+
+				if (!res || !res.ok) {
+					throw new Error(`Fetch file failed (${res?.status})`);
 				}
-				const res = await fetch(downloadUrl);
-				if (!res.ok) throw new Error(`Fetch file failed (${res.status})`);
 				const blob = await res.blob();
 				const objectUrl = URL.createObjectURL(blob);
 				const a = document.createElement("a");
@@ -96,30 +110,28 @@ export function BinListItem({ item }: { item: BinItem }) {
 		startCopyingTransition(async () => {
 			try {
 				setError(null);
-				let url = existingUrl;
+				let res: Response | undefined;
 
-				if (!url) {
-					const { success, error, downloadUrl } =
-						await getFileItemDownloadUrl(id);
-					if (!success) {
-						setError(error || "Failed to get file URL");
-						return;
-					} else {
-						url = downloadUrl;
-					}
-					// Update the preview URL for future use
-					if (item.fileItem) {
-						item.fileItem.preview = url;
+				if (existingUrl) {
+					res = await fetch(existingUrl);
+					if (!res.ok) {
+						const { success, error, downloadUrl } =
+							await getFileItemDownloadUrl(id);
+						if (!success) {
+							setError(error || "Failed to get file URL");
+							return;
+						}
+						if (!downloadUrl) {
+							setError("Missing file URL");
+							return;
+						}
+						res = await fetch(downloadUrl);
 					}
 				}
 
-				if (!url) {
-					setError("No URL available");
-					return;
+				if (!res || !res.ok) {
+					throw new Error(`Fetch file failed (${res?.status})`);
 				}
-
-				const res = await fetch(url);
-				if (!res.ok) throw new Error(`Fetch file failed (${res.status})`);
 				const blob = await res.blob();
 				const mime =
 					blob.type || expectedContentType || "application/octet-stream";
@@ -249,7 +261,11 @@ export function BinListItem({ item }: { item: BinItem }) {
 								title="Download"
 								disabled={downloadIsTransitioning}
 								onClick={() =>
-									handleDownloadFile(item.id, item.fileItem?.originalName)
+									handleDownloadFile(
+										item.id,
+										item.fileItem?.originalName,
+										item?.fileItem?.preview ?? undefined,
+									)
 								}
 							>
 								{downloadIsTransitioning ? (
