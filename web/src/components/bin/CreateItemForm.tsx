@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MAX_CHAR_LIMIT, MAX_FILE_SIZE } from "@/constants/constants";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 
 type CreateItemFormProps = {
@@ -19,7 +20,14 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 	async function uploadPastedFile(file: File) {
 		setIsSubmitting(true);
 		setError(null);
+
 		try {
+			if (file.size > MAX_FILE_SIZE) {
+				setError(
+					`${(file.size / 1024 / 1024).toFixed(2)}MB file size exceeds the ${MAX_FILE_SIZE / 1024 / 1024}MB limit`,
+				);
+				return;
+			}
 			let imageWidth: number | undefined;
 			let imageHeight: number | undefined;
 			if (file.type.startsWith("image/")) {
@@ -91,6 +99,14 @@ export function CreateItemForm({ token }: CreateItemFormProps) {
 		const trimmed = text.trim();
 		if (!trimmed) {
 			setError("Please enter some content");
+			return;
+		}
+
+		// Check character limit
+		if (trimmed.length > MAX_CHAR_LIMIT) {
+			setError(
+				`Text content (${trimmed.length} characters) exceeds the ${MAX_CHAR_LIMIT} character limit`,
+			);
 			return;
 		}
 

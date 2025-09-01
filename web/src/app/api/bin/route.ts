@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { MAX_CHAR_LIMIT, MAX_FILE_SIZE } from "@/constants/constants";
 import { prisma } from "@/lib/prisma";
 import { createPresignedPutUrl, getBucketName } from "@/lib/s3";
 import { serializeForJson } from "@/lib/utils";
@@ -70,6 +71,14 @@ export async function POST(req: Request) {
 			body?.file?.contentType &&
 			(body?.file?.size ?? 0) > 0
 		) {
+			if (body.file.size > MAX_FILE_SIZE) {
+				return NextResponse.json(
+					{
+						error: `${(body.file.size / 1024 / 1024).toFixed(2)}MB file size exceeds the ${MAX_FILE_SIZE / 1024 / 1024}MB limit`,
+					},
+					{ status: 400 },
+				);
+			}
 			const objectKey = `${user.id}/${crypto.randomUUID()}`;
 			const uploadUrl = await createPresignedPutUrl({
 				key: objectKey,
@@ -105,6 +114,17 @@ export async function POST(req: Request) {
 				{ status: 400 },
 			);
 		}
+
+		// Check character limit
+		if (content.length > MAX_CHAR_LIMIT) {
+			return NextResponse.json(
+				{
+					error: `Text content (${content.length} characters) exceeds the ${MAX_CHAR_LIMIT} character limit`,
+				},
+				{ status: 400 },
+			);
+		}
+
 		const text = await prisma.textItem.create({ data: { content } });
 		const item = await prisma.binItem.create({
 			data: {

@@ -202,9 +202,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 				}}
 			>
 				<div className="flex items-start justify-between gap-3">
-					<div className="truncate font-medium text-foreground">
-						{renderTitle()}
-					</div>
+					<div className="font-medium text-foreground">{renderTitle()}</div>
 					<div className="flex items-center gap-1.5">
 						{/* Copy Text Button */}
 						{item.kind === "TEXT" && item.textItem && (
