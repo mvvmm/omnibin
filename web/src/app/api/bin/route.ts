@@ -14,15 +14,11 @@ import { serializeForJson } from "@/lib/utils";
 import { verifyAccessToken } from "@/lib/verifyAccessToken";
 
 export async function GET(req: Request) {
-	console.log("📥 GET /api/bin called");
-	console.log("📥 Headers:", Object.fromEntries(req.headers.entries()));
-
 	try {
 		const payload = await verifyAccessToken(
 			req.headers.get("authorization") ?? undefined,
 		);
 		const auth0Sub = payload.sub;
-		console.log("✅ User authenticated:", auth0Sub);
 
 		// Ensure user exists and fetch their bin items (clipboard entries)
 		const user = await prisma.user.upsert({
@@ -39,12 +35,11 @@ export async function GET(req: Request) {
 			include: { textItem: true, fileItem: true },
 		});
 
-		console.log("✅ Returning", items.length, "items");
 		return NextResponse.json(serializeForJson({ items }));
 	} catch (error) {
 		const typed = error as Error & { statusCode?: number };
-		console.log(
-			"❌ Error in GET /api/bin:",
+		console.error(
+			"Error in GET /api/bin:",
 			typed.message,
 			"Status:",
 			typed.statusCode ?? 401,
