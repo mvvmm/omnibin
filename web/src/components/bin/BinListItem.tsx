@@ -17,6 +17,8 @@ export function BinListItem({ item }: { item: BinItem }) {
 	const [error, setError] = useState<string | null>(null);
 	const [copied, setCopied] = useState<boolean | null>(null);
 	const [downloaded, setDownloaded] = useState<boolean | null>(null);
+	const [imageLoading, setImageLoading] = useState<boolean>(true);
+	const [imageError, setImageError] = useState<boolean>(false);
 
 	const [deleteIsTransitioning, startDeleteTransition] = useTransition();
 	const [downloadIsTransitioning, startDownloadTransition] = useTransition();
@@ -311,14 +313,45 @@ export function BinListItem({ item }: { item: BinItem }) {
 							item.fileItem.contentType.startsWith("image/") && (
 								<div className="mb-4 mt-2">
 									{item.fileItem.preview && (
-										<Image
-											src={item.fileItem.preview}
-											alt={item.fileItem.originalName}
-											width={item.fileItem.imageWidth ?? 320}
-											height={item.fileItem.imageHeight ?? 240}
-											className="h-auto max-h-80 w-auto rounded"
-											quality={50}
-										/>
+										<div className="h-[300px] w-full overflow-hidden rounded-lg bg-muted/30 relative border border-border">
+											{imageLoading && (
+												<div className="absolute inset-0 flex items-center justify-center">
+													<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+												</div>
+											)}
+											{imageError && (
+												<div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+													<svg
+														className="h-6 w-6 mb-1"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+													>
+														<title>Image preview unavailable</title>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth={2}
+															d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+														/>
+													</svg>
+													<span className="text-xs">Preview unavailable</span>
+												</div>
+											)}
+											<Image
+												src={item.fileItem.preview}
+												alt={item.fileItem.originalName}
+												width={item.fileItem.imageWidth ?? 320}
+												height={item.fileItem.imageHeight ?? 240}
+												className={`h-full w-full object-cover ${imageLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-200`}
+												quality={50}
+												onLoad={() => setImageLoading(false)}
+												onError={() => {
+													setImageLoading(false);
+													setImageError(true);
+												}}
+											/>
+										</div>
 									)}
 								</div>
 							)}
