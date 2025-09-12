@@ -43,7 +43,7 @@ export default async function Home({
 							width={680}
 							height={200}
 							priority
-							className="h-auto w-full max-w-[720px] drop-shadow-xl"
+							className="h-auto w-full max-w-[720px]"
 						/>
 					</div>
 
