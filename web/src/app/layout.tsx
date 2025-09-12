@@ -22,18 +22,20 @@ export default function RootLayout({
 			lang="en"
 			className={`${comfortaa.variable} ${geistSans.variable} ${geistMono.variable}`}
 		>
-			<body className="antialiased">
+			<body
+				className="antialiased"
+				style={{
+					backgroundImage:
+						"linear-gradient(to bottom right, var(--bg-from), var(--bg-via), var(--bg-to))",
+					backgroundAttachment: "fixed",
+				}}
+			>
 				<ThemeProvider>
-					<div
-						className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br"
-						style={{
-							backgroundImage:
-								"linear-gradient(to bottom right, var(--bg-from), var(--bg-via), var(--bg-to))",
-						}}
-					>
+					{/* Fixed background elements that cover the entire viewport */}
+					<div className="fixed inset-0 pointer-events-none">
 						{/* Blob 1 */}
 						<div
-							className="pointer-events-none absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl z-10"
+							className="absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl"
 							style={{
 								backgroundColor: "var(--blob-1)",
 								opacity: "var(--blob-opacity)",
@@ -42,7 +44,7 @@ export default function RootLayout({
 
 						{/* Blob 2 */}
 						<div
-							className="pointer-events-none absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl z-10"
+							className="absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl"
 							style={{
 								backgroundColor: "var(--blob-2)",
 								opacity: "var(--blob-opacity)",
@@ -51,17 +53,17 @@ export default function RootLayout({
 
 						{/* Grid */}
 						<div
-							className="pointer-events-none absolute inset-0 opacity-20 z-20 [mask-image:radial-gradient(60rem_60rem_at_center,white,transparent)]"
+							className="absolute inset-0 opacity-20 [mask-image:radial-gradient(60rem_60rem_at_center,white,transparent)]"
 							style={{
 								backgroundImage:
 									"linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px)",
 								backgroundSize: "36px 36px",
 							}}
 						/>
-
-						{/* Content container with relative positioning */}
-						<div className="relative z-30">{children}</div>
 					</div>
+
+					{/* Content container with relative positioning */}
+					<div className="relative z-10">{children}</div>
 				</ThemeProvider>
 			</body>
 		</html>
