@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BinView: View {
     let accessToken: String?
+    let onLogout: () -> Void
     
     @State private var binItems: [BinItem] = []
     @State private var isLoading = false
@@ -29,7 +30,7 @@ struct BinView: View {
                 Spacer()
                 
                 Button("Logout") {
-                    // Handle logout
+                    onLogout()
                 }
                 .foregroundColor(AppColors.Button.accentPrimary)
             }
@@ -177,6 +178,7 @@ struct BinView: View {
                         .padding(.horizontal, 24)
                     }
                 }
+                .padding(.top, 8)
                 .padding(.bottom, 20)
             }
         }
@@ -555,5 +557,5 @@ struct RoundedCorner: Shape {
 }
 
 #Preview {
-    BinView(accessToken: nil)
+    BinView(accessToken: nil, onLogout: {})
 }

@@ -49,7 +49,7 @@ struct MainView: View {
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                 }
             } else if self.user != nil {
-                BinView(accessToken: accessToken)
+                BinView(accessToken: accessToken, onLogout: logout)
             } else {
                 GeometryReader { geometry in
                     ScrollView {
@@ -63,7 +63,6 @@ struct MainView: View {
                                 .frame(maxWidth: min(720, geometry.size.width * 0.9))
                                 .frame(maxHeight: 200)
                                 .frame(minHeight: 120)
-                                .shadow(radius: 20)
                                 .padding(.horizontal, 24)
                             
                             // Main heading
