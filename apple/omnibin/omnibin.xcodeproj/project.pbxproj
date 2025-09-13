@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9E04698E2E7169FD000F4EF3 /* Auth0 in Frameworks */ = {isa = PBXBuildFile; productRef = 9E04698D2E7169FD000F4EF3 /* Auth0 */; };
+		9E679E3B2E75F6CC00B3261B /* omnibin Share Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9E679E312E75F6CC00B3261B /* omnibin Share Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,13 +26,45 @@
 			remoteGlobalIDString = 9E57EB4F2E6CB3C400C01E7B;
 			remoteInfo = omnibin;
 		};
+		9E679E392E75F6CC00B3261B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9E57EB482E6CB3C400C01E7B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9E679E302E75F6CC00B3261B;
+			remoteInfo = "omnibin Share Extension";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9E679E3C2E75F6CC00B3261B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9E679E3B2E75F6CC00B3261B /* omnibin Share Extension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		9E57EB502E6CB3C400C01E7B /* omnibin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = omnibin.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9E57EB5E2E6CB3C500C01E7B /* omnibinTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = omnibinTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9E57EB682E6CB3C500C01E7B /* omnibinUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = omnibinUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9E679E312E75F6CC00B3261B /* omnibin Share Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "omnibin Share Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9E679E3F2E75F6CC00B3261B /* Exceptions for "omnibin Share Extension" folder in "omnibin Share Extension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9E679E302E75F6CC00B3261B /* omnibin Share Extension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9E57EB522E6CB3C400C01E7B /* omnibin */ = {
@@ -47,6 +80,14 @@
 		9E57EB6B2E6CB3C500C01E7B /* omnibinUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = omnibinUITests;
+			sourceTree = "<group>";
+		};
+		9E679E322E75F6CC00B3261B /* omnibin Share Extension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9E679E3F2E75F6CC00B3261B /* Exceptions for "omnibin Share Extension" folder in "omnibin Share Extension" target */,
+			);
+			path = "omnibin Share Extension";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -74,6 +115,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9E679E2E2E75F6CC00B3261B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -83,6 +131,7 @@
 				9E57EB522E6CB3C400C01E7B /* omnibin */,
 				9E57EB612E6CB3C500C01E7B /* omnibinTests */,
 				9E57EB6B2E6CB3C500C01E7B /* omnibinUITests */,
+				9E679E322E75F6CC00B3261B /* omnibin Share Extension */,
 				9E57EB512E6CB3C400C01E7B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -93,6 +142,7 @@
 				9E57EB502E6CB3C400C01E7B /* omnibin.app */,
 				9E57EB5E2E6CB3C500C01E7B /* omnibinTests.xctest */,
 				9E57EB682E6CB3C500C01E7B /* omnibinUITests.xctest */,
+				9E679E312E75F6CC00B3261B /* omnibin Share Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -107,10 +157,12 @@
 				9E57EB4C2E6CB3C400C01E7B /* Sources */,
 				9E57EB4D2E6CB3C400C01E7B /* Frameworks */,
 				9E57EB4E2E6CB3C400C01E7B /* Resources */,
+				9E679E3C2E75F6CC00B3261B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				9E679E3A2E75F6CC00B3261B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				9E57EB522E6CB3C400C01E7B /* omnibin */,
@@ -169,6 +221,28 @@
 			productReference = 9E57EB682E6CB3C500C01E7B /* omnibinUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		9E679E302E75F6CC00B3261B /* omnibin Share Extension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9E679E402E75F6CC00B3261B /* Build configuration list for PBXNativeTarget "omnibin Share Extension" */;
+			buildPhases = (
+				9E679E2D2E75F6CC00B3261B /* Sources */,
+				9E679E2E2E75F6CC00B3261B /* Frameworks */,
+				9E679E2F2E75F6CC00B3261B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9E679E322E75F6CC00B3261B /* omnibin Share Extension */,
+			);
+			name = "omnibin Share Extension";
+			packageProductDependencies = (
+			);
+			productName = "omnibin Share Extension";
+			productReference = 9E679E312E75F6CC00B3261B /* omnibin Share Extension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -189,6 +263,9 @@
 					9E57EB672E6CB3C500C01E7B = {
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = 9E57EB4F2E6CB3C400C01E7B;
+					};
+					9E679E302E75F6CC00B3261B = {
+						CreatedOnToolsVersion = 16.4;
 					};
 				};
 			};
@@ -212,6 +289,7 @@
 				9E57EB4F2E6CB3C400C01E7B /* omnibin */,
 				9E57EB5D2E6CB3C500C01E7B /* omnibinTests */,
 				9E57EB672E6CB3C500C01E7B /* omnibinUITests */,
+				9E679E302E75F6CC00B3261B /* omnibin Share Extension */,
 			);
 		};
 /* End PBXProject section */
@@ -232,6 +310,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9E57EB662E6CB3C500C01E7B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9E679E2F2E75F6CC00B3261B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -262,6 +347,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9E679E2D2E75F6CC00B3261B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -274,6 +366,11 @@
 			isa = PBXTargetDependency;
 			target = 9E57EB4F2E6CB3C400C01E7B /* omnibin */;
 			targetProxy = 9E57EB692E6CB3C500C01E7B /* PBXContainerItemProxy */;
+		};
+		9E679E3A2E75F6CC00B3261B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9E679E302E75F6CC00B3261B /* omnibin Share Extension */;
+			targetProxy = 9E679E392E75F6CC00B3261B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -288,7 +385,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_ENABLE_OBJC_WEAR = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -349,7 +446,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_ENABLE_OBJC_WEAR = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -415,18 +512,15 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = in.omnib.omnibin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 2.5;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -453,18 +547,15 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = in.omnib.omnibin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 2.5;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -481,12 +572,11 @@
 				PRODUCT_BUNDLE_IDENTIFIER = in.omnib.omnibinTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/omnibin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/omnibin";
-				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Debug;
 		};
@@ -503,12 +593,11 @@
 				PRODUCT_BUNDLE_IDENTIFIER = in.omnib.omnibinTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/omnibin.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/omnibin";
-				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Release;
 		};
@@ -524,12 +613,11 @@
 				PRODUCT_BUNDLE_IDENTIFIER = in.omnib.omnibinUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = omnibin;
-				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Debug;
 		};
@@ -545,12 +633,76 @@
 				PRODUCT_BUNDLE_IDENTIFIER = in.omnib.omnibinUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = omnibin;
-				XROS_DEPLOYMENT_TARGET = 2.5;
+			};
+			name = Release;
+		};
+		9E679E3D2E75F6CC00B3261B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = "omnibin Share Extension/omnibin Share Extension.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YSV22LA249;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "omnibin Share Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "omnibin Share Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "in.omnib.omnibin.omnibin-Share-Extension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+			};
+			name = Debug;
+		};
+		9E679E3E2E75F6CC00B3261B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = "omnibin Share Extension/omnibin Share Extension.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YSV22LA249;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "omnibin Share Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "omnibin Share Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "in.omnib.omnibin.omnibin-Share-Extension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -589,6 +741,15 @@
 			buildConfigurations = (
 				9E57EB792E6CB3C500C01E7B /* Debug */,
 				9E57EB7A2E6CB3C500C01E7B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9E679E402E75F6CC00B3261B /* Build configuration list for PBXNativeTarget "omnibin Share Extension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9E679E3D2E75F6CC00B3261B /* Debug */,
+				9E679E3E2E75F6CC00B3261B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

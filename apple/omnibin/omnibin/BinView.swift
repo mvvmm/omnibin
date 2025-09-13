@@ -19,168 +19,160 @@ struct BinView: View {
     private let binItemsLimit = 10
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("Your Bin")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                
-                Spacer()
-                
-                Button("Logout") {
-                    onLogout()
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("Your Bin")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                    
+                    Spacer()
+                    
+                    Button("Logout") {
+                        onLogout()
+                    }
+                    .foregroundColor(AppColors.Button.accentPrimary)
                 }
-                .foregroundColor(AppColors.Button.accentPrimary)
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 20)
-            .padding(.bottom, 16)
-            
-            // Content
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Add new item form
-                    VStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 8) {
+                .padding(.top, 20)
+                .padding(.bottom, 16)
+                .padding(.horizontal, min(24, geometry.size.width * 0.05))
+                
+                // Content
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Add new item form
+                        VStack(spacing: 12) {
                             TextField("Paste something...", text: $newItemText, axis: .vertical)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(isDarkMode ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.95, green: 0.95, blue: 0.95))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(
-                                                    newItemText.isEmpty ? 
-                                                    (isDarkMode ? Color(red: 0.3, green: 0.3, blue: 0.3) : Color(red: 0.8, green: 0.8, blue: 0.8)) :
-                                                    AppColors.Button.accentPrimary,
-                                                    lineWidth: newItemText.isEmpty ? 1 : 2
-                                                )
+                                        .strokeBorder(
+                                            newItemText.isEmpty ? 
+                                            (isDarkMode ? Color(red: 0.3, green: 0.3, blue: 0.3) : Color(red: 0.8, green: 0.8, blue: 0.8)) :
+                                            AppColors.Button.accentPrimary,
+                                            lineWidth: newItemText.isEmpty ? 1 : 2
                                         )
                                 )
                                 .foregroundColor(isDarkMode ? .white : .black)
                                 .font(.system(size: 16, weight: .regular))
                                 .lineLimit(3...6)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                                 .onSubmit {
                                     addTextItem()
                                 }
-                                .onTapGesture {
-                                    // Add subtle animation when tapped
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        // This will trigger the border color change
+                            
+                            HStack(alignment: .bottom) {
+                                Button(action: addTextItem) {
+                                    HStack(spacing: 8) {
+                                        if isSubmitting {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        } else {
+                                            Image(systemName: "plus.circle.fill")
+                                                .font(.system(size: 16, weight: .medium))
+                                            Text("Add")
+                                                .font(.system(size: 16, weight: .semibold))
+                                        }
                                     }
-                                }
-                        }
-                        
-                        HStack(alignment: .bottom) {
-                            Button(action: addTextItem) {
-                                HStack(spacing: 8) {
-                                    if isSubmitting {
-                                        ProgressView()
-                                            .scaleEffect(0.8)
-                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    } else {
-                                        Image(systemName: "plus.circle.fill")
-                                            .font(.system(size: 16, weight: .medium))
-                                        Text("Add")
-                                            .font(.system(size: 16, weight: .semibold))
-                                    }
-                                }
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 14)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [
-                                                    AppColors.Button.accentPrimary,
-                                                    AppColors.Button.accentSecondary
-                                                ]),
-                                                startPoint: .leading,
-                                                endPoint: .trailing
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 14)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [
+                                                        AppColors.Button.accentPrimary,
+                                                        AppColors.Button.accentSecondary
+                                                    ]),
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                )
                                             )
-                                        )
-                                        .shadow(
-                                            color: AppColors.Button.accentPrimary.opacity(0.3),
-                                            radius: 8,
-                                            x: 0,
-                                            y: 4
-                                        )
-                                )
-                                .scaleEffect(isSubmitting ? 0.95 : 1.0)
-                                .animation(.easeInOut(duration: 0.1), value: isSubmitting)
-                            }
-                            .disabled(isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            .opacity(isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.6 : 1.0)
-                            .animation(.easeInOut(duration: 0.2), value: isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text("Items: \(binItems.count) / \(binItemsLimit)")
-                                    .font(.caption)
-                                    .foregroundColor(binItems.count >= binItemsLimit ? .red : AppColors.mutedText(isDarkMode: isDarkMode))
-                                
-                                if binItems.count >= binItemsLimit {
-                                    Text("Oldest item will be deleted on next add.")
-                                        .font(.caption2)
-                                        .foregroundColor(.red)
+                                            .shadow(
+                                                color: AppColors.Button.accentPrimary.opacity(0.3),
+                                                radius: 8,
+                                                x: 0,
+                                                y: 4
+                                            )
+                                    )
+                                    .scaleEffect(isSubmitting ? 0.95 : 1.0)
+                                    .animation(.easeInOut(duration: 0.1), value: isSubmitting)
                                 }
+                                .disabled(isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                .opacity(isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.6 : 1.0)
+                                .animation(.easeInOut(duration: 0.2), value: isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("Items: \(binItems.count) / \(binItemsLimit)")
+                                        .font(.caption)
+                                        .foregroundColor(binItems.count >= binItemsLimit ? .red : AppColors.mutedText(isDarkMode: isDarkMode))
+                                    
+                                    if binItems.count >= binItemsLimit {
+                                        Text("Oldest item will be deleted on next add.")
+                                            .font(.caption2)
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                            }
+                            
+                            if let error = errorMessage {
+                                Text(error)
+                                    .font(.caption)
+                                    .foregroundColor(.red)
                             }
                         }
                         
-                        if let error = errorMessage {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    
-                    // Items list
-                    if isLoading {
-                        VStack(spacing: 12) {
-                            ProgressView()
-                                .scaleEffect(1.2)
-                                .progressViewStyle(CircularProgressViewStyle(tint: AppColors.Button.accentPrimary))
-                            
-                            Text("Loading your bin...")
-                                .font(.headline)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                        }
-                        .padding(.top, 60)
-                    } else if binItems.isEmpty {
-                        VStack(spacing: 12) {
-                            Image(systemName: "tray")
-                                .font(.system(size: 48))
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                            
-                            Text("No items yet")
-                                .font(.headline)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                            
-                            Text("Paste text or files to get started")
-                                .font(.subheadline)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                        }
-                        .padding(.top, 60)
-                    } else {
-                        LazyVStack(spacing: 12) {
-                            ForEach(binItems) { item in
-                                BinItemRow(item: item, accessToken: accessToken) {
-                                    deleteItem(item)
+                        // Items list
+                        if isLoading {
+                            VStack(spacing: 12) {
+                                ProgressView()
+                                    .scaleEffect(1.2)
+                                    .progressViewStyle(CircularProgressViewStyle(tint: AppColors.Button.accentPrimary))
+                                
+                                Text("Loading your bin...")
+                                    .font(.headline)
+                                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                            }
+                            .padding(.top, 60)
+                        } else if binItems.isEmpty {
+                            VStack(spacing: 12) {
+                                Image(systemName: "tray")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                                
+                                Text("No items yet")
+                                    .font(.headline)
+                                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                                
+                                Text("Paste text or files to get started")
+                                    .font(.subheadline)
+                                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                            }
+                            .padding(.top, 60)
+                        } else {
+                            LazyVStack(spacing: 12) {
+                                ForEach(binItems) { item in
+                                    BinItemRow(item: item, accessToken: accessToken) {
+                                        deleteItem(item)
+                                    }
                                 }
                             }
                         }
-                        .padding(.horizontal, 24)
                     }
+                    .padding(.top, 8)
+                    .padding(.bottom, 20)
+                    .padding(.horizontal, min(24, geometry.size.width * 0.05))
                 }
-                .padding(.top, 8)
-                .padding(.bottom, 20)
             }
+            .frame(maxWidth: min(geometry.size.width, 600), maxHeight: .infinity)
         }
         .refreshable {
             await refreshBinItems()
@@ -356,7 +348,7 @@ struct BinItemRow: View {
                 .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
                 )
         )
         .shadow(
@@ -456,7 +448,7 @@ struct ImagePreviewView: View {
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
+                                .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
                         )
                 } placeholder: {
                     Rectangle()
@@ -465,7 +457,7 @@ struct ImagePreviewView: View {
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
+                                .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
                         )
                         .overlay(
                             ProgressView()
@@ -479,7 +471,7 @@ struct ImagePreviewView: View {
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
+                            .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
                     )
                     .overlay(
                         VStack {
@@ -498,7 +490,7 @@ struct ImagePreviewView: View {
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
+                            .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
                     )
                     .overlay(
                         ProgressView()

@@ -20,23 +20,29 @@ struct MainView: View {
                 .ignoresSafeArea()
             
             // Blob effects
-            Circle()
-                .fill(AppColors.blob1Color(isDarkMode: isDarkMode))
-                .frame(width: 400, height: 400)
-                .blur(radius: 60)
-                .offset(x: -150, y: -200)
-                .opacity(AppColors.blobOpacity(isDarkMode: isDarkMode))
-            
-            Circle()
-                .fill(AppColors.blob2Color(isDarkMode: isDarkMode))
-                .frame(width: 450, height: 450)
-                .blur(radius: 60)
-                .offset(x: 200, y: 300)
-                .opacity(AppColors.blobOpacity(isDarkMode: isDarkMode))
+            GeometryReader { geometry in
+                let screenWidth = geometry.size.width
+                let screenHeight = geometry.size.height
+                let blobSize = min(screenWidth, screenHeight) * 0.6
+                
+                Circle()
+                    .fill(AppColors.blob1Color(isDarkMode: isDarkMode))
+                    .frame(width: blobSize, height: blobSize)
+                    .blur(radius: blobSize * 0.15)
+                    .offset(x: -screenWidth * 0.1, y: screenHeight * 0.1)
+                    .opacity(AppColors.blobOpacity(isDarkMode: isDarkMode))
+                
+                Circle()
+                    .fill(AppColors.blob2Color(isDarkMode: isDarkMode))
+                    .frame(width: blobSize * 1.1, height: blobSize * 1.1)
+                    .blur(radius: blobSize * 0.15)
+                    .offset(x: screenWidth * 0.4, y: screenHeight * 0.6)
+                    .opacity(AppColors.blobOpacity(isDarkMode: isDarkMode))
+            }
             
             // Grid pattern
             GridPattern(isDarkMode: isDarkMode)
-                .opacity(0.2)
+                .opacity(isDarkMode ? 0.3 : 1)
                 .ignoresSafeArea()
             
             // Main content
@@ -108,15 +114,6 @@ struct MainView: View {
                                 .shadow(color: AppColors.Button.accentPrimary.opacity(0.4), radius: 12, x: 0, y: 6)
                             }
                             .buttonStyle(PlainButtonStyle())
-                            .onHover { isHovering in
-                                #if os(macOS)
-                                if isHovering {
-                                    NSCursor.pointingHand.push()
-                                } else {
-                                    NSCursor.pop()
-                                }
-                                #endif
-                            }
                             
                             Spacer()
                                 .frame(height: 10)
@@ -252,6 +249,10 @@ extension MainView {
                         case .success(let renewedCredentials):
                             self.user = User(from: renewedCredentials.idToken)
                             self.accessToken = renewedCredentials.accessToken
+                            
+                            // Update access token in shared Keychain
+                            SecureStorageManager.shared.setAccessToken(renewedCredentials.accessToken)
+                            
                             self.isLoading = false
                         case .failure(let renewError):
                             print("Failed to renew credentials: \(renewError)")
@@ -274,12 +275,16 @@ extension MainView {
             .scope("openid profile email offline_access")
             .start { result in
                 switch result {
-                case .success(let credentials):
-                    // Store credentials for future use
-                    self.credentialsManager.store(credentials: credentials)
-                    self.user = User(from: credentials.idToken)
-                    self.accessToken = credentials.accessToken
-                    self.isLoading = false
+            case .success(let credentials):
+                // Store credentials for future use
+                self.credentialsManager.store(credentials: credentials)
+                self.user = User(from: credentials.idToken)
+                self.accessToken = credentials.accessToken
+                
+        // Store access token in shared Keychain for Share Extension
+        SecureStorageManager.shared.setAccessToken(credentials.accessToken)
+                
+                self.isLoading = false
                 case .failure(let error):
                     print("Login failed with: \(error)")
                     self.isLoading = false
@@ -290,6 +295,10 @@ extension MainView {
     func logout() {
         // Clear stored credentials
         credentialsManager.clear()
+        
+        // Clear shared Keychain
+        SecureStorageManager.shared.deleteAccessToken()
+        SecureStorageManager.shared.clearUserInfo()
         
         Auth0
             .webAuth()
