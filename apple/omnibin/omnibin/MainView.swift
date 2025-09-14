@@ -255,12 +255,10 @@ extension MainView {
                             
                             self.isLoading = false
                         case .failure(let renewError):
-                            print("Failed to renew credentials: \(renewError)")
                             self.isLoading = false
                         }
                     }
                 } else {
-                    print("No stored credentials: \(error)")
                     self.isLoading = false
                 }
             }
@@ -277,7 +275,7 @@ extension MainView {
                 switch result {
             case .success(let credentials):
                 // Store credentials for future use
-                self.credentialsManager.store(credentials: credentials)
+                _ = self.credentialsManager.store(credentials: credentials)
                 self.user = User(from: credentials.idToken)
                 self.accessToken = credentials.accessToken
                 
@@ -286,7 +284,6 @@ extension MainView {
                 
                 self.isLoading = false
                 case .failure(let error):
-                    print("Login failed with: \(error)")
                     self.isLoading = false
                 }
             }
@@ -294,7 +291,7 @@ extension MainView {
 
     func logout() {
         // Clear stored credentials
-        credentialsManager.clear()
+        _ = credentialsManager.clear()
         
         // Clear shared Keychain
         SecureStorageManager.shared.deleteAccessToken()
@@ -310,7 +307,6 @@ extension MainView {
                     self.accessToken = nil
                     self.isLoading = false
                 case .failure(let error):
-                    print("Failed with: \(error)")
                     self.isLoading = false
                 }
             }

@@ -1,4 +1,6 @@
 import SwiftUI
+import UIKit
+import PhotosUI
 
 struct BinView: View {
     let accessToken: String?
@@ -7,8 +9,12 @@ struct BinView: View {
     @State private var binItems: [BinItem] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var newItemText = ""
     @State private var isSubmitting = false
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var snackbarMessage: String?
+    @State private var snackbarType: MessageType?
+    @State private var showTextInputDialog = false
+    @State private var textInput = ""
     @Environment(\.colorScheme) private var colorScheme
     
     private var isDarkMode: Bool {
@@ -44,84 +50,113 @@ struct BinView: View {
                     VStack(spacing: 16) {
                         // Add new item form
                         VStack(spacing: 12) {
-                            TextField("Paste something...", text: $newItemText, axis: .vertical)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
+                            // Paste from Clipboard button (full width)
+                            Button(action: pasteFromClipboard) {
+                                HStack(spacing: 12) {
+                                    if isSubmitting {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Image(systemName: "doc.on.clipboard")
+                                            .font(.system(size: 18, weight: .medium))
+                                    }
+                                    
+                                    Text(isSubmitting ? "Pasting..." : "Paste from Clipboard")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .fill(isDarkMode ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.95, green: 0.95, blue: 0.95))
-                                        .strokeBorder(
-                                            newItemText.isEmpty ? 
-                                            (isDarkMode ? Color(red: 0.3, green: 0.3, blue: 0.3) : Color(red: 0.8, green: 0.8, blue: 0.8)) :
-                                            AppColors.Button.accentPrimary,
-                                            lineWidth: newItemText.isEmpty ? 1 : 2
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [
+                                                    AppColors.Button.accentPrimary,
+                                                    AppColors.Button.accentSecondary
+                                                ]),
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                        .shadow(
+                                            color: AppColors.Button.accentPrimary.opacity(0.3),
+                                            radius: 8,
+                                            x: 0,
+                                            y: 4
                                         )
                                 )
-                                .foregroundColor(isDarkMode ? .white : .black)
-                                .font(.system(size: 16, weight: .regular))
-                                .lineLimit(3...6)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .onSubmit {
-                                    addTextItem()
-                                }
+                                .scaleEffect(isSubmitting ? 0.95 : 1.0)
+                                .animation(.easeInOut(duration: 0.1), value: isSubmitting)
+                            }
+                            .disabled(isSubmitting)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
                             
-                            HStack(alignment: .bottom) {
-                                Button(action: addTextItem) {
-                                    HStack(spacing: 8) {
-                                        if isSubmitting {
-                                            ProgressView()
-                                                .scaleEffect(0.8)
-                                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        } else {
-                                            Image(systemName: "plus.circle.fill")
-                                                .font(.system(size: 16, weight: .medium))
-                                            Text("Add")
-                                                .font(.system(size: 16, weight: .semibold))
-                                        }
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 14)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(
-                                                LinearGradient(
-                                                    gradient: Gradient(colors: [
-                                                        AppColors.Button.accentPrimary,
-                                                        AppColors.Button.accentSecondary
-                                                    ]),
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
+                            // Text and Photos buttons row
+                            HStack(spacing: 12) {
+                                // Add Text button
+                                Button(action: { showTextInputDialog = true }) {
+                                    Image(systemName: "textformat")
+                                        .font(.system(size: 18, weight: .medium))
+                                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
                                                 )
-                                            )
-                                            .shadow(
-                                                color: AppColors.Button.accentPrimary.opacity(0.3),
-                                                radius: 8,
-                                                x: 0,
-                                                y: 4
-                                            )
-                                    )
-                                    .scaleEffect(isSubmitting ? 0.95 : 1.0)
-                                    .animation(.easeInOut(duration: 0.1), value: isSubmitting)
+                                                .shadow(
+                                                    color: AppColors.cardShadow(isDarkMode: isDarkMode),
+                                                    radius: 4,
+                                                    x: 0,
+                                                    y: 2
+                                                )
+                                        )
                                 }
-                                .disabled(isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                .opacity(isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.6 : 1.0)
-                                .animation(.easeInOut(duration: 0.2), value: isSubmitting || newItemText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                .disabled(isSubmitting)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
                                 
-                                Spacer()
+                                // Upload from Photos button
+                                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                                    Image(systemName: "photo")
+                                        .font(.system(size: 18, weight: .medium))
+                                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                                                )
+                                                .shadow(
+                                                    color: AppColors.cardShadow(isDarkMode: isDarkMode),
+                                                    radius: 4,
+                                                    x: 0,
+                                                    y: 2
+                                                )
+                                        )
+                                }
+                                .disabled(isSubmitting)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                            }
+                            
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("Items: \(binItems.count) / \(binItemsLimit)")
+                                    .font(.caption)
+                                    .foregroundColor(binItems.count >= binItemsLimit ? .red : AppColors.mutedText(isDarkMode: isDarkMode))
                                 
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    Text("Items: \(binItems.count) / \(binItemsLimit)")
-                                        .font(.caption)
-                                        .foregroundColor(binItems.count >= binItemsLimit ? .red : AppColors.mutedText(isDarkMode: isDarkMode))
-                                    
-                                    if binItems.count >= binItemsLimit {
-                                        Text("Oldest item will be deleted on next add.")
-                                            .font(.caption2)
-                                            .foregroundColor(.red)
-                                    }
+                                if binItems.count >= binItemsLimit {
+                                    Text("Oldest item will be deleted on next add.")
+                                        .font(.caption2)
+                                        .foregroundColor(.red)
                                 }
                             }
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                             
                             if let error = errorMessage {
                                 Text(error)
@@ -158,11 +193,14 @@ struct BinView: View {
                             }
                             .padding(.top, 60)
                         } else {
-                            LazyVStack(spacing: 12) {
-                                ForEach(binItems) { item in
-                                    BinItemRow(item: item, accessToken: accessToken) {
-                                        deleteItem(item)
-                                    }
+                            VStack(spacing: 12) {
+                                ForEach(binItems, id: \.id) { item in
+                                    BinItemRow(item: item, accessToken: accessToken, onDelete: {
+                                        deleteItemById(item.id)
+                                    }, onShowMessage: { message, type in
+                                        showSnackbar(message: message, type: type)
+                                    })
+                                    .id(item.id)
                                 }
                             }
                         }
@@ -180,18 +218,40 @@ struct BinView: View {
         .onAppear {
             loadBinItems()
         }
+        .onChange(of: selectedPhoto) { _, newPhoto in
+            if let newPhoto = newPhoto {
+                Task {
+                    await loadPhoto(newPhoto)
+                }
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let snackbarMessage = snackbarMessage, let snackbarType = snackbarType {
+                SnackbarView(message: snackbarMessage, type: snackbarType) {
+                    self.snackbarMessage = nil
+                    self.snackbarType = nil
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.easeInOut(duration: 0.3), value: snackbarMessage)
+            }
+        }
+        .alert("Add Text Item", isPresented: $showTextInputDialog) {
+            TextField("Enter text...", text: $textInput, axis: .vertical)
+                .lineLimit(5...10)
+            Button("Cancel", role: .cancel) {
+                textInput = ""
+            }
+            Button("Add") {
+                addTextFromInput()
+            }
+            .disabled(textInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } message: {
+            Text("Enter the text you want to add to your bin.")
+        }
     }
     
-    private func addTextItem() {
-        let trimmedText = newItemText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedText.isEmpty else { return }
-        
-        if trimmedText.count > maxCharLimit {
-            errorMessage = "Text content (\(trimmedText.count) characters) exceeds the \(maxCharLimit) character limit"
-            return
-        }
-        
-        guard let token = accessToken else {
+    private func pasteFromClipboard() {
+        guard accessToken != nil else {
             errorMessage = "No access token available"
             return
         }
@@ -201,18 +261,238 @@ struct BinView: View {
         
         Task {
             do {
-                let newItem = try await BinAPI.shared.addTextItem(content: trimmedText, accessToken: token)
-                await MainActor.run {
-                    binItems.insert(newItem, at: 0)
-                    newItemText = ""
-                    isSubmitting = false
+                // Check for image first
+                if let image = UIPasteboard.general.image {
+                    await uploadImage(image)
                 }
-            } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isSubmitting = false
+                // Check for text
+                else if let text = UIPasteboard.general.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    await addTextItem(text: text)
+                }
+                else {
+                    await MainActor.run {
+                        errorMessage = "No content found in clipboard"
+                        isSubmitting = false
+                    }
                 }
             }
+        }
+    }
+    
+    private func uploadImage(_ image: UIImage) async {
+        do {
+            // Convert image to data
+            guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+                await MainActor.run {
+                    errorMessage = "Failed to process image"
+                    isSubmitting = false
+                }
+                return
+            }
+            
+            // Get image dimensions
+            let size = image.size
+            let imageWidth = Int(size.width)
+            let imageHeight = Int(size.height)
+            
+            // Try to get original filename from clipboard metadata
+            let originalName = getImageFileName() ?? "ios-image.jpg"
+            
+            // Upload the image
+            let newItem = try await BinAPI.shared.addFileItem(
+                fileData: imageData,
+                originalName: originalName,
+                contentType: "image/jpeg",
+                imageWidth: imageWidth,
+                imageHeight: imageHeight,
+                accessToken: accessToken!
+            )
+            
+            await MainActor.run {
+                binItems.insert(newItem, at: 0)
+                isSubmitting = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = error.localizedDescription
+                isSubmitting = false
+            }
+        }
+    }
+    
+    private func getImageFileName() -> String? {
+        // Try to get filename from clipboard items
+        let pasteboard = UIPasteboard.general
+        let items = pasteboard.items
+        
+        for item in items {
+            // Check for various filename keys that might be present
+            if let filename = item["public.filename"] as? String {
+                return filename
+            }
+            if let filename = item["public.file-url"] as? String {
+                return URL(string: filename)?.lastPathComponent
+            }
+            if let filename = item["public.url"] as? String {
+                return URL(string: filename)?.lastPathComponent
+            }
+        }
+        
+        // Try to get from pasteboard's string representation
+        if let string = pasteboard.string {
+            // Look for common image filename patterns
+            let imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp"]
+            for ext in imageExtensions {
+                if string.lowercased().contains(".\(ext)") {
+                    // Extract filename from string if possible
+                    let components = string.components(separatedBy: CharacterSet(charactersIn: " \n\t"))
+                    for component in components {
+                        if component.lowercased().hasSuffix(".\(ext)") {
+                            return component
+                        }
+                    }
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    private func generateImageName(width: Int, height: Int) -> String {
+        let timestamp = Int(Date().timeIntervalSince1970)
+        return "image-\(width)x\(height)-\(timestamp).jpg"
+    }
+    
+    private func addTextItem(text: String) async {
+        do {
+            let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedText.isEmpty else {
+                await MainActor.run {
+                    errorMessage = "No text content to add"
+                    isSubmitting = false
+                }
+                return
+            }
+            
+            if trimmedText.count > maxCharLimit {
+                await MainActor.run {
+                    errorMessage = "Text content (\(trimmedText.count) characters) exceeds the \(maxCharLimit) character limit"
+                    isSubmitting = false
+                }
+                return
+            }
+            
+            let newItem = try await BinAPI.shared.addTextItem(content: trimmedText, accessToken: accessToken!)
+            
+            await MainActor.run {
+                binItems.insert(newItem, at: 0)
+                isSubmitting = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = error.localizedDescription
+                isSubmitting = false
+            }
+        }
+    }
+    
+    private func addTextFromInput() {
+        guard accessToken != nil else {
+            errorMessage = "No access token available"
+            return
+        }
+        
+        let trimmedText = textInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else {
+            errorMessage = "No text content to add"
+            return
+        }
+        
+        isSubmitting = true
+        errorMessage = nil
+        textInput = "" // Clear the input
+        
+        Task {
+            await addTextItem(text: trimmedText)
+        }
+    }
+    
+    private func loadPhoto(_ photo: PhotosPickerItem) async {
+        guard accessToken != nil else {
+            errorMessage = "No access token available"
+            return
+        }
+        
+        isSubmitting = true
+        errorMessage = nil
+        
+        do {
+            guard let data = try await photo.loadTransferable(type: Data.self) else {
+                await MainActor.run {
+                    errorMessage = "Failed to load photo"
+                    isSubmitting = false
+                }
+                return
+            }
+            
+            // Convert data to UIImage to get dimensions and process
+            guard let image = UIImage(data: data) else {
+                await MainActor.run {
+                    errorMessage = "Failed to process image"
+                    isSubmitting = false
+                }
+                return
+            }
+            
+            // Get image dimensions
+            let size = image.size
+            let imageWidth = Int(size.width)
+            let imageHeight = Int(size.height)
+            
+            // Generate filename with timestamp
+            let originalName = "photo-\(Int(Date().timeIntervalSince1970)).jpg"
+            
+            // Convert to JPEG data for upload
+            guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
+                await MainActor.run {
+                    errorMessage = "Failed to process image"
+                    isSubmitting = false
+                }
+                return
+            }
+            
+            // Upload the image using existing uploadImage function
+            let newItem = try await BinAPI.shared.addFileItem(
+                fileData: jpegData,
+                originalName: originalName,
+                contentType: "image/jpeg",
+                imageWidth: imageWidth,
+                imageHeight: imageHeight,
+                accessToken: accessToken!
+            )
+            
+            await MainActor.run {
+                binItems.insert(newItem, at: 0)
+                isSubmitting = false
+                selectedPhoto = nil // Reset selection
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = error.localizedDescription
+                isSubmitting = false
+                selectedPhoto = nil // Reset selection
+            }
+        }
+    }
+    
+    private func showSnackbar(message: String, type: MessageType) {
+        snackbarMessage = message
+        snackbarType = type
+        
+        // Auto-dismiss after 3 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            snackbarMessage = nil
+            snackbarType = nil
         }
     }
     
@@ -281,251 +561,52 @@ struct BinView: View {
             }
         }
     }
+    
+    private func deleteItemById(_ itemId: String) {
+        binItems.removeAll { $0.id == itemId }
+    }
 }
 
-struct BinItemRow: View {
-    let item: BinItem
-    let accessToken: String?
-    let onDelete: () -> Void
-    
-    @State private var isCopied = false
-    @State private var isDownloading = false
-    @Environment(\.colorScheme) private var colorScheme
-    
-    private var isDarkMode: Bool {
-        colorScheme == .dark
-    }
+struct SnackbarView: View {
+    let message: String
+    let type: MessageType
+    let onDismiss: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(itemTitle)
-                        .font(.headline)
-                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                        .lineLimit(2)
-                    
-                    Text(itemSubtitle)
-                        .font(.caption)
-                        .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                }
-                
-                Spacer()
-                
-                HStack(spacing: 8) {
-                    // Copy button
-                    Button(action: copyItem) {
-                        Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
-                            .foregroundColor(isCopied ? .green : AppColors.mutedText(isDarkMode: isDarkMode))
-                    }
-                    .disabled(isDownloading)
-                    
-                    // Download button (for files)
-                    if item.isFile {
-                        Button(action: downloadItem) {
-                            Image(systemName: isDownloading ? "checkmark" : "arrow.down.circle")
-                                .foregroundColor(isDownloading ? .green : AppColors.mutedText(isDarkMode: isDarkMode))
-                        }
-                        .disabled(isDownloading)
-                    }
-                    
-                    // Delete button
-                    Button(action: onDelete) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                    }
-                }
-            }
+        HStack(spacing: 12) {
+            Image(systemName: type == .success ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundColor(type == .success ? .green : .red)
+                .font(.system(size: 16, weight: .medium))
             
-            // Image preview for image files
-            if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
+            Text(message)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.primary)
+                .lineLimit(2)
+            
+            Spacer()
+            
+            Button("Dismiss") {
+                onDismiss()
             }
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(.secondary)
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+                .fill(.regularMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                        .strokeBorder(type == .success ? Color.green.opacity(0.3) : Color.red.opacity(0.3), lineWidth: 1)
                 )
         )
-        .shadow(
-            color: AppColors.cardShadow(isDarkMode: isDarkMode),
-            radius: 8,
-            x: 0,
-            y: 4
-        )
-    }
-    
-    private var itemTitle: String {
-        if item.isText, let textItem = item.textItem {
-            return textItem.content
-        } else if item.isFile, let fileItem = item.fileItem {
-            return fileItem.originalName
-        }
-        return ""
-    }
-    
-    private var itemSubtitle: String {
-        var parts: [String] = [item.formattedCreatedAt()]
-        
-        if item.isText, let textItem = item.textItem {
-            parts.append("\(textItem.content.count) chars")
-        } else if item.isFile, let fileItem = item.fileItem {
-            parts.append(fileItem.contentType)
-            parts.append(fileItem.formattedSize())
-        }
-        
-        return parts.joined(separator: " · ")
-    }
-    
-    private func copyItem() {
-        if item.isText, let textItem = item.textItem {
-            UIPasteboard.general.string = textItem.content
-        } else if item.isFile {
-            // TODO: Implement file copying to clipboard
-        }
-        
-        isCopied = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            isCopied = false
-        }
-    }
-    
-    private func downloadItem() {
-        guard item.isFile, let token = accessToken else { return }
-        
-        isDownloading = true
-        
-        Task {
-            do {
-                let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
-                
-                // Download the file
-                let (data, _) = try await URLSession.shared.data(from: URL(string: downloadURL)!)
-                
-                // Save to documents directory
-                let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                let fileName = item.fileItem?.originalName ?? "download"
-                let fileURL = documentsPath.appendingPathComponent(fileName)
-                
-                try data.write(to: fileURL)
-                
-                await MainActor.run {
-                    isDownloading = false
-                    // Show success feedback
-                }
-            } catch {
-                await MainActor.run {
-                    isDownloading = false
-                    // Show error feedback
-                }
-            }
-        }
+        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
     }
 }
 
-struct ImagePreviewView: View {
-    let item: BinItem
-    let accessToken: String?
-    let isDarkMode: Bool
-    
-    @State private var imageURL: String?
-    @State private var isLoading = true
-    @State private var hasError = false
-    
-    var body: some View {
-        Group {
-            if let imageURL = imageURL, let url = URL(string: imageURL) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 200)
-                        .clipped()
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
-                        )
-                } placeholder: {
-                    Rectangle()
-                        .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                        .frame(height: 200)
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
-                        )
-                        .overlay(
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        )
-                }
-            } else if hasError {
-                Rectangle()
-                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                    .frame(height: 200)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
-                    )
-                    .overlay(
-                        VStack {
-                            Image(systemName: "photo")
-                                .font(.title2)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                            Text("Preview unavailable")
-                                .font(.caption)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                        }
-                    )
-            } else {
-                Rectangle()
-                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                    .frame(height: 200)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
-                    )
-                    .overlay(
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    )
-            }
-        }
-        .onAppear {
-            loadImageURL()
-        }
-    }
-    
-    private func loadImageURL() {
-        guard let token = accessToken else {
-            hasError = true
-            isLoading = false
-            return
-        }
-        
-        Task {
-            do {
-                let url = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
-                await MainActor.run {
-                    imageURL = url
-                    isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    hasError = true
-                    isLoading = false
-                }
-            }
-        }
-    }
-}
 
 // MARK: - Corner Radius Extension
 extension View {
@@ -547,6 +628,8 @@ struct RoundedCorner: Shape {
         return Path(path.cgPath)
     }
 }
+
+
 
 #Preview {
     BinView(accessToken: nil, onLogout: {})
