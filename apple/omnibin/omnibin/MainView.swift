@@ -241,7 +241,7 @@ extension MainView {
                 self.user = User(from: credentials.idToken)
                 self.accessToken = credentials.accessToken
                 self.isLoading = false
-            case .failure(let error):
+            case .failure(_):
                 // Try to renew if we have stored credentials but they're expired
                 if credentialsManager.canRenew() {
                     credentialsManager.renew { renewResult in
@@ -254,7 +254,7 @@ extension MainView {
                             SecureStorageManager.shared.setAccessToken(renewedCredentials.accessToken)
                             
                             self.isLoading = false
-                        case .failure(let renewError):
+                        case .failure(_):
                             self.isLoading = false
                         }
                     }
@@ -283,7 +283,7 @@ extension MainView {
         SecureStorageManager.shared.setAccessToken(credentials.accessToken)
                 
                 self.isLoading = false
-                case .failure(let error):
+                case .failure(_):
                     self.isLoading = false
                 }
             }
@@ -306,7 +306,7 @@ extension MainView {
                     self.user = nil
                     self.accessToken = nil
                     self.isLoading = false
-                case .failure(let error):
+                case .failure(_):
                     self.isLoading = false
                 }
             }

@@ -7,6 +7,7 @@ struct BinView: View {
     let onLogout: () -> Void
     
     @State private var binItems: [BinItem] = []
+    @State private var deletedItems: [BinItem] = [] // Store deleted items for potential restoration
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var isSubmitting = false
@@ -36,10 +37,17 @@ struct BinView: View {
                     
                     Spacer()
                     
-                    Button("Logout") {
-                        onLogout()
+                    Menu {
+                        Button(action: {
+                            onLogout()
+                        }) {
+                            Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(AppColors.Button.accentPrimary)
                     }
-                    .foregroundColor(AppColors.Button.accentPrimary)
                 }
                 .padding(.top, 20)
                 .padding(.bottom, 16)
@@ -197,6 +205,8 @@ struct BinView: View {
                                 ForEach(binItems, id: \.id) { item in
                                     BinItemRow(item: item, accessToken: accessToken, onDelete: {
                                         deleteItemById(item.id)
+                                    }, onRestore: {
+                                        restoreItem(item)
                                     }, onShowMessage: { message, type in
                                         showSnackbar(message: message, type: type)
                                     })
@@ -563,7 +573,20 @@ struct BinView: View {
     }
     
     private func deleteItemById(_ itemId: String) {
-        binItems.removeAll { $0.id == itemId }
+        if let item = binItems.first(where: { $0.id == itemId }) {
+            // Store the item for potential restoration
+            deletedItems.append(item)
+            // Remove from the main list
+            binItems.removeAll { $0.id == itemId }
+        }
+    }
+    
+    private func restoreItem(_ item: BinItem) {
+        // Remove from deleted items and add back to main list
+        deletedItems.removeAll { $0.id == item.id }
+        binItems.append(item)
+        // Sort to maintain order (you might want to insert at the original position)
+        binItems.sort { $0.createdAt > $1.createdAt }
     }
 }
 

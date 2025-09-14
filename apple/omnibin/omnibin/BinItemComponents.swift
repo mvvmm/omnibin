@@ -23,6 +23,7 @@ struct BinItemRow: View {
     let item: BinItem
     let accessToken: String?
     let onDelete: () -> Void
+    let onRestore: (() -> Void)?
     let onShowMessage: (String, MessageType) -> Void
     
     @State private var isCopied = false
@@ -35,10 +36,11 @@ struct BinItemRow: View {
     
     private let itemId: String
     
-    init(item: BinItem, accessToken: String?, onDelete: @escaping () -> Void, onShowMessage: @escaping (String, MessageType) -> Void) {
+    init(item: BinItem, accessToken: String?, onDelete: @escaping () -> Void, onRestore: (() -> Void)? = nil, onShowMessage: @escaping (String, MessageType) -> Void) {
         self.item = item
         self.accessToken = accessToken
         self.onDelete = onDelete
+        self.onRestore = onRestore
         self.onShowMessage = onShowMessage
         self.itemId = item.id
     }
@@ -90,85 +92,101 @@ struct BinItemRow: View {
                 HStack(spacing: 12) {
                     // Copy button
                     Button(action: copyItem) {
-                        if isCopying {
-                            ProgressView()
-                                .frame(width: 18, height: 18)
-                                .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
-                        } else {
-                            Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
-                                .font(.system(size: 18, weight: .medium))
+                        HStack {
+                            if isCopying {
+                                ProgressView()
+                                    .frame(width: 18, height: 18)
+                                    .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
+                            } else {
+                                Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
+                                    .font(.system(size: 18, weight: .medium))
+                            }
+                            Text(isCopied ? "Copied" : "Copy")
+                                .font(.system(size: 14, weight: .medium))
                         }
+                        .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(isCopied ? 
+                                    Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
+                                    AppColors.Button.accentPrimary.opacity(isDarkMode ? 0.25 : 0.15)
+                                )
+                        )
                     }
-                    .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                    .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(isCopied ? 
-                                Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
-                                AppColors.Button.accentPrimary.opacity(isDarkMode ? 0.25 : 0.15)
-                            )
-                    )
                     .disabled(isDownloading || isCopying)
                     
                     // Download button (for images - save to Photos)
                     if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
                         Button(action: downloadItem) {
-                            if isDownloading {
-                                ProgressView()
-                                    .frame(width: 18, height: 18)
-                                    .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
-                            } else {
-                                Image(systemName: isSaved ? "checkmark.circle.fill" : "square.and.arrow.down")
-                                    .font(.system(size: 18, weight: .medium))
+                            HStack {
+                                if isDownloading {
+                                    ProgressView()
+                                        .frame(width: 18, height: 18)
+                                        .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
+                                } else {
+                                    Image(systemName: isSaved ? "checkmark.circle.fill" : "square.and.arrow.down")
+                                        .font(.system(size: 18, weight: .medium))
+                                }
+                                Text(isSaved ? "Saved" : "Save")
+                                    .font(.system(size: 14, weight: .medium))
                             }
-                        }
-                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                        .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(isSaved ? 
-                                    Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
-                                    (isDownloading ? 
+                            .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(isSaved ? 
                                         Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
-                                        AppColors.Button.accentSecondary.opacity(isDarkMode ? 0.25 : 0.15)
+                                        (isDownloading ? 
+                                            Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
+                                            AppColors.Button.accentSecondary.opacity(isDarkMode ? 0.25 : 0.15)
+                                        )
                                     )
-                                )
-                        )
+                            )
+                        }
                         .disabled(isDownloading)
                     }
                     
                     // Download button (for non-images - save to Documents)
                     if item.isFile, let fileItem = item.fileItem, !fileItem.contentType.hasPrefix("image/") {
                         Button(action: downloadItem) {
-                            if isDownloading {
-                                ProgressView()
-                                    .frame(width: 18, height: 18)
-                                    .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
-                            } else {
-                                Image(systemName: "arrow.down.doc")
-                                    .font(.system(size: 18, weight: .medium))
+                            HStack {
+                                if isDownloading {
+                                    ProgressView()
+                                        .frame(width: 18, height: 18)
+                                        .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
+                                } else {
+                                    Image(systemName: "arrow.down.doc")
+                                        .font(.system(size: 18, weight: .medium))
+                                }
+                                Text("Download")
+                                    .font(.system(size: 14, weight: .medium))
                             }
+                            .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(AppColors.Button.accentSecondary.opacity(isDarkMode ? 0.25 : 0.15))
+                            )
                         }
-                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                        .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(AppColors.Button.accentSecondary.opacity(isDarkMode ? 0.25 : 0.15))
-                        )
                         .disabled(isDownloading)
                     }
                     
                     // Delete button
                     Button(action: deleteItem) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 18, weight: .medium))
+                        HStack {
+                            Image(systemName: "trash")
+                                .font(.system(size: 18, weight: .medium))
+                            Text("Delete")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.red.opacity(isDarkMode ? 0.25 : 0.15))
+                        )
                     }
-                    .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                    .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.red.opacity(isDarkMode ? 0.25 : 0.15))
-                    )
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -373,15 +391,19 @@ struct BinItemRow: View {
             return
         }
         
+        // Optimistic delete - remove from UI immediately
+        onDelete()
+        
+        // Make API call in background
         Task {
             do {
                 try await BinAPI.shared.deleteItem(itemId: item.id, accessToken: token)
-                await MainActor.run {
-                    onDelete() // Call the parent's delete callback to remove from UI
-                }
+                // Success - item is already removed from UI
             } catch {
+                // Error - restore the item to UI
                 await MainActor.run {
                     onShowMessage("Failed to delete item: \(error.localizedDescription)", .error)
+                    onRestore?() // Restore the item to the UI
                 }
             }
         }
