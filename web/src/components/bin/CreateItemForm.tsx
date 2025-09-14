@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -23,6 +23,8 @@ export function CreateItemForm({
 	const [content, setContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [isDragOver, setIsDragOver] = useState(false);
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	async function uploadPastedFile(file: File) {
 		setIsSubmitting(true);
@@ -172,16 +174,61 @@ export function CreateItemForm({
 		await uploadText(pasted);
 	}
 
+	function handleDragOver(e: React.DragEvent<HTMLTextAreaElement>) {
+		e.preventDefault();
+		e.stopPropagation();
+		if (!isDragOver) {
+			setIsDragOver(true);
+		}
+	}
+
+	function handleDragEnter(e: React.DragEvent<HTMLTextAreaElement>) {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragOver(true);
+	}
+
+	function handleDragLeave(e: React.DragEvent<HTMLTextAreaElement>) {
+		e.preventDefault();
+		e.stopPropagation();
+		// Only set isDragOver to false if we're leaving the textarea itself
+		if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+			setIsDragOver(false);
+		}
+	}
+
+	async function handleDrop(e: React.DragEvent<HTMLTextAreaElement>) {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragOver(false);
+
+		const files = Array.from(e.dataTransfer.files);
+		if (files.length > 0) {
+			for (const file of files) {
+				await uploadPastedFile(file);
+			}
+		}
+	}
+
 	return (
 		<form onSubmit={handleSubmit} className="space-y-2">
 			<div className="mb-4">
 				<Textarea
+					ref={textareaRef}
 					value={content}
 					onChange={(e) => setContent(e.target.value)}
 					onPaste={handlePaste}
-					placeholder="Paste something..."
+					onDragOver={handleDragOver}
+					onDragEnter={handleDragEnter}
+					onDragLeave={handleDragLeave}
+					onDrop={handleDrop}
+					placeholder={isDragOver ? "Drop files here..." : "Paste something..."}
 					rows={3}
-					className="mb-1"
+					className={`mb-1 transition-all duration-200 ${
+						isDragOver
+							? "border-accent-primary bg-accent-primary/5 ring-2 ring-accent-primary/20"
+							: ""
+					}`}
 				/>
 				{error && <div className="ml-2 text-sm text-red-600">{error}</div>}
 			</div>

@@ -146,9 +146,88 @@ export function BinListItem({ item }: { item: BinItem }) {
 				const mime =
 					blob.type || expectedContentType || "application/octet-stream";
 
-				// Write the file blob to clipboard
-				await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
-				setCopied(true);
+				// Try different approaches for copying to clipboard
+				try {
+					// First, try with the original MIME type
+					await navigator.clipboard.write([
+						new ClipboardItem({ [mime]: blob }),
+					]);
+					setCopied(true);
+				} catch (clipboardError) {
+					console.log(
+						"Original MIME type failed, trying fallbacks:",
+						clipboardError,
+					);
+
+					// If it's an image, try simpler approaches first
+					if (mime.startsWith("image/")) {
+						// First try: just change the MIME type to PNG without conversion
+						try {
+							await navigator.clipboard.write([
+								new ClipboardItem({ "image/png": blob }),
+							]);
+							setCopied(true);
+						} catch (pngError) {
+							console.log("PNG MIME type failed, trying conversion:", pngError);
+
+							// Second try: actually convert to PNG format
+							try {
+								const canvas = document.createElement("canvas");
+								const ctx = canvas.getContext("2d");
+								const img = new window.Image();
+
+								await new Promise<void>((resolve, reject) => {
+									img.onload = () => {
+										canvas.width = img.width;
+										canvas.height = img.height;
+										ctx?.drawImage(img, 0, 0);
+										canvas.toBlob((pngBlob) => {
+											if (pngBlob) {
+												navigator.clipboard
+													.write([new ClipboardItem({ "image/png": pngBlob })])
+													.then(() => {
+														setCopied(true);
+														resolve();
+													})
+													.catch(reject);
+											} else {
+												reject(new Error("Failed to convert image to PNG"));
+											}
+										}, "image/png");
+									};
+									img.onerror = reject;
+									img.src = URL.createObjectURL(blob);
+								});
+							} catch (conversionError) {
+								console.log("Image conversion failed:", conversionError);
+
+								// Last resort: try with generic binary data
+								try {
+									await navigator.clipboard.write([
+										new ClipboardItem({ "application/octet-stream": blob }),
+									]);
+									setCopied(true);
+								} catch {
+									throw new Error(
+										`Failed to copy image to clipboard. This browser may not support image copying.`,
+									);
+								}
+							}
+						}
+					} else {
+						// For non-image files, try with generic binary data
+						try {
+							await navigator.clipboard.write([
+								new ClipboardItem({ "application/octet-stream": blob }),
+							]);
+							setCopied(true);
+						} catch {
+							throw new Error(
+								`Failed to copy file to clipboard. Original error: ${(clipboardError as Error).message}`,
+							);
+						}
+					}
+				}
 			} catch (err) {
 				const error = err as Error;
 				setError(error.message);
