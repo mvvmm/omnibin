@@ -320,6 +320,12 @@ struct BinView: View {
             
             await MainActor.run {
                 binItems.insert(newItem, at: 0)
+                
+                // If we're at or over the limit, optimistically remove the last item
+                if binItems.count > binItemsLimit {
+                    binItems.removeLast()
+                }
+                
                 isSubmitting = false
             }
         } catch {
@@ -396,6 +402,12 @@ struct BinView: View {
             
             await MainActor.run {
                 binItems.insert(newItem, at: 0)
+                
+                // If we're at or over the limit, optimistically remove the last item
+                if binItems.count > binItemsLimit {
+                    binItems.removeLast()
+                }
+                
                 isSubmitting = false
             }
         } catch {
@@ -483,6 +495,12 @@ struct BinView: View {
             
             await MainActor.run {
                 binItems.insert(newItem, at: 0)
+                
+                // If we're at or over the limit, optimistically remove the last item
+                if binItems.count > binItemsLimit {
+                    binItems.removeLast()
+                }
+                
                 isSubmitting = false
                 selectedPhoto = nil // Reset selection
             }
