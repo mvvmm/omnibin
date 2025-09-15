@@ -154,6 +154,12 @@ struct MainView: View {
         .onAppear {
             checkStoredCredentials()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
+            // Refresh credentials when app becomes active
+            if user != nil {
+                checkStoredCredentials()
+            }
+        }
     }
 }
 
@@ -253,6 +259,11 @@ extension MainView {
                             // Update access token in shared Keychain
                             SecureStorageManager.shared.setAccessToken(renewedCredentials.accessToken)
                             
+                            // Also store in UserDefaults for debugging
+                            if let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin") {
+                                sharedDefaults.set(renewedCredentials.accessToken, forKey: "access_token")
+                            }
+                            
                             self.isLoading = false
                         case .failure(_):
                             self.isLoading = false
@@ -281,6 +292,11 @@ extension MainView {
                 
         // Store access token in shared Keychain for Share Extension
         SecureStorageManager.shared.setAccessToken(credentials.accessToken)
+        
+        // Also store in UserDefaults for debugging
+        if let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin") {
+            sharedDefaults.set(credentials.accessToken, forKey: "access_token")
+        }
                 
                 self.isLoading = false
                 case .failure(_):

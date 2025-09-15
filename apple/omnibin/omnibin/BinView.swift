@@ -228,6 +228,12 @@ struct BinView: View {
         .onAppear {
             loadBinItems()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
+            // Refresh bin items when app becomes active
+            Task {
+                await refreshBinItems()
+            }
+        }
         .onChange(of: selectedPhoto) { _, newPhoto in
             if let newPhoto = newPhoto {
                 Task {
@@ -280,10 +286,7 @@ struct BinView: View {
                     await addTextItem(text: text)
                 }
                 else {
-                    await MainActor.run {
-                        errorMessage = "No content found in clipboard"
-                        isSubmitting = false
-                    }
+                    await setSubmittingError("No content found in clipboard")
                 }
             }
         }
@@ -293,10 +296,7 @@ struct BinView: View {
         do {
             // Convert image to data
             guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-                await MainActor.run {
-                    errorMessage = "Failed to process image"
-                    isSubmitting = false
-                }
+                await setSubmittingError("Failed to process image")
                 return
             }
             
@@ -318,21 +318,9 @@ struct BinView: View {
                 accessToken: accessToken!
             )
             
-            await MainActor.run {
-                binItems.insert(newItem, at: 0)
-                
-                // If we're at or over the limit, optimistically remove the last item
-                if binItems.count > binItemsLimit {
-                    binItems.removeLast()
-                }
-                
-                isSubmitting = false
-            }
+            await insertNewItemAndFinishSubmitting(newItem)
         } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-                isSubmitting = false
-            }
+            await setSubmittingError(error.localizedDescription)
         }
     }
     
@@ -383,38 +371,20 @@ struct BinView: View {
         do {
             let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmedText.isEmpty else {
-                await MainActor.run {
-                    errorMessage = "No text content to add"
-                    isSubmitting = false
-                }
+                await setSubmittingError("No text content to add")
                 return
             }
             
             if trimmedText.count > maxCharLimit {
-                await MainActor.run {
-                    errorMessage = "Text content (\(trimmedText.count) characters) exceeds the \(maxCharLimit) character limit"
-                    isSubmitting = false
-                }
+                await setSubmittingError("Text content (\(trimmedText.count) characters) exceeds the \(maxCharLimit) character limit")
                 return
             }
             
             let newItem = try await BinAPI.shared.addTextItem(content: trimmedText, accessToken: accessToken!)
             
-            await MainActor.run {
-                binItems.insert(newItem, at: 0)
-                
-                // If we're at or over the limit, optimistically remove the last item
-                if binItems.count > binItemsLimit {
-                    binItems.removeLast()
-                }
-                
-                isSubmitting = false
-            }
+            await insertNewItemAndFinishSubmitting(newItem)
         } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-                isSubmitting = false
-            }
+            await setSubmittingError(error.localizedDescription)
         }
     }
     
@@ -450,19 +420,13 @@ struct BinView: View {
         
         do {
             guard let data = try await photo.loadTransferable(type: Data.self) else {
-                await MainActor.run {
-                    errorMessage = "Failed to load photo"
-                    isSubmitting = false
-                }
+                await setSubmittingError("Failed to load photo")
                 return
             }
             
             // Convert data to UIImage to get dimensions and process
             guard let image = UIImage(data: data) else {
-                await MainActor.run {
-                    errorMessage = "Failed to process image"
-                    isSubmitting = false
-                }
+                await setSubmittingError("Failed to process image")
                 return
             }
             
@@ -493,32 +457,19 @@ struct BinView: View {
                 accessToken: accessToken!
             )
             
-            await MainActor.run {
-                binItems.insert(newItem, at: 0)
-                
-                // If we're at or over the limit, optimistically remove the last item
-                if binItems.count > binItemsLimit {
-                    binItems.removeLast()
-                }
-                
-                isSubmitting = false
-                selectedPhoto = nil // Reset selection
-            }
+            await insertNewItemAndFinishSubmitting(newItem, resetSelection: true)
         } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-                isSubmitting = false
-                selectedPhoto = nil // Reset selection
-            }
+            await setSubmittingError(error.localizedDescription)
+            await resetPhotoSelection()
         }
     }
     
+    @MainActor
     private func showSnackbar(message: String, type: MessageType) {
         snackbarMessage = message
         snackbarType = type
-        
-        // Auto-dismiss after 3 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
             snackbarMessage = nil
             snackbarType = nil
         }
@@ -536,37 +487,24 @@ struct BinView: View {
         Task {
             do {
                 let items = try await BinAPI.shared.fetchBinItems(accessToken: token)
-                await MainActor.run {
-                    binItems = items
-                    isLoading = false
-                }
+                await setLoadedItems(items)
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isLoading = false
-                }
+                await setLoadingError(error.localizedDescription)
             }
         }
     }
     
     private func refreshBinItems() async {
         guard let token = accessToken else {
-            await MainActor.run {
-                errorMessage = "No access token available"
-            }
+            await setRefreshError("No access token available")
             return
         }
         
         do {
             let items = try await BinAPI.shared.fetchBinItems(accessToken: token)
-            await MainActor.run {
-                binItems = items
-                errorMessage = nil
-            }
+            await setRefreshedItems(items)
         } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-            }
+            await setRefreshError(error.localizedDescription)
         }
     }
     
@@ -579,13 +517,9 @@ struct BinView: View {
         Task {
             do {
                 try await BinAPI.shared.deleteItem(itemId: item.id, accessToken: token)
-                await MainActor.run {
-                    binItems.removeAll { $0.id == item.id }
-                }
+                await removeItemById(item.id)
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                }
+                await setRefreshError(error.localizedDescription)
             }
         }
     }
@@ -605,6 +539,58 @@ struct BinView: View {
         binItems.append(item)
         // Sort to maintain order (you might want to insert at the original position)
         binItems.sort { $0.createdAt > $1.createdAt }
+    }
+
+    // MARK: - @MainActor UI helpers
+    @MainActor
+    private func setSubmittingError(_ message: String) async {
+        errorMessage = message
+        isSubmitting = false
+    }
+
+    @MainActor
+    private func insertNewItemAndFinishSubmitting(_ newItem: BinItem, resetSelection: Bool = false) async {
+        binItems.insert(newItem, at: 0)
+        if binItems.count > binItemsLimit {
+            binItems.removeLast()
+        }
+        isSubmitting = false
+        if resetSelection {
+            selectedPhoto = nil
+        }
+    }
+
+    @MainActor
+    private func resetPhotoSelection() async {
+        selectedPhoto = nil
+    }
+
+    @MainActor
+    private func setLoadedItems(_ items: [BinItem]) async {
+        binItems = items
+        isLoading = false
+    }
+
+    @MainActor
+    private func setLoadingError(_ message: String) async {
+        errorMessage = message
+        isLoading = false
+    }
+
+    @MainActor
+    private func setRefreshedItems(_ items: [BinItem]) async {
+        binItems = items
+        errorMessage = nil
+    }
+
+    @MainActor
+    private func setRefreshError(_ message: String) async {
+        errorMessage = message
+    }
+
+    @MainActor
+    private func removeItemById(_ id: String) async {
+        binItems.removeAll { $0.id == id }
     }
 }
 

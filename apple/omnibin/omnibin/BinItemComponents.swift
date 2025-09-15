@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 enum MessageType {
     case success
@@ -32,6 +33,10 @@ struct BinItemRow: View {
     @State private var isExpanded = false
     @State private var showPermissionAlert = false
     @State private var isSaved = false
+    @State private var showDocumentPicker = false
+    @State private var fileDataToSave: Data?
+    @State private var fileNameToSave: String?
+    @State private var imageSaveHandler: ImageSaveHandler?
     @Environment(\.colorScheme) private var colorScheme
     
     private let itemId: String
@@ -51,40 +56,41 @@ struct BinItemRow: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Content section with tap gesture
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(itemTitle)
-                            .font(.headline)
-                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                            .lineLimit(2)
-                        
-                        Text(itemSubtitle)
-                            .font(.caption)
-                            .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                    }
+            // Header section with tap gesture
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(itemTitle)
+                        .font(.headline)
+                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                        .lineLimit(2)
                     
-                    Spacer()
-                    
-                    // Chevron indicator
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 14, weight: .medium))
+                    Text(itemSubtitle)
+                        .font(.caption)
                         .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                        .animation(.easeInOut(duration: 0.2), value: isExpanded)
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isExpanded.toggle()
-                    }
                 }
                 
-                // Image preview for image files
-                if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                    ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
+                Spacer()
+                
+                // Chevron indicator
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    .animation(.easeInOut(duration: 0.2), value: isExpanded)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
                 }
+            }
+            
+            // Image preview for image files (separate from tappable header)
+            if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
+                ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
+                    .frame(height: 200)
+                    .clipped()
+                    .contentShape(RoundedRectangle(cornerRadius: 8)) // Define tappable area to match visual bounds
             }
             
             // Action buttons section (only visible when expanded)
@@ -118,7 +124,7 @@ struct BinItemRow: View {
                     
                     // Download button (for images - save to Photos)
                     if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                        Button(action: downloadItem) {
+                        Button(action: { Task { await downloadItem() } }) {
                             HStack {
                                 if isDownloading {
                                     ProgressView()
@@ -149,7 +155,7 @@ struct BinItemRow: View {
                     
                     // Download button (for non-images - save to Documents)
                     if item.isFile, let fileItem = item.fileItem, !fileItem.contentType.hasPrefix("image/") {
-                        Button(action: downloadItem) {
+                        Button(action: { Task { await downloadItem() } }) {
                             HStack {
                                 if isDownloading {
                                     ProgressView()
@@ -159,7 +165,7 @@ struct BinItemRow: View {
                                     Image(systemName: "arrow.down.doc")
                                         .font(.system(size: 18, weight: .medium))
                                 }
-                                Text("Download")
+                                Text("Save")
                                     .font(.system(size: 14, weight: .medium))
                             }
                             .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
@@ -217,6 +223,20 @@ struct BinItemRow: View {
         } message: {
             Text("To save images to your Photos library, please enable Photos access in Settings > Privacy & Security > Photos > omnibin")
         }
+        .sheet(isPresented: $showDocumentPicker) {
+            DocumentPickerView(
+                fileData: fileDataToSave,
+                fileName: fileNameToSave,
+                onComplete: { success in
+                    if success {
+                        showSuccessMessage("File saved to Files app")
+                    } else {
+                        onShowMessage("Failed to save file", .error)
+                    }
+                    isDownloading = false
+                }
+            )
+        }
     }
     
     private var itemTitle: String {
@@ -246,12 +266,13 @@ struct BinItemRow: View {
             UIPasteboard.general.string = textItem.content
             isCopied = true
             showSuccessMessage("Text copied to clipboard")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
                 isCopied = false
             }
         } else if item.isFile {
             isCopying = true
-            copyFileToClipboard()
+            Task { await copyFileToClipboard() }
         }
     }
     
@@ -259,130 +280,134 @@ struct BinItemRow: View {
         onShowMessage(message, .success)
     }
     
-    private func copyFileToClipboard() {
+    private func copyFileToClipboard() async {
         guard let token = accessToken else { return }
-        
-        Task {
-            do {
-                let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
-                
-                // Download the file
-                let (data, _) = try await URLSession.shared.data(from: URL(string: downloadURL)!)
-                
-                // Check if it's an image
-                if let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                    if let image = UIImage(data: data) {
-                        await MainActor.run {
-                            UIPasteboard.general.image = image
-                            isCopying = false
-                            isCopied = true
-                            showSuccessMessage("Image copied to clipboard")
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                isCopied = false
-                            }
-                        }
-                    } else {
-                        await MainActor.run {
-                            isCopying = false
-                        }
-                    }
-                } else {
-                    // For non-image files, copy the file data
-                    await MainActor.run {
-                        UIPasteboard.general.setData(data, forPasteboardType: item.fileItem?.contentType ?? "public.data")
-                        isCopying = false
-                        isCopied = true
-                        showSuccessMessage("File copied to clipboard")
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            isCopied = false
-                        }
-                    }
-                }
-            } catch {
-                // Show error message to user
-                await MainActor.run {
-                    isCopying = false
-                    onShowMessage("Failed to copy file: \(error.localizedDescription)", .error)
-                }
+        do {
+            let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
+            guard let url = URL(string: downloadURL) else {
+                await setCopyErrorUI(message: "Invalid download URL")
+                return
             }
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let isImage = item.fileItem?.contentType.hasPrefix("image/") == true
+            let image = isImage ? UIImage(data: data) : nil
+            if isImage {
+                if let image = image {
+                    await completeImageCopySuccess(image)
+                } else {
+                    await setCopyErrorUI(message: nil)
+                }
+            } else {
+                let mime = item.fileItem?.contentType ?? "application/octet-stream"
+                let pbType = UTType(mimeType: mime)?.identifier ?? "public.data"
+                await completeFileCopySuccess(data: data, uti: pbType)
+            }
+        } catch {
+            await setCopyErrorUI(message: "Failed to copy file: \(error.localizedDescription)")
         }
     }
     
-    private func downloadItem() {
+    private func downloadItem() async {
         guard item.isFile, let token = accessToken else { return }
         
         isDownloading = true
-        
-        Task {
-            do {
-                let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
-                
-                // Download the file
-                let (data, _) = try await URLSession.shared.data(from: URL(string: downloadURL)!)
-                
-                // Check if it's an image
-                if let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                    if let image = UIImage(data: data) {
-                        // Save to Photos library with completion handler
-                        await MainActor.run {
-                            let handler = ImageSaveHandler { error in
-                                self.handleImageSaveCompletion(error: error)
-                            }
-                            // Keep a strong reference to the handler
-                            objc_setAssociatedObject(image, "ImageSaveHandler", handler, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-                            UIImageWriteToSavedPhotosAlbum(image, handler, #selector(ImageSaveHandler.image(_:didFinishSavingWithError:contextInfo:)), nil)
-                        }
-                    } else {
-                        await MainActor.run {
-                            isDownloading = false
-                            onShowMessage("Failed to process image data", .error)
-                        }
-                    }
-                } else {
-                    // For non-image files, save to documents directory
-                    let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                    let fileName = item.fileItem?.originalName ?? "download"
-                    let fileURL = documentsPath.appendingPathComponent(fileName)
-                    
-                    try data.write(to: fileURL)
-                    
-                    await MainActor.run {
-                        isDownloading = false
-                        showSuccessMessage("File saved to Documents")
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    isDownloading = false
-                    onShowMessage("Failed to download file: \(error.localizedDescription)", .error)
-                }
+        do {
+            let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
+            guard let url = URL(string: downloadURL) else {
+                await setDownloadErrorUI(message: "Invalid download URL")
+                return
             }
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let isImage = item.fileItem?.contentType.hasPrefix("image/") == true
+            let image = isImage ? UIImage(data: data) : nil
+            if isImage {
+                if let image = image {
+                    await saveImageToPhotos(image)
+                } else {
+                    await setDownloadErrorUI(message: "Failed to process image data")
+                }
+            } else {
+                let name = item.fileItem?.originalName ?? "download"
+                await presentDocumentPicker(data: data, fileName: name)
+            }
+        } catch {
+            await setDownloadErrorUI(message: "Failed to download file: \(error.localizedDescription)")
         }
     }
     
+    @MainActor
     private func handleImageSaveCompletion(error: Error?) {
-        DispatchQueue.main.async {
-            self.isDownloading = false
-            
-            if let error = error {
-                // Check if it's a permission error
-                if error.localizedDescription.contains("permission") || error.localizedDescription.contains("denied") {
-                    self.showPermissionAlert = true
-                } else {
-                    // Show other errors as snackbar messages
-                    self.onShowMessage("Failed to save image: \(error.localizedDescription)", .error)
-                }
+        // UIKit calls this completion on the main thread; update UI directly
+        self.isDownloading = false
+        
+        if let error = error {
+            if error.localizedDescription.contains("permission") || error.localizedDescription.contains("denied") {
+                self.showPermissionAlert = true
             } else {
-                // Success - show saved indication
-                self.isSaved = true
-                self.showSuccessMessage("Image saved to Photos")
-                
-                // Reset the saved state after 2 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    self.isSaved = false
-                }
+                self.onShowMessage("Failed to save image: \(error.localizedDescription)", .error)
+            }
+        } else {
+            self.isSaved = true
+            self.showSuccessMessage("Image saved to Photos")
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                self.isSaved = false
             }
         }
+        // Release strong reference to the handler
+        self.imageSaveHandler = nil
+    }
+
+    // MARK: - MainActor UI helpers
+    @MainActor
+    private func completeImageCopySuccess(_ image: UIImage) async {
+        UIPasteboard.general.image = image
+        isCopying = false
+        isCopied = true
+        showSuccessMessage("Image copied to clipboard")
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        isCopied = false
+    }
+
+    @MainActor
+    private func completeFileCopySuccess(data: Data, uti: String) async {
+        UIPasteboard.general.setData(data, forPasteboardType: uti)
+        isCopying = false
+        isCopied = true
+        showSuccessMessage("File copied to clipboard")
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        isCopied = false
+    }
+
+    @MainActor
+    private func setCopyErrorUI(message: String?) async {
+        isCopying = false
+        if let message = message {
+            onShowMessage(message, .error)
+        }
+    }
+
+    @MainActor
+    private func presentDocumentPicker(data: Data, fileName: String) async {
+        fileDataToSave = data
+        fileNameToSave = fileName
+        showDocumentPicker = true
+    }
+
+    @MainActor
+    private func saveImageToPhotos(_ image: UIImage) async {
+        let handler = ImageSaveHandler { error in
+            self.handleImageSaveCompletion(error: error)
+        }
+        // Keep a strong reference until completion
+        self.imageSaveHandler = handler
+        UIImageWriteToSavedPhotosAlbum(image, handler, #selector(ImageSaveHandler.image(_:didFinishSavingWithError:contextInfo:)), nil)
+    }
+
+    @MainActor
+    private func setDownloadErrorUI(message: String) async {
+        isDownloading = false
+        onShowMessage(message, .error)
     }
     
     private func deleteItem() {
@@ -401,12 +426,15 @@ struct BinItemRow: View {
                 // Success - item is already removed from UI
             } catch {
                 // Error - restore the item to UI
-                await MainActor.run {
-                    onShowMessage("Failed to delete item: \(error.localizedDescription)", .error)
-                    onRestore?() // Restore the item to the UI
-                }
+                await restoreDeletedItemUI(error: error)
             }
         }
+    }
+
+    @MainActor
+    private func restoreDeletedItemUI(error: Error) async {
+        onShowMessage("Failed to delete item: \(error.localizedDescription)", .error)
+        onRestore?()
     }
 }
 
@@ -421,50 +449,95 @@ struct ImagePreviewView: View {
     @State private var downloadedImage: UIImage?
     
     var body: some View {
-        Group {
-            if let imageURL = imageURL, let url = URL(string: imageURL) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 200)
-                        .clipped()
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
-                        )
+        // Use a fixed-size container to strictly limit the hit testing area
+        Rectangle()
+            .fill(Color.clear)
+            .frame(height: 200)
+            .overlay(
+                Group {
+                    if let imageURL = imageURL, let url = URL(string: imageURL) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(height: 200)
+                                .clipped()
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
+                                )
+                                .contentShape(RoundedRectangle(cornerRadius: 8)) // Define tappable area to match visual bounds
                         .contextMenu {
                             if let downloadedImage = downloadedImage {
                                 Button(action: {
-                                    UIImageWriteToSavedPhotosAlbum(downloadedImage, nil, nil, nil)
+                                    Task { @MainActor in
+                                        UIImageWriteToSavedPhotosAlbum(downloadedImage, nil, nil, nil)
+                                    }
                                 }) {
                                     Label("Save to Photos", systemImage: "square.and.arrow.down")
                                 }
                                 
                                 Button(action: {
-                                    UIPasteboard.general.image = downloadedImage
+                                    Task { @MainActor in
+                                        UIPasteboard.general.image = downloadedImage
+                                    }
                                 }) {
                                     Label("Copy", systemImage: "doc.on.doc")
                                 }
                                 
                                 Button(action: {
-                                    // Share sheet
-                                    let activityVC = UIActivityViewController(activityItems: [downloadedImage], applicationActivities: nil)
-                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                                       let window = windowScene.windows.first {
-                                        window.rootViewController?.present(activityVC, animated: true)
+                                    Task { @MainActor in
+                                        // Share sheet
+                                        let activityVC = UIActivityViewController(activityItems: [downloadedImage], applicationActivities: nil)
+                                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                           let window = windowScene.windows.first {
+                                            window.rootViewController?.present(activityVC, animated: true)
+                                        }
                                     }
                                 }) {
                                     Label("Share", systemImage: "square.and.arrow.up")
                                 }
                             }
                         }
-                        .onAppear {
-                            // Download the image for context menu actions
-                            downloadImageForContextMenu(from: url)
-                        }
-                } placeholder: {
+                            .onAppear {
+                                // Download the image for context menu actions
+                                downloadImageForContextMenu(from: url)
+                            }
+                    } placeholder: {
+                        Rectangle()
+                            .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                            .frame(height: 200)
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
+                            )
+                            .overlay(
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            )
+                    }
+                } else if hasError {
+                    Rectangle()
+                        .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                        .frame(height: 200)
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
+                        )
+                        .overlay(
+                            VStack {
+                                Image(systemName: "photo")
+                                    .font(.title2)
+                                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                                Text("Preview unavailable")
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                            }
+                        )
+                } else {
                     Rectangle()
                         .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
                         .frame(height: 200)
@@ -478,40 +551,9 @@ struct ImagePreviewView: View {
                                 .scaleEffect(0.8)
                         )
                 }
-            } else if hasError {
-                Rectangle()
-                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                    .frame(height: 200)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
-                    )
-                    .overlay(
-                        VStack {
-                            Image(systemName: "photo")
-                                .font(.title2)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                            Text("Preview unavailable")
-                                .font(.caption)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                        }
-                    )
-            } else {
-                Rectangle()
-                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                    .frame(height: 200)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
-                    )
-                    .overlay(
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    )
-            }
-        }
+                }
+            )
+            .clipped() // Final clipping to ensure hit testing area is exactly the rectangle bounds
         .onAppear {
             loadImageURL()
         }
@@ -527,15 +569,9 @@ struct ImagePreviewView: View {
         Task {
             do {
                 let url = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
-                await MainActor.run {
-                    imageURL = url
-                    isLoading = false
-                }
+                await setImageURLLoaded(url)
             } catch {
-                await MainActor.run {
-                    hasError = true
-                    isLoading = false
-                }
+                await setImageURLError()
             }
         }
     }
@@ -545,13 +581,88 @@ struct ImagePreviewView: View {
             do {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 if let image = UIImage(data: data) {
-                    await MainActor.run {
-                        downloadedImage = image
-                    }
+                    await setDownloadedImage(image)
                 }
             } catch {
                 // Silently fail for context menu image download
             }
         }
+    }
+
+    // MARK: - ImagePreviewView MainActor helpers
+    @MainActor
+    private func setImageURLLoaded(_ url: String) async {
+        imageURL = url
+        isLoading = false
+    }
+
+    @MainActor
+    private func setImageURLError() async {
+        hasError = true
+        isLoading = false
+    }
+
+    @MainActor
+    private func setDownloadedImage(_ image: UIImage) async {
+        downloadedImage = image
+    }
+}
+
+// MARK: - Document Picker for Files App Integration
+
+struct DocumentPickerView: UIViewControllerRepresentable {
+    let fileData: Data?
+    let fileName: String?
+    let onComplete: (Bool) -> Void
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        guard let fileData = fileData, let fileName = fileName else {
+            onComplete(false)
+            return UIActivityViewController(activityItems: [], applicationActivities: nil)
+        }
+        
+        // Create a temporary file URL
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let tempFileURL = tempDirectory.appendingPathComponent(fileName)
+        
+        do {
+            try fileData.write(to: tempFileURL)
+        } catch {
+            onComplete(false)
+            return UIActivityViewController(activityItems: [], applicationActivities: nil)
+        }
+        
+        // Create activity view controller for sharing/saving the file
+        // Use both the file URL and the data to ensure compatibility
+        let activityItems: [Any] = [tempFileURL, fileData]
+        let activityVC = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+        activityVC.modalPresentationStyle = .formSheet
+        
+        // Exclude activities that don't make sense for file saving
+        activityVC.excludedActivityTypes = [
+            .assignToContact,
+            .addToReadingList,
+            .postToFacebook,
+            .postToTwitter,
+            .postToWeibo,
+            .print,
+            .mail,
+            .message
+        ]
+        
+        // Set completion handler
+        activityVC.completionWithItemsHandler = { activityType, completed, returnedItems, error in
+            if completed {
+                self.onComplete(true)
+            } else {
+                self.onComplete(false)
+            }
+        }
+        
+        return activityVC
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
+        // No updates needed
     }
 }

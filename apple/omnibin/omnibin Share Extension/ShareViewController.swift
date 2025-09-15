@@ -58,13 +58,11 @@ class ShareViewController: UIViewController {
         
         // Process the content immediately
         processContent { [weak self] success in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.isProcessing = false
                 if success {
-                    // Success - close the extension
                     self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
                 } else {
-                    // Error - show error and allow cancel
                     self?.statusLabel.text = "Failed to add content"
                     self?.activityIndicator.stopAnimating()
                     self?.cancelButton.setTitle("Close", for: .normal)
@@ -95,30 +93,23 @@ class ShareViewController: UIViewController {
         
         // Check for image first (most common case for Photos sharing)
         if attachment.hasItemConformingToTypeIdentifier("public.image") {
-            print("Share Extension: Processing as image...")
             attachment.loadItem(forTypeIdentifier: "public.image", options: nil) { [weak self] (item, error) in
-                if let error = error {
-                    print("Share Extension: Image load error: \(error.localizedDescription)")
+                if error != nil {
                     completion(false)
                     return
                 }
                 
                 if let image = item as? UIImage {
-                    print("Share Extension: Got UIImage directly")
                     self?.addImageToBin(image, completion: completion)
                 } else if let url = item as? URL {
-                    print("Share Extension: Got image URL: \(url)")
                     self?.addImageFromURL(url, completion: completion)
                 } else if let data = item as? Data {
-                    print("Share Extension: Got image data")
                     self?.addImageFromData(data, completion: completion)
                 } else {
-                    print("Share Extension: Unknown image item type: \(type(of: item))")
                     completion(false)
                 }
             }
         } else if attachment.hasItemConformingToTypeIdentifier("public.url") {
-            print("Share Extension: Processing as URL...")
             attachment.loadItem(forTypeIdentifier: "public.url", options: nil) { [weak self] (item, error) in
                 if let url = item as? URL {
                     self?.addURLToBin(url, completion: completion)
@@ -127,7 +118,6 @@ class ShareViewController: UIViewController {
                 }
             }
         } else {
-            print("Share Extension: Processing as text...")
             // Try to get as text
             attachment.loadItem(forTypeIdentifier: "public.text", options: nil) { [weak self] (item, error) in
                 if let text = item as? String {
@@ -142,7 +132,7 @@ class ShareViewController: UIViewController {
     private func addTextToBin(_ text: String, completion: @escaping (Bool) -> Void) {
         // Get access token from shared container
         guard let accessToken = getAccessToken() else {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.statusLabel.text = "Not logged in"
                 self.activityIndicator.stopAnimating()
             }
@@ -154,16 +144,10 @@ class ShareViewController: UIViewController {
         Task {
             do {
                 let _ = try await addTextItemToAPI(content: text, accessToken: accessToken)
-                await MainActor.run {
-                    completion(true)
-                }
+                await callCompletion(true, completion: completion)
             } catch {
-                print("Share Extension Text Error: \(error.localizedDescription)")
-                await MainActor.run {
-                    self.statusLabel.text = "Upload failed: \(error.localizedDescription)"
-                    self.activityIndicator.stopAnimating()
-                    completion(false)
-                }
+                await self.setStatusAndStopAnimating("Upload failed")
+                await callCompletion(false, completion: completion)
             }
         }
     }
@@ -176,7 +160,7 @@ class ShareViewController: UIViewController {
     private func addImageToBin(_ image: UIImage, completion: @escaping (Bool) -> Void) {
         // Get access token from shared container
         guard let accessToken = getAccessToken() else {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.statusLabel.text = "Not logged in"
                 self.activityIndicator.stopAnimating()
             }
@@ -186,8 +170,19 @@ class ShareViewController: UIViewController {
         
         // Convert image to JPEG data
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.statusLabel.text = "Failed to process image"
+                self.activityIndicator.stopAnimating()
+            }
+            completion(false)
+            return
+        }
+        
+        // Check if image data is too large
+        let maxSize = 10 * 1024 * 1024 // 10MB
+        if imageData.count > maxSize {
+            Task { @MainActor in
+                self.statusLabel.text = "Image too large"
                 self.activityIndicator.stopAnimating()
             }
             completion(false)
@@ -213,23 +208,15 @@ class ShareViewController: UIViewController {
                     imageHeight: imageHeight,
                     accessToken: accessToken
                 )
-                await MainActor.run {
-                    completion(true)
-                }
+                await callCompletion(true, completion: completion)
             } catch {
-                print("Share Extension Error: \(error.localizedDescription)")
-                await MainActor.run {
-                    self.statusLabel.text = "Upload failed: \(error.localizedDescription)"
-                    self.activityIndicator.stopAnimating()
-                    completion(false)
-                }
+                await self.setStatusAndStopAnimating("Upload failed")
+                await callCompletion(false, completion: completion)
             }
         }
     }
     
     private func addImageFromURL(_ url: URL, completion: @escaping (Bool) -> Void) {
-        print("Share Extension: Loading image from URL: \(url)")
-        
         // Get access token from shared container
         guard getAccessToken() != nil else {
             DispatchQueue.main.async {
@@ -240,54 +227,74 @@ class ShareViewController: UIViewController {
             return
         }
         
-        // Load image from URL
+        // Check if it's a local file URL (from Photos app)
+        if url.isFileURL {
+            loadLocalImage(from: url, completion: completion)
+        } else {
+            loadRemoteImage(from: url, completion: completion)
+        }
+    }
+    
+    private func loadLocalImage(from url: URL, completion: @escaping (Bool) -> Void) {
+        Task {
+            do {
+                // For local files, we need to use the security-scoped URL
+                let securityScopedResource = url.startAccessingSecurityScopedResource()
+                defer {
+                    if securityScopedResource {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
+                
+                let data = try Data(contentsOf: url)
+                
+                guard let image = UIImage(data: data) else {
+                    await self.setStatusAndStopAnimating("Invalid image data")
+                    completion(false)
+                    return
+                }
+                
+                // Update UI on main actor
+                await self.callAddImage(image, completion: completion)
+                
+            } catch {
+                await self.setStatusAndStopAnimating("Failed to load image")
+                completion(false)
+            }
+        }
+    }
+    
+    private func loadRemoteImage(from url: URL, completion: @escaping (Bool) -> Void) {
         Task {
             do {
                 let (data, response) = try await URLSession.shared.data(from: url)
                 
                 guard let httpResponse = response as? HTTPURLResponse,
                       (200...299).contains(httpResponse.statusCode) else {
-                    print("Share Extension: Failed to load image from URL")
-                    await MainActor.run {
-                        self.statusLabel.text = "Failed to load image"
-                        self.activityIndicator.stopAnimating()
-                    }
+                    await self.setStatusAndStopAnimating("Failed to load image")
                     completion(false)
                     return
                 }
                 
                 guard let image = UIImage(data: data) else {
-                    print("Share Extension: Invalid image data from URL")
-                    await MainActor.run {
-                        self.statusLabel.text = "Invalid image data"
-                        self.activityIndicator.stopAnimating()
-                    }
+                    await self.setStatusAndStopAnimating("Invalid image data")
                     completion(false)
                     return
                 }
                 
-                print("Share Extension: Successfully loaded image from URL")
-                await MainActor.run {
-                    self.addImageToBin(image, completion: completion)
-                }
+                // Update UI on main actor
+                await self.callAddImage(image, completion: completion)
                 
             } catch {
-                print("Share Extension: Error loading image from URL: \(error.localizedDescription)")
-                await MainActor.run {
-                    self.statusLabel.text = "Failed to load image: \(error.localizedDescription)"
-                    self.activityIndicator.stopAnimating()
-                }
+                await self.setStatusAndStopAnimating("Failed to load image")
                 completion(false)
             }
         }
     }
     
     private func addImageFromData(_ data: Data, completion: @escaping (Bool) -> Void) {
-        print("Share Extension: Processing image from data")
-        
         guard let image = UIImage(data: data) else {
-            print("Share Extension: Invalid image data")
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.statusLabel.text = "Invalid image data"
                 self.activityIndicator.stopAnimating()
             }
@@ -303,19 +310,37 @@ class ShareViewController: UIViewController {
         addTextToBin(url.absoluteString, completion: completion)
     }
     
+    // MARK: - MainActor helpers
+    @MainActor
+    private func setStatusAndStopAnimating(_ message: String) async {
+        self.statusLabel.text = message
+        self.activityIndicator.stopAnimating()
+    }
+
+    @MainActor
+    private func callCompletion(_ success: Bool, completion: @escaping (Bool) -> Void) async {
+        completion(success)
+    }
+
+    @MainActor
+    private func callAddImage(_ image: UIImage, completion: @escaping (Bool) -> Void) async {
+        self.addImageToBin(image, completion: completion)
+    }
     // MARK: - API Integration
     
     private func getAccessToken() -> String? {
+        // Try keychain first
         let token = SecureStorageManager.shared.getAccessToken()
-        print("Share Extension: Access token retrieved: \(token != nil ? "Yes" : "No")")
         if let token = token {
-            print("Share Extension: Token length: \(token.count)")
+            return token
         }
-        return token
+        
+        // Fallback to UserDefaults
+        let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin")
+        return sharedDefaults?.string(forKey: "access_token")
     }
     
     private func addTextItemToAPI(content: String, accessToken: String) async throws -> BinItem {
-        print("Share Extension: Starting text upload...")
         guard let url = URL(string: "https://www.omnib.in/api/bin") else {
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
         }
@@ -328,29 +353,23 @@ class ShareViewController: UIViewController {
         let requestBody = ["content": content]
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
-        print("Share Extension: Making text API request...")
         let (data, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            print("Share Extension: Invalid response type")
             throw NSError(domain: "ShareExtension", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
         }
         
-        print("Share Extension: HTTP status: \(httpResponse.statusCode)")
         guard httpResponse.statusCode == 200 else {
             let responseString = String(data: data, encoding: .utf8) ?? "No response body"
-            print("Share Extension: Error response: \(responseString)")
             throw NSError(domain: "ShareExtension", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP error: \(httpResponse.statusCode) - \(responseString)"])
         }
         
         // Parse response to BinItem
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         guard let itemData = json else {
-            print("Share Extension: Invalid JSON response")
             throw NSError(domain: "ShareExtension", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
         }
         
-        print("Share Extension: Text upload successful")
         // Create a simple BinItem from the response
         return BinItem(
             id: itemData["id"] as? String ?? UUID().uuidString,
@@ -361,7 +380,6 @@ class ShareViewController: UIViewController {
     }
     
     private func addFileItemToAPI(fileData: Data, originalName: String, contentType: String, imageWidth: Int?, imageHeight: Int?, accessToken: String) async throws -> BinItem {
-        print("Share Extension: Starting file upload...")
         guard let url = URL(string: "https://www.omnib.in/api/bin") else {
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
         }
@@ -372,29 +390,31 @@ class ShareViewController: UIViewController {
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        let fileMetadata: [String: Any] = [
+        var fileMetadata: [String: Any] = [
             "originalName": originalName,
             "contentType": contentType,
-            "size": fileData.count,
-            "imageWidth": imageWidth as Any,
-            "imageHeight": imageHeight as Any
+            "size": fileData.count
         ]
+        
+        // Only add image dimensions if they are valid
+        if let width = imageWidth, width > 0 {
+            fileMetadata["imageWidth"] = width
+        }
+        if let height = imageHeight, height > 0 {
+            fileMetadata["imageHeight"] = height
+        }
         
         let requestBody = ["file": fileMetadata]
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
-        print("Share Extension: Requesting upload URL...")
         let (data, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            print("Share Extension: Invalid response type for upload URL request")
             throw NSError(domain: "ShareExtension", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
         }
         
-        print("Share Extension: Upload URL request status: \(httpResponse.statusCode)")
         guard (200...299).contains(httpResponse.statusCode) else {
             let responseString = String(data: data, encoding: .utf8) ?? "No response body"
-            print("Share Extension: Upload URL error response: \(responseString)")
             let errorData = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
             let errorMessage = errorData?["error"] as? String ?? "Unknown error"
             throw NSError(domain: "ShareExtension", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "\(errorMessage) - \(responseString)"])
@@ -403,11 +423,9 @@ class ShareViewController: UIViewController {
         let responseData = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         guard let uploadURLString = responseData?["uploadUrl"] as? String,
               let uploadURL = URL(string: uploadURLString) else {
-            print("Share Extension: No upload URL in response")
             throw NSError(domain: "ShareExtension", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid upload URL"])
         }
         
-        print("Share Extension: Uploading file to S3...")
         // Step 2: Upload file to S3
         var uploadRequest = URLRequest(url: uploadURL)
         uploadRequest.httpMethod = "PUT"
@@ -417,23 +435,18 @@ class ShareViewController: UIViewController {
         let (_, uploadResponse) = try await URLSession.shared.data(for: uploadRequest)
         
         guard let uploadHttpResponse = uploadResponse as? HTTPURLResponse else {
-            print("Share Extension: Invalid S3 upload response type")
             throw NSError(domain: "ShareExtension", code: -4, userInfo: [NSLocalizedDescriptionKey: "Invalid upload response"])
         }
         
-        print("Share Extension: S3 upload status: \(uploadHttpResponse.statusCode)")
         guard (200...299).contains(uploadHttpResponse.statusCode) else {
-            print("Share Extension: S3 upload failed")
             throw NSError(domain: "ShareExtension", code: uploadHttpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Failed to upload file to storage"])
         }
         
         // Step 3: Parse and return the BinItem
         guard let itemData = responseData?["item"] as? [String: Any] else {
-            print("Share Extension: No item data in response")
             throw NSError(domain: "ShareExtension", code: -5, userInfo: [NSLocalizedDescriptionKey: "Invalid item data"])
         }
         
-        print("Share Extension: File upload successful")
         // Create a simple BinItem from the response
         return BinItem(
             id: itemData["id"] as? String ?? UUID().uuidString,
