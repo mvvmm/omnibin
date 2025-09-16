@@ -8,8 +8,8 @@ export const isCopyableFile = (contentType: string): boolean => {
 		"image/svg+xml",
 		"text/plain",
 		"text/html",
-		"application/json",
-		"application/pdf",
+		// "application/json",
+		// "application/pdf",
 	];
 	return supportedMimeTypes.includes(contentType);
 };
