@@ -73,28 +73,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 		startDownloadTransition(async () => {
 			try {
 				setError(null);
-				let res: Response | undefined;
-
-				if (existingUrl) {
-					res = await fetch(existingUrl);
-					if (!res.ok) {
-						const { success, error, downloadUrl } =
-							await getFileItemDownloadUrl(id);
-						if (!success) {
-							setError(error || "Failed to get file URL");
-							return;
-						}
-						if (!downloadUrl) {
-							setError("Missing file URL");
-							return;
-						}
-						res = await fetch(downloadUrl);
-					}
-				}
-
-				if (!res || !res.ok) {
-					throw new Error(`Fetch file failed (${res?.status})`);
-				}
+				const res = await fetchFileResponse(id, existingUrl);
 				const blob = await res.blob();
 				const objectUrl = URL.createObjectURL(blob);
 				const a = document.createElement("a");
@@ -120,28 +99,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 		startCopyingTransition(async () => {
 			try {
 				setError(null);
-				let res: Response | undefined;
-
-				if (existingUrl) {
-					res = await fetch(existingUrl);
-					if (!res.ok) {
-						const { success, error, downloadUrl } =
-							await getFileItemDownloadUrl(id);
-						if (!success) {
-							setError(error || "Failed to get file URL");
-							return;
-						}
-						if (!downloadUrl) {
-							setError("Missing file URL");
-							return;
-						}
-						res = await fetch(downloadUrl);
-					}
-				}
-
-				if (!res || !res.ok) {
-					throw new Error(`Fetch file failed (${res?.status})`);
-				}
+				const res = await fetchFileResponse(id, existingUrl);
 				const blob = await res.blob();
 				const mime =
 					blob.type || expectedContentType || "application/octet-stream";
@@ -233,6 +191,33 @@ export function BinListItem({ item }: { item: BinItem }) {
 				setError(error.message);
 			}
 		});
+	};
+
+	// Fetch helper: try preview URL first, fallback to a fresh presigned URL
+	const fetchFileResponse = async (
+		id: string,
+		existingUrl?: string,
+	): Promise<Response> => {
+		let res: Response | undefined;
+		if (existingUrl) {
+			try {
+				const r = await fetch(existingUrl);
+				if (r.ok) res = r;
+			} catch {
+				// ignore and fallback to fresh presigned URL
+			}
+		}
+		if (!res || !res.ok) {
+			const { success, error, downloadUrl } = await getFileItemDownloadUrl(id);
+			if (!success || !downloadUrl) {
+				throw new Error(error || "Failed to get file URL");
+			}
+			res = await fetch(downloadUrl);
+		}
+		if (!res.ok) {
+			throw new Error(`Fetch file failed (${res.status})`);
+		}
+		return res;
 	};
 
 	if (deleteIsTransitioning) {
