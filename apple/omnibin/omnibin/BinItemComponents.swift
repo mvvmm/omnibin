@@ -33,10 +33,13 @@ struct BinItemRow: View {
     @State private var isExpanded = false
     @State private var showPermissionAlert = false
     @State private var isSaved = false
-    @State private var showDocumentPicker = false
     @State private var fileDataToSave: Data?
     @State private var fileNameToSave: String?
     @State private var imageSaveHandler: ImageSaveHandler?
+    @State private var showExporter = false
+    @State private var exportDoc: DataDoc?
+    @State private var exportType: UTType = .data
+    @State private var exportName: String = "download"
     @Environment(\.colorScheme) private var colorScheme
     
     private let itemId: String
@@ -223,19 +226,21 @@ struct BinItemRow: View {
         } message: {
             Text("To save images to your Photos library, please enable Photos access in Settings > Privacy & Security > Photos > omnibin")
         }
-        .sheet(isPresented: $showDocumentPicker) {
-            DocumentPickerView(
-                fileData: fileDataToSave,
-                fileName: fileNameToSave,
-                onComplete: { success in
-                    if success {
-                        showSuccessMessage("File saved to Files app")
-                    } else {
-                        onShowMessage("Failed to save file", .error)
-                    }
-                    isDownloading = false
-                }
-            )
+        .fileExporter(isPresented: $showExporter,
+                      document: exportDoc,
+                      contentType: exportType,
+                      defaultFilename: exportName) { result in
+            switch result {
+            case .success: showSuccessMessage("Saved to Files")
+            case .failure: onShowMessage("Failed to save file", .error)
+            }
+            isDownloading = false
+        }
+        .onChange(of: showExporter) { oldValue, newValue in
+            if newValue == false {
+                // Ensure loading state is reset when the exporter closes (including cancel)
+                isDownloading = false
+            }
         }
     }
     
@@ -308,29 +313,25 @@ struct BinItemRow: View {
     
     private func downloadItem() async {
         guard item.isFile, let token = accessToken else { return }
-        
         isDownloading = true
         do {
             let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
-            guard let url = URL(string: downloadURL) else {
-                await setDownloadErrorUI(message: "Invalid download URL")
-                return
-            }
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let isImage = item.fileItem?.contentType.hasPrefix("image/") == true
-            let image = isImage ? UIImage(data: data) : nil
-            if isImage {
-                if let image = image {
-                    await saveImageToPhotos(image)
-                } else {
-                    await setDownloadErrorUI(message: "Failed to process image data")
-                }
-            } else {
-                let name = item.fileItem?.originalName ?? "download"
-                await presentDocumentPicker(data: data, fileName: name)
+            let (tmp, _) = try await URLSession.shared.download(from: URL(string: downloadURL)!)
+
+            let data = try Data(contentsOf: tmp)
+            let name = item.fileItem?.originalName ?? "download"
+            let ext  = (name as NSString).pathExtension
+            let type = UTType(filenameExtension: ext) ?? .data
+
+            await MainActor.run {
+                exportType = type
+                exportName = name.isEmpty ? "download" : name
+                exportDoc  = DataDoc(data: data)
+                showExporter = true
             }
         } catch {
-            await setDownloadErrorUI(message: "Failed to download file: \(error.localizedDescription)")
+            await setDownloadErrorUI(message: "Failed: \(error.localizedDescription)")
+            isDownloading = false
         }
     }
     
@@ -357,7 +358,6 @@ struct BinItemRow: View {
         self.imageSaveHandler = nil
     }
 
-    // MARK: - MainActor UI helpers
     @MainActor
     private func completeImageCopySuccess(_ image: UIImage) async {
         UIPasteboard.general.image = image
@@ -417,13 +417,6 @@ struct BinItemRow: View {
         if let message = message {
             onShowMessage(message, .error)
         }
-    }
-
-    @MainActor
-    private func presentDocumentPicker(data: Data, fileName: String) async {
-        fileDataToSave = data
-        fileNameToSave = fileName
-        showDocumentPicker = true
     }
 
     @MainActor
@@ -640,61 +633,21 @@ struct ImagePreviewView: View {
     }
 }
 
-// MARK: - Document Picker for Files App Integration
+struct DataDoc: FileDocument {
+    static var readableContentTypes: [UTType] = [.data]
 
-struct DocumentPickerView: UIViewControllerRepresentable {
-    let fileData: Data?
-    let fileName: String?
-    let onComplete: (Bool) -> Void
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        guard let fileData = fileData, let fileName = fileName else {
-            onComplete(false)
-            return UIActivityViewController(activityItems: [], applicationActivities: nil)
-        }
-        
-        // Create a temporary file URL
-        let tempDirectory = FileManager.default.temporaryDirectory
-        let tempFileURL = tempDirectory.appendingPathComponent(fileName)
-        
-        do {
-            try fileData.write(to: tempFileURL)
-        } catch {
-            onComplete(false)
-            return UIActivityViewController(activityItems: [], applicationActivities: nil)
-        }
-        
-        // Create activity view controller for sharing/saving the file
-        // Use both the file URL and the data to ensure compatibility
-        let activityItems: [Any] = [tempFileURL, fileData]
-        let activityVC = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-        activityVC.modalPresentationStyle = .formSheet
-        
-        // Exclude activities that don't make sense for file saving
-        activityVC.excludedActivityTypes = [
-            .assignToContact,
-            .addToReadingList,
-            .postToFacebook,
-            .postToTwitter,
-            .postToWeibo,
-            .print,
-            .mail,
-            .message
-        ]
-        
-        // Set completion handler
-        activityVC.completionWithItemsHandler = { activityType, completed, returnedItems, error in
-            if completed {
-                self.onComplete(true)
-            } else {
-                self.onComplete(false)
-            }
-        }
-        
-        return activityVC
+    static var writableContentTypes: [UTType] = [
+        .data, .pdf, .png, .jpeg, .plainText, .json, .zip
+    ]
+
+    var data: Data
+    init(data: Data) { self.data = data }
+
+    init(configuration: ReadConfiguration) throws {
+        self.data = configuration.file.regularFileContents ?? Data()
     }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
-        // No updates needed
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
     }
 }
