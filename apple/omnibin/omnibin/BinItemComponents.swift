@@ -288,19 +288,18 @@ struct BinItemRow: View {
                 await setCopyErrorUI(message: "Invalid download URL")
                 return
             }
-            let (data, _) = try await URLSession.shared.data(from: url)
             let isImage = item.fileItem?.contentType.hasPrefix("image/") == true
-            let image = isImage ? UIImage(data: data) : nil
             if isImage {
-                if let image = image {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                if let image = UIImage(data: data) {
                     await completeImageCopySuccess(image)
                 } else {
                     await setCopyErrorUI(message: nil)
                 }
             } else {
-                let mime = item.fileItem?.contentType ?? "application/octet-stream"
-                let pbType = UTType(mimeType: mime)?.identifier ?? "public.data"
-                await completeFileCopySuccess(data: data, uti: pbType)
+                let (tmpURL, _) = try await URLSession.shared.download(from: url)
+                let filename = item.fileItem?.originalName ?? "file"
+                await completeFileCopyFromDownloadedURL(tmpURL: tmpURL, filename: filename)
             }
         } catch {
             await setCopyErrorUI(message: "Failed to copy file: \(error.localizedDescription)")
@@ -370,13 +369,46 @@ struct BinItemRow: View {
     }
 
     @MainActor
-    private func completeFileCopySuccess(data: Data, uti: String) async {
-        UIPasteboard.general.setData(data, forPasteboardType: uti)
-        isCopying = false
-        isCopied = true
-        showSuccessMessage("File copied to clipboard")
-        try? await Task.sleep(nanoseconds: 1_500_000_000)
-        isCopied = false
+    private func completeFileCopyFromDownloadedURL(tmpURL: URL, filename: String) async {
+        // Build desired filename and unique dest directory
+        let raw = (filename as NSString).lastPathComponent
+        let base = (raw as NSString).deletingPathExtension.isEmpty ? "file" : (raw as NSString).deletingPathExtension
+        let ext  = (raw as NSString).pathExtension
+        let type = UTType(filenameExtension: ext) ?? .data
+        let ensuredExt = ext.isEmpty ? (type.preferredFilenameExtension ?? "") : ext
+        let desired = ensuredExt.isEmpty ? base : "\(base).\(ensuredExt)"
+
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let url = dir.appendingPathComponent(desired)
+            // Move/rename the downloaded temp file to our desired url
+            try? FileManager.default.removeItem(at: url)
+            try FileManager.default.moveItem(at: tmpURL, to: url)
+
+            // Explicit UTType + openInPlace improves name preservation
+            let explicitType = UTType(filenameExtension: url.pathExtension) ?? .data
+            let provider = NSItemProvider()
+            provider.suggestedName = desired
+            provider.registerFileRepresentation(
+                forTypeIdentifier: explicitType.identifier,
+                fileOptions: [.openInPlace],
+                visibility: .all
+            ) { completion in
+                completion(url, true, nil)
+                return nil
+            }
+
+            UIPasteboard.general.setItemProviders([provider], localOnly: false, expirationDate: Date().addingTimeInterval(3600))
+            isCopying = false
+            isCopied = true
+            showSuccessMessage("File copied to clipboard")
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            isCopied = false
+        } catch {
+            isCopying = false
+            onShowMessage("Failed to copy file: \(error.localizedDescription)", .error)
+        }
     }
 
     @MainActor
