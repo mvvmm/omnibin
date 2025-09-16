@@ -245,11 +245,19 @@ export function BinListItem({ item }: { item: BinItem }) {
 						handleCopyText(item.textItem.content);
 					}
 					if (item.kind === "FILE" && item.fileItem) {
-						handleCopyFile(
-							item.id,
-							item.fileItem.contentType,
-							item.fileItem.preview ?? undefined,
-						);
+						if (isCopyableFile(item.fileItem.contentType)) {
+							handleCopyFile(
+								item.id,
+								item.fileItem.contentType,
+								item.fileItem.preview ?? undefined,
+							);
+						} else {
+							handleDownloadFile(
+								item.id,
+								item.fileItem?.originalName,
+								item.fileItem?.preview ?? undefined,
+							);
+						}
 					}
 				}}
 				onKeyDown={(e) => {
@@ -258,11 +266,19 @@ export function BinListItem({ item }: { item: BinItem }) {
 							handleCopyText(item.textItem.content);
 						}
 						if (item.kind === "FILE" && item.fileItem) {
-							handleCopyFile(
-								item.id,
-								item.fileItem.contentType,
-								item.fileItem.preview ?? undefined,
-							);
+							if (isCopyableFile(item.fileItem.contentType)) {
+								handleCopyFile(
+									item.id,
+									item.fileItem.contentType,
+									item.fileItem.preview ?? undefined,
+								);
+							} else {
+								handleDownloadFile(
+									item.id,
+									item.fileItem?.originalName,
+									item.fileItem?.preview ?? undefined,
+								);
+							}
 						}
 					}
 				}}
