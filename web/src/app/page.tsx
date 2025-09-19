@@ -57,8 +57,8 @@ export default async function Home({
 						className="mx-auto mt-4 max-w-2xl text-balance text-base sm:text-lg"
 						style={{ color: "var(--muted-80)" }}
 					>
-						Seamless cross‑platform clipboard. Move text and files between
-						devices with ease.
+						Seamless cross‑platform clipboard. Move text, images, and files
+						between devices with ease.
 					</p>
 
 					<div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
@@ -82,35 +82,35 @@ export default async function Home({
 								color: "var(--foreground)",
 							}}
 						>
+							<p className="text-sm">Cross-platform</p>
+							<p className="mt-1 text-xs" style={{ color: "var(--muted-60)" }}>
+								Share one bin on all devices.
+							</p>
+						</Card>
+						<Card
+							className="rounded-xl shadow-none p-4"
+							style={{
+								backgroundColor: "var(--card-bg)",
+								borderColor: "var(--border)",
+								color: "var(--foreground)",
+							}}
+						>
+							<p className="text-sm">Effortless</p>
+							<p className="mt-1 text-xs" style={{ color: "var(--muted-60)" }}>
+								One click copy and paste.
+							</p>
+						</Card>
+						<Card
+							className="rounded-xl shadow-none p-4"
+							style={{
+								backgroundColor: "var(--card-bg)",
+								borderColor: "var(--border)",
+								color: "var(--foreground)",
+							}}
+						>
 							<p className="text-sm">Fast, secure sync</p>
 							<p className="mt-1 text-xs" style={{ color: "var(--muted-60)" }}>
 								Backed by modern auth and storage.
-							</p>
-						</Card>
-						<Card
-							className="rounded-xl shadow-none p-4"
-							style={{
-								backgroundColor: "var(--card-bg)",
-								borderColor: "var(--border)",
-								color: "var(--foreground)",
-							}}
-						>
-							<p className="text-sm">Multi‑device</p>
-							<p className="mt-1 text-xs" style={{ color: "var(--muted-60)" }}>
-								Use it on the web, Windows 11, iOS, macOS, and iPadOS.
-							</p>
-						</Card>
-						<Card
-							className="rounded-xl shadow-none p-4"
-							style={{
-								backgroundColor: "var(--card-bg)",
-								borderColor: "var(--border)",
-								color: "var(--foreground)",
-							}}
-						>
-							<p className="text-sm">Simple by design</p>
-							<p className="mt-1 text-xs" style={{ color: "var(--muted-60)" }}>
-								One click to get started.
 							</p>
 						</Card>
 					</div>

@@ -85,7 +85,7 @@ struct MainView: View {
                                 .padding(.horizontal, 24)
                             
                             // Subtitle
-                            Text("Seamless cross‑platform clipboard. Move text and files between devices with ease.")
+                            Text("Seamless cross‑platform clipboard. Move text, images, and files between devices with ease.")
                                 .font(.system(size: min(isRegularWidth ? 32 : 18, geometry.size.width * 0.045), weight: .regular))
                                 .multilineTextAlignment(.center)
                                 .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
@@ -126,24 +126,24 @@ struct MainView: View {
                             VStack(spacing: isRegularWidth ? 16 : 8) {
                                 HStack(spacing: isRegularWidth ? 12 : 8) {
                                     FeatureCard(
-                                        title: "Fast, secure sync",
-                                        description: "Backed by modern auth and storage.",
+                                        title: "Cross-platform",
+                                        description: "Share one bin on all devices.",
                                         isDarkMode: isDarkMode
                                     )
-                                    
+
                                     FeatureCard(
-                                        title: "Multi‑device",
-                                        description: "Use it on the web, Windows 11, iOS, macOS, and iPadOS.",
-                                        isDarkMode: isDarkMode
-                                    )
+                                    title: "Effortless",
+                                    description: "One click copy and paste.",
+                                    isDarkMode: isDarkMode
+                                )
                                 }
                                 .frame(maxHeight: .infinity, alignment: .top)
                                 
                                 FeatureCard(
-                                    title: "Simple by design",
-                                    description: "One click to get started.",
-                                    isDarkMode: isDarkMode
-                                )
+                                        title: "Fast and secure",
+                                        description: "Backed by modern auth and storage.",
+                                        isDarkMode: isDarkMode
+                                    )
                             }
                             .padding(.horizontal, isRegularWidth ? 24 : 8)
                         }
