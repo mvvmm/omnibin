@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ContextMenu } from "@/components/context-menu";
 import { auth0 } from "@/lib/auth0";
 import { OMNIBIN_ROUTES } from "@/routes";
 
@@ -29,7 +29,7 @@ export default async function Layout({
 						priority
 					/>
 				</Link>
-				<ThemeToggle />
+				<ContextMenu loggedIn={!!session} />
 			</div>
 			{children}
 		</>

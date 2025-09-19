@@ -1,8 +1,8 @@
-import { LogIn } from "lucide-react";
+import { ArrowRight, LogIn } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ContextMenu } from "@/components/context-menu";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
@@ -24,7 +24,7 @@ export default async function Home({
 	return (
 		<>
 			<div className="flex justify-end p-4">
-				<ThemeToggle />
+				<ContextMenu loggedIn={!!session} />
 			</div>
 
 			<div className="relative z-10 mx-auto flex max-w-6xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
@@ -67,8 +67,12 @@ export default async function Home({
 							className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-accent-primary/30 transition-transform duration-300 hover:scale-[1.02] hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
 						>
 							<Link href="/bin">
-								Login to sync
-								<LogIn className="ml-2 h-5 w-5" aria-hidden="true" />
+								{session ? "Go to shared bin" : "Login to sync"}
+								{session ? (
+									<ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+								) : (
+									<LogIn className="ml-2 h-5 w-5" aria-hidden="true" />
+								)}
 							</Link>
 						</Button>
 					</div>

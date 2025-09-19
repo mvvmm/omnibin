@@ -8,7 +8,7 @@ export function ThemeToggle() {
 
 	return (
 		<div
-			className="flex items-center gap-1 rounded-md border backdrop-blur-md w-fit"
+			className="flex w-full"
 			style={{
 				backgroundColor: "var(--card-bg)",
 				borderColor: "var(--border)",
@@ -17,7 +17,7 @@ export function ThemeToggle() {
 			<Button
 				variant="ghost"
 				size="sm"
-				className="text-xs rounded-r-none"
+				className="text-xs rounded-sm rounded-r-none flex-1"
 				onClick={() => setTheme("light")}
 				type="button"
 			>
@@ -26,7 +26,7 @@ export function ThemeToggle() {
 			<Button
 				variant="ghost"
 				size="sm"
-				className="text-xs rounded-none"
+				className="text-xs rounded-sm rounded-none flex-1"
 				onClick={() => setTheme("system")}
 				type="button"
 			>
@@ -35,7 +35,7 @@ export function ThemeToggle() {
 			<Button
 				variant="ghost"
 				size="sm"
-				className="text-xs rounded-l-none"
+				className="text-xs rounded-sm rounded-l-none flex-1"
 				onClick={() => setTheme("dark")}
 				type="button"
 			>
