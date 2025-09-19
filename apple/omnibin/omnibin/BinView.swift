@@ -220,7 +220,7 @@ struct BinView: View {
                     .padding(.horizontal, min(24, geometry.size.width * 0.05))
                 }
             }
-            .frame(maxWidth: min(geometry.size.width, 600), maxHeight: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .refreshable {
             await refreshBinItems()
