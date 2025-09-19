@@ -6,6 +6,7 @@ struct MainView: View {
     @State var accessToken: String?
     @State var isLoading = true
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     private let credentialsManager = CredentialsManager(authentication: Auth0.authentication())
     
@@ -54,10 +55,13 @@ struct MainView: View {
                         .font(.headline)
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                 }
+                .padding(.top, horizontalSizeClass == .regular ? 48 : 0)
             } else if self.user != nil {
                 BinView(accessToken: accessToken, onLogout: logout)
+                    .padding(.top, horizontalSizeClass == .regular ? 48 : 0)
             } else {
                 GeometryReader { geometry in
+                    let isRegularWidth = (horizontalSizeClass == .regular) || geometry.size.width >= 700
                     ScrollView {
                         VStack(spacing: 0) {
                             // Main content
@@ -73,7 +77,7 @@ struct MainView: View {
                             
                             // Main heading
                             Text("Copy. Paste. Anywhere.")
-                                .font(.system(size: min(48, geometry.size.width * 0.12), weight: .semibold, design: .rounded))
+                                .font(.system(size: min(isRegularWidth ? 90 : 48, geometry.size.width * 0.12), weight: .semibold, design: .rounded))
                                 .multilineTextAlignment(.center)
                                 .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                                 .minimumScaleFactor(0.5)
@@ -82,7 +86,7 @@ struct MainView: View {
                             
                             // Subtitle
                             Text("Seamless cross‑platform clipboard. Move text and files between devices with ease.")
-                                .font(.system(size: min(18, geometry.size.width * 0.045), weight: .regular))
+                                .font(.system(size: min(isRegularWidth ? 32 : 18, geometry.size.width * 0.045), weight: .regular))
                                 .multilineTextAlignment(.center)
                                 .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
                                 .padding(.horizontal, 24)
@@ -93,9 +97,9 @@ struct MainView: View {
                             Button(action: self.login) {
                                 HStack(spacing: 8) {
                                     Text("Login to sync")
-                                        .font(.system(size: min(18, geometry.size.width * 0.045), weight: .medium))
+                                        .font(.system(size: min(isRegularWidth ? 28 : 18, geometry.size.width * 0.045), weight: .medium))
                                     Image(systemName: "arrow.right")
-                                        .font(.system(size: min(16, geometry.size.width * 0.04), weight: .medium))
+                                        .font(.system(size: min(isRegularWidth ? 24 : 16, geometry.size.width * 0.04), weight: .medium))
                                 }
                                 .foregroundColor(.white)
                                 .padding(.horizontal, min(32, geometry.size.width * 0.08))
@@ -119,8 +123,8 @@ struct MainView: View {
                                 .frame(height: 10)
                             
                             // Feature cards
-                            VStack(spacing: 16) {
-                                HStack(spacing: 12) {
+                            VStack(spacing: isRegularWidth ? 16 : 8) {
+                                HStack(spacing: isRegularWidth ? 12 : 8) {
                                     FeatureCard(
                                         title: "Fast, secure sync",
                                         description: "Backed by modern auth and storage.",
@@ -133,6 +137,7 @@ struct MainView: View {
                                         isDarkMode: isDarkMode
                                     )
                                 }
+                                .frame(maxHeight: .infinity, alignment: .top)
                                 
                                 FeatureCard(
                                     title: "Simple by design",
@@ -140,10 +145,10 @@ struct MainView: View {
                                     isDarkMode: isDarkMode
                                 )
                             }
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, isRegularWidth ? 24 : 8)
                         }
                             .padding(.horizontal, min(32, geometry.size.width * 0.08))
-                            .padding(.top, 30)
+                            .padding(.top, 30 + (isRegularWidth ? 48 : 0))
                             .padding(.bottom, 30)
                         }
                     }
@@ -204,24 +209,28 @@ struct FeatureCard: View {
     let title: String
     let description: String
     let isDarkMode: Bool
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     var body: some View {
+        let isRegularWidth = horizontalSizeClass == .regular
+        let horizontalPadding: CGFloat = isRegularWidth ? 20 : 12
+        let verticalPadding: CGFloat = isRegularWidth ? 16 : 12
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: isRegularWidth ? 24 : 15, weight: .semibold))
                 .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                 .lineLimit(1)
             
             Text(description)
-                .font(.system(size: 13, weight: .regular))
+                .font(.system(size: isRegularWidth ? 16 : 13, weight: .regular))
                 .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: 60) // Reduced minimum height
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, verticalPadding)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
