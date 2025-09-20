@@ -67,7 +67,7 @@ body:
     id: source_platform
     attributes:
       label: Where was the item pasted? (source)
-      placeholder: e.g., Desktop PC, Windows 11,Chrome 140.0.7339.129.
+      placeholder: e.g., Desktop PC, Windows 11, Chrome 140.0.7339.129.
       description: Include as much information about device, operating system, browser version, etc.
     validations:
       required: true
