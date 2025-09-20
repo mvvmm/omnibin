@@ -62,16 +62,11 @@ body:
       label: File attachment (if file)
       description: Drag-and-drop the file here, or attach it after creating the issue.
 
-  - type: dropdown
+  - type: textarea
     id: source_platform
     attributes:
       label: Where was the item pasted? (source)
-      options:
-        - iOS app
-        - iOS share extension
-        - Web app
-        - Windows app
-        - Other
+      placeholder: e.g., iphone app, ipad app, web.
     validations:
       required: true
 
@@ -83,30 +78,19 @@ body:
     validations:
       required: true
 
-  - type: input
-    id: source_app_version
-    attributes:
-      label: Source omnibin app version (if applicable)
-      placeholder: e.g., 1.2.3 (build 45)
-
-  - type: dropdown
+  - type: textarea
     id: destination_platform
     attributes:
       label: Where is it being copied to? (destination)
-      options:
-        - iOS app
-        - iOS share extension
-        - Web app
-        - Windows app
-        - Other
+      placeholder: e.g., iphone app, ipad app, web.
     validations:
       required: true
 
   - type: input
-    id: destination_context
+    id: destination_device_os
     attributes:
-      label: Destination context details
-      placeholder: e.g., Safari 17.4 on macOS 14.5; Windows 11 desktop
+      label: Destination device and OS version
+      placeholder: e.g., iPhone 14 Pro, iOS 17.6.1
 
   - type: textarea
     id: steps
@@ -139,21 +123,5 @@ body:
     attributes:
       label: Screenshots or screen recordings (optional)
       description: Drag-and-drop images or videos here, or attach them after creating the issue.
-
-  - type: textarea
-    id: logs
-    attributes:
-      label: Logs or error output
-      description: Paste relevant logs or response bodies. Redact secrets.
-
-  - type: checkboxes
-    id: checks
-    attributes:
-      label: Pre-submit checks
-      options:
-        - label: I have searched for existing issues
-          required: true
-        - label: I can reproduce this on the latest version
-        - label: This report contains no sensitive data
 
 

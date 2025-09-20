@@ -1,8 +1,13 @@
-scope name: Feature request
+name: Feature request
 description: Suggest an idea or improvement for omnibin
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a feature request! Fill out the form below as completely as possible.
+
   - type: input
     id: summary
     attributes:
