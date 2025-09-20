@@ -56,11 +56,11 @@ body:
       label: File size (if file)
       placeholder: e.g., 18.2 MB
 
-  - type: attachments
+  - type: textarea
     id: attached_file
     attributes:
-      label: Upload the file (if file)
-      description: Attach the exact file that reproduces the issue, if possible.
+      label: File attachment (if file)
+      description: Drag-and-drop the file here, or attach it after creating the issue.
 
   - type: dropdown
     id: source_platform
@@ -134,10 +134,11 @@ body:
     validations:
       required: true
 
-  - type: attachments
+  - type: textarea
     id: screenshots
     attributes:
       label: Screenshots or screen recordings (optional)
+      description: Drag-and-drop images or videos here, or attach them after creating the issue.
 
   - type: textarea
     id: logs
