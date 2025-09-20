@@ -39,8 +39,9 @@ body:
       label: Item type
       options:
         - Text
+        - Image
         - File
-        - Other / Unsure
+        - Other
     validations:
       required: true
 
@@ -53,44 +54,32 @@ body:
   - type: input
     id: file_size
     attributes:
-      label: File size (if file)
+      label: File size (if image / file)
       placeholder: e.g., 18.2 MB
 
   - type: textarea
     id: attached_file
     attributes:
       label: File attachment (if file)
-      description: Drag-and-drop the file here, or attach it after creating the issue.
+      placeholder: If you're comfortable doing so, drag-and-drop the file here, or attach it after creating the issue.
 
-  - type: textarea
+  - type: input
     id: source_platform
     attributes:
       label: Where was the item pasted? (source)
-      placeholder: e.g., iphone app, ipad app, web.
+      placeholder: e.g., Desktop PC, Windows 11,Chrome 140.0.7339.129.
+      description: Include as much information about device, operating system, browser version, etc.
     validations:
       required: true
 
   - type: input
-    id: source_device_os
-    attributes:
-      label: Source device and OS version
-      placeholder: e.g., iPhone 14 Pro, iOS 17.6.1
-    validations:
-      required: true
-
-  - type: textarea
     id: destination_platform
     attributes:
       label: Where is it being copied to? (destination)
-      placeholder: e.g., iphone app, ipad app, web.
+      placeholder: e.g., iPhone 14 Pro, iOS 17.6.1, app.
+      description: Include as much information about device, operating system, browser version, etc.
     validations:
       required: true
-
-  - type: input
-    id: destination_device_os
-    attributes:
-      label: Destination device and OS version
-      placeholder: e.g., iPhone 14 Pro, iOS 17.6.1
 
   - type: textarea
     id: steps
