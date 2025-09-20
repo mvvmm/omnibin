@@ -1,0 +1,158 @@
+name: Bug report
+description: Report a problem with omnibin
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug! Fill out the form below as completely as possible.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Short summary
+      placeholder: e.g., Pasting PDF from iOS fails with 500
+    validations:
+      required: true
+
+  - type: textarea
+    id: overview
+    attributes:
+      label: Overview of the issue
+      description: What happened? Include error messages verbatim if any.
+      placeholder: Describe the problem...
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired_fix
+    attributes:
+      label: How would you like to see this fixed?
+      placeholder: Describe the desired behavior or fix approach...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: item_type
+    attributes:
+      label: Item type
+      options:
+        - Text
+        - File
+        - Other / Unsure
+    validations:
+      required: true
+
+  - type: input
+    id: text_length
+    attributes:
+      label: Character length (if text)
+      placeholder: e.g., 12,345
+
+  - type: input
+    id: file_size
+    attributes:
+      label: File size (if file)
+      placeholder: e.g., 18.2 MB
+
+  - type: attachments
+    id: attached_file
+    attributes:
+      label: Upload the file (if file)
+      description: Attach the exact file that reproduces the issue, if possible.
+
+  - type: dropdown
+    id: source_platform
+    attributes:
+      label: Where was the item pasted? (source)
+      options:
+        - iOS app
+        - iOS share extension
+        - Web app
+        - Windows app
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: source_device_os
+    attributes:
+      label: Source device and OS version
+      placeholder: e.g., iPhone 14 Pro, iOS 17.6.1
+    validations:
+      required: true
+
+  - type: input
+    id: source_app_version
+    attributes:
+      label: Source omnibin app version (if applicable)
+      placeholder: e.g., 1.2.3 (build 45)
+
+  - type: dropdown
+    id: destination_platform
+    attributes:
+      label: Where is it being copied to? (destination)
+      options:
+        - iOS app
+        - iOS share extension
+        - Web app
+        - Windows app
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: destination_context
+    attributes:
+      label: Destination context details
+      placeholder: e.g., Safari 17.4 on macOS 14.5; Windows 11 desktop
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide numbered steps to reproduce the issue.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: attachments
+    id: screenshots
+    attributes:
+      label: Screenshots or screen recordings (optional)
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error output
+      description: Paste relevant logs or response bodies. Redact secrets.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checks
+      options:
+        - label: I have searched for existing issues
+          required: true
+        - label: I can reproduce this on the latest version
+        - label: This report contains no sensitive data
+
+
