@@ -226,7 +226,7 @@ export function CreateItemForm({
 					rows={3}
 					className={`mb-1 transition-all duration-200 ${
 						isDragOver
-							? "border-accent-primary bg-accent-primary/5 ring-2 ring-accent-primary/20"
+							? "border-omnibin-primary bg-omnibin-primary/5 ring-2 ring-omnibin-primary/20"
 							: ""
 					}`}
 				/>
@@ -234,11 +234,7 @@ export function CreateItemForm({
 			</div>
 
 			<div className="flex items-end gap-3 justify-between">
-				<Button
-					disabled={isSubmitting}
-					type="submit"
-					className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-accent-primary/30 transition-transform duration-200 hover:scale-[1.02] hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-				>
+				<Button disabled={isSubmitting} type="submit" className="btn-omnibin">
 					{isSubmitting ? "Adding..." : "Add"}
 				</Button>
 

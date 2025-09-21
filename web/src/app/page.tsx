@@ -62,10 +62,7 @@ export default async function Home({
 					</p>
 
 					<div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-						<Button
-							asChild
-							className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-accent-primary/30 transition-transform duration-300 hover:scale-[1.02] hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-						>
+						<Button asChild className="btn-omnibin">
 							<Link href="/bin">
 								{session ? "Go to shared bin" : "Login to sync"}
 								{session ? (

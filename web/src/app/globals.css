@@ -108,80 +108,49 @@ body {
 }
 
 @theme inline {
+	/* fonts */
 	--font-comfortaa: var(--font-comfortaa);
 	--font-sans: var(--font-geist-sans);
 	--font-mono: var(--font-geist-mono);
+
+	/* shadcn/ui core color tokens mapped to :root variables */
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
-
-	/* colors */
-
-	/* primary */
-	--color-primary: #f2ba5c;
-	--color-primary-dark: #d89c37;
-	--color-primary-darker: #b0781a;
-	--color-primary-light: #ffd185;
-	--color-primary-lighter: #ffe1af;
-
-	/* secondary */
-	--color-secondary: #2e2417;
-	--color-secondary-dark: #1f180f;
-	--color-secondary-darker: #140f08;
-	--color-secondary-light: #4a3a24;
-	--color-secondary-lighter: #655033;
-
-	/* tertiary */
-	--color-tertiary: #f2d35c;
-	--color-tertiary-dark: #d8b737;
-	--color-tertiary-darker: #b0911a;
-	--color-tertiary-light: #ffe585;
-	--color-tertiary-lighter: #ffeeaf;
-
-	/* accent primary */
-	--color-accent-primary: #5a4da8;
-	--color-accent-primary-dark: #423596;
-	--color-accent-primary-darker: #2c1f7a;
-	--color-accent-primary-light: #7c70c1;
-	--color-accent-primary-lighter: #a9a1dd;
-
-	/* accent secondary */
-	--color-accent-secondary: #456b9f;
-	--color-accent-secondary-dark: #2d568e;
-	--color-accent-secondary-darker: #194074;
-	--color-accent-secondary-light: #698bba;
-	--color-accent-secondary-lighter: #9bb5d9;
-
-	--color-sidebar-ring: var(--sidebar-ring);
-	--color-sidebar-border: var(--sidebar-border);
-	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-	--color-sidebar-accent: var(--sidebar-accent);
-	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-	--color-sidebar-primary: var(--sidebar-primary);
-	--color-sidebar-foreground: var(--sidebar-foreground);
-	--color-sidebar: var(--sidebar);
-	--color-chart-5: var(--chart-5);
-	--color-chart-4: var(--chart-4);
-	--color-chart-3: var(--chart-3);
-	--color-chart-2: var(--chart-2);
-	--color-chart-1: var(--chart-1);
-	--color-ring: var(--ring);
-	--color-input: var(--input);
-	--color-border: var(--border);
-	--color-destructive: var(--destructive);
-	--color-accent-foreground: var(--accent-foreground);
-	--color-accent: var(--accent);
-	--color-muted-foreground: var(--muted-foreground);
-	--color-muted: var(--muted);
-	--color-secondary-foreground: var(--secondary-foreground);
-	--color-primary-foreground: var(--primary-foreground);
-	--color-popover-foreground: var(--popover-foreground);
-	--color-popover: var(--popover);
-	--color-card-foreground: var(--card-foreground);
 	--color-card: var(--card);
-	--radius-sm: calc(var(--radius) - 4px);
-	--radius-md: calc(var(--radius) - 2px);
-	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) + 4px);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+
+	/* optional palettes used by charts/sidebar examples */
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+
+	/* custom */
+	--color-omnibin-primary: #5a4da8;
+	--color-omnibin-secondary: #456b9f;
 }
 
 @layer base {
@@ -190,5 +159,10 @@ body {
 	}
 	body {
 		@apply bg-background text-foreground;
+	}
+}
+@layer utilities {
+	.btn-omnibin {
+		@apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-omnibin-primary to-omnibin-secondary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-omnibin-primary/30 transition-transform duration-200 focus:outline-none hover:scale-105 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/60;
 	}
 }
