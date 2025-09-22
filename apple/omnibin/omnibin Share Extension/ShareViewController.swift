@@ -1,74 +1,589 @@
 import UIKit
 import Social
 import Foundation
+import UniformTypeIdentifiers
 
 class ShareViewController: UIViewController {
     
     private var isProcessing = false
-    private let activityIndicator = UIActivityIndicatorView(style: .large)
+    private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let statusLabel = UILabel()
     private let cancelButton = UIButton(type: .system)
+
+    // Header
+    private let headerContainer = UIView()
+    private let closeButton = UIButton(type: .system)
+    private let addButton = UIButton(type: .system)
+    private let titleStack = UIStackView()
+    private let logoImageView = UIImageView()
+    private let titleLabel = UILabel()
+
+    // Content container (drawer style)
+    private let drawerContainer = UIView()
+    private let previewContainer = UIView()
+    private let previewImageView = UIImageView()
+    private let previewTextView = UITextView()
+    private let bottomLogoImageView = UIImageView()
+    private let statusStack = UIStackView()
+    private let countLabel = UILabel()
+    private let warningLabel = UILabel()
+    private var imageBottomConstraint: NSLayoutConstraint?
+    private var textBottomConstraint: NSLayoutConstraint?
+    private var imageAspectConstraint: NSLayoutConstraint?
+    private var textPreviewMaxHeightConstraint: NSLayoutConstraint?
+    private var previewTextHeightConstraint: NSLayoutConstraint?
+    private var limitWarningText: String?
+    private let binItemsLimit = 10
+    
+    private enum SharedContent {
+        case text(String)
+        case url(URL)
+        case image(UIImage)
+        case fileURL(URL)
+    }
+    private var sharedContent: SharedContent?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        processContentAutomatically()
+        loadSharedContentForPreview()
+        Task { await self.checkAndShowBinLimitWarning() }
     }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if !previewTextView.isHidden {
+            adjustTextHeightToContent()
+        }
+    }
+    
+    
     
     private func setupUI() {
-        view.backgroundColor = UIColor.systemBackground
-        
-        // Setup activity indicator
+        view.backgroundColor = UIColor.systemGroupedBackground
+
+        // Drawer container styling
+        drawerContainer.translatesAutoresizingMaskIntoConstraints = false
+        drawerContainer.backgroundColor = UIColor.systemBackground
+        drawerContainer.layer.cornerRadius = 16
+        drawerContainer.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        drawerContainer.layer.masksToBounds = true
+        view.addSubview(drawerContainer)
+
+        // Header
+        headerContainer.translatesAutoresizingMaskIntoConstraints = false
+        headerContainer.backgroundColor = UIColor.secondarySystemBackground
+        drawerContainer.addSubview(headerContainer)
+
+        // Close button (X)
+        closeButton.translatesAutoresizingMaskIntoConstraints = false
+        let closeConfig = UIImage.SymbolConfiguration(pointSize: 18, weight: .semibold)
+        closeButton.setImage(UIImage(systemName: "xmark", withConfiguration: closeConfig), for: .normal)
+        closeButton.tintColor = UIColor.label
+        closeButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
+        headerContainer.addSubview(closeButton)
+
+        // Add button
+        addButton.translatesAutoresizingMaskIntoConstraints = false
+        addButton.setTitle("Add", for: .normal)
+        addButton.titleLabel?.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        addButton.addTarget(self, action: #selector(addTapped), for: .touchUpInside)
+        headerContainer.addSubview(addButton)
+
+        // Title + logo
+        titleStack.translatesAutoresizingMaskIntoConstraints = false
+        titleStack.axis = .horizontal
+        titleStack.alignment = .center
+        titleStack.spacing = 8
+        headerContainer.addSubview(titleStack)
+
+        logoImageView.translatesAutoresizingMaskIntoConstraints = false
+        logoImageView.contentMode = .scaleAspectFit
+        let logo = UIImage(named: "binboy") ?? UIImage(named: "omnibin-logo") ?? UIImage(systemName: "tray.and.arrow.down.fill")
+        logoImageView.image = logo
+        logoImageView.tintColor = UIColor.label
+        titleStack.addArrangedSubview(logoImageView)
+
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "Add to omnibin"
+        titleLabel.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        titleStack.addArrangedSubview(titleLabel)
+
+        // Preview container
+        previewContainer.translatesAutoresizingMaskIntoConstraints = false
+        previewContainer.backgroundColor = UIColor.systemBackground
+        drawerContainer.addSubview(previewContainer)
+
+        // Image preview
+        previewImageView.translatesAutoresizingMaskIntoConstraints = false
+        previewImageView.contentMode = .scaleAspectFit
+        previewImageView.setContentHuggingPriority(.required, for: .vertical)
+        previewImageView.setContentCompressionResistancePriority(.required, for: .vertical)
+        previewImageView.isHidden = true
+        previewContainer.addSubview(previewImageView)
+
+        // Text preview
+        previewTextView.translatesAutoresizingMaskIntoConstraints = false
+        previewTextView.isEditable = false
+        previewTextView.isScrollEnabled = false
+        previewTextView.alwaysBounceVertical = true
+        previewTextView.showsVerticalScrollIndicator = true
+        previewTextView.isSelectable = true
+        previewTextView.isUserInteractionEnabled = true
+        previewTextView.font = UIFont.systemFont(ofSize: 16)
+        previewTextView.textAlignment = .left
+        previewTextView.backgroundColor = UIColor.secondarySystemBackground
+        previewTextView.layer.cornerRadius = 8
+        previewTextView.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        previewTextView.isHidden = true
+        previewTextView.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        previewTextView.setContentCompressionResistancePriority(.required, for: .vertical)
+        previewContainer.addSubview(previewTextView)
+
+        // Activity + status (inline)
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        activityIndicator.startAnimating()
-        view.addSubview(activityIndicator)
-        
-        // Setup status label
+        activityIndicator.hidesWhenStopped = true
+
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        statusLabel.text = "Adding to omnibin..."
+        statusLabel.text = ""
         statusLabel.textAlignment = .center
-        statusLabel.font = UIFont.systemFont(ofSize: 16)
-        view.addSubview(statusLabel)
-        
-        // Setup cancel button
-        cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.setTitle("Cancel", for: .normal)
-        cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
-        view.addSubview(cancelButton)
-        
-        // Layout constraints
+        statusLabel.font = UIFont.systemFont(ofSize: 14)
+        statusLabel.textColor = UIColor.secondaryLabel
+        statusLabel.numberOfLines = 0
+        statusLabel.lineBreakMode = .byWordWrapping
+        statusLabel.setContentHuggingPriority(.required, for: .horizontal)
+
+        statusStack.translatesAutoresizingMaskIntoConstraints = false
+        statusStack.axis = .horizontal
+        statusStack.alignment = .center
+        statusStack.spacing = 6
+        statusStack.setContentHuggingPriority(.required, for: .horizontal)
+        statusStack.addArrangedSubview(activityIndicator)
+        statusStack.addArrangedSubview(statusLabel)
+        drawerContainer.addSubview(statusStack)
+
+        // Count label directly under preview
+        countLabel.translatesAutoresizingMaskIntoConstraints = false
+        countLabel.textAlignment = .right
+        countLabel.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
+        countLabel.textColor = UIColor.secondaryLabel
+        drawerContainer.addSubview(countLabel)
+
+        // Warning label (separate from loading text)
+        warningLabel.translatesAutoresizingMaskIntoConstraints = false
+        warningLabel.textAlignment = .right
+        warningLabel.font = UIFont.systemFont(ofSize: 14)
+        warningLabel.textColor = UIColor.systemRed
+        warningLabel.numberOfLines = 0
+        warningLabel.lineBreakMode = .byWordWrapping
+        drawerContainer.addSubview(warningLabel)
+
+        // Bottom logo
+        bottomLogoImageView.translatesAutoresizingMaskIntoConstraints = false
+        bottomLogoImageView.contentMode = .scaleAspectFit
+        bottomLogoImageView.image = UIImage(named: "omnibin-logo6") ?? UIImage(named: "omnibin-logo") ?? UIImage(named: "binboy")
+        bottomLogoImageView.setContentHuggingPriority(.required, for: .vertical)
+        bottomLogoImageView.setContentHuggingPriority(.required, for: .horizontal)
+        bottomLogoImageView.setContentCompressionResistancePriority(.required, for: .vertical)
+        bottomLogoImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
+        drawerContainer.addSubview(bottomLogoImageView)
+        // Ensure logo sits behind other content and never overlays the preview
+        drawerContainer.sendSubviewToBack(bottomLogoImageView)
+
+        // Layout
         NSLayoutConstraint.activate([
-            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -50),
-            
-            statusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            statusLabel.topAnchor.constraint(equalTo: activityIndicator.bottomAnchor, constant: 20),
-            statusLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
-            statusLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
-            
-            cancelButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            cancelButton.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 30)
+            // Drawer fills width, pinned to bottom like a sheet
+            drawerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            drawerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            drawerContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            drawerContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+
+            // Header
+            headerContainer.topAnchor.constraint(equalTo: drawerContainer.topAnchor),
+            headerContainer.leadingAnchor.constraint(equalTo: drawerContainer.leadingAnchor),
+            headerContainer.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor),
+            headerContainer.heightAnchor.constraint(equalToConstant: 56),
+
+            closeButton.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 12),
+            closeButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
+            closeButton.widthAnchor.constraint(equalToConstant: 36),
+            closeButton.heightAnchor.constraint(equalToConstant: 36),
+
+            addButton.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -12),
+            addButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
+
+            titleStack.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor),
+            titleStack.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
+
+            logoImageView.widthAnchor.constraint(equalToConstant: 20),
+            logoImageView.heightAnchor.constraint(equalToConstant: 20),
+
+            // Preview container
+            previewContainer.topAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: 12),
+            previewContainer.leadingAnchor.constraint(equalTo: drawerContainer.leadingAnchor, constant: 16),
+            previewContainer.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+            previewContainer.bottomAnchor.constraint(equalTo: countLabel.topAnchor, constant: -8),
+
+            // Image preview constraints (height wraps content; avoid extra space)
+            previewImageView.topAnchor.constraint(equalTo: previewContainer.topAnchor),
+            previewImageView.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor),
+            previewImageView.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor),
+            previewImageView.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor),
+
+            // Text preview constraints
+            previewTextView.topAnchor.constraint(equalTo: previewContainer.topAnchor),
+            previewTextView.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor),
+            previewTextView.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor),
+            previewTextView.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor),
+            // Allow the text area to collapse fully when content is short
+            previewTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 0),
+            previewContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 0),
+
+            // Count below preview (right aligned)
+            countLabel.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.leadingAnchor, constant: 16),
+            countLabel.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+
+            // Warning right below count
+            warningLabel.topAnchor.constraint(equalTo: countLabel.bottomAnchor, constant: 6),
+            warningLabel.leadingAnchor.constraint(equalTo: drawerContainer.leadingAnchor, constant: 16),
+            warningLabel.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+
+            // Activity + status stack now below warning
+            statusStack.topAnchor.constraint(equalTo: warningLabel.bottomAnchor, constant: 6),
+            statusStack.centerXAnchor.constraint(equalTo: drawerContainer.centerXAnchor),
+            statusStack.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.leadingAnchor, constant: 16),
+            statusStack.trailingAnchor.constraint(lessThanOrEqualTo: drawerContainer.trailingAnchor, constant: -16),
+
+            // Bottom logo fills remaining space
+            bottomLogoImageView.topAnchor.constraint(equalTo: statusStack.bottomAnchor, constant: 8),
+            bottomLogoImageView.centerXAnchor.constraint(equalTo: drawerContainer.centerXAnchor),
+            bottomLogoImageView.widthAnchor.constraint(lessThanOrEqualToConstant: 160),
+            bottomLogoImageView.heightAnchor.constraint(equalToConstant: 64),
+            bottomLogoImageView.bottomAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.bottomAnchor, constant: -24)
         ])
+
+        // Start animating while preparing
+        activityIndicator.startAnimating()
     }
     
-    private func processContentAutomatically() {
-        guard !isProcessing else { return }
-        
-        isProcessing = true
-        
-        // Process the content immediately
-        processContent { [weak self] success in
+    private func checkAndShowBinLimitWarning() async {
+        guard let accessToken = getAccessToken() else { return }
+        do {
+            let count = try await fetchBinItemCount(accessToken: accessToken)
+            if count >= binItemsLimit {
+                let message = "Oldest item will be deleted on next add."
+                await MainActor.run {
+                    self.limitWarningText = message
+                    if !self.isProcessing {
+                        self.warningLabel.text = message
+                        self.warningLabel.isHidden = false
+                    }
+                }
+            await MainActor.run {
+                self.countLabel.text = "Items: \(min(count, binItemsLimit))/\(binItemsLimit)"
+                self.countLabel.textColor = count >= binItemsLimit ? UIColor.systemRed : UIColor.secondaryLabel
+            }
+        } else {
+            await MainActor.run {
+                self.countLabel.text = "Items: \(count)/\(binItemsLimit)"
+                self.countLabel.textColor = UIColor.secondaryLabel
+                self.warningLabel.isHidden = true
+            }
+            }
+        } catch {
+            // Ignore silently; not critical for sharing flow
+        }
+    }
+    
+    private func fetchBinItemCount(accessToken: String) async throws -> Int {
+        guard let url = URL(string: "https://www.omnib.in/api/bin") else {
+            throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+            throw NSError(domain: "ShareExtension", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch bin items"])
+        }
+        // Response may be { items: [...] } or an array; support both
+        if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let items = obj["items"] as? [Any] {
+            return items.count
+        }
+        if let arr = try? JSONSerialization.jsonObject(with: data) as? [Any] {
+            return arr.count
+        }
+        return 0
+    }
+    
+    private func loadSharedContentForPreview() {
+        guard let inputItem = extensionContext?.inputItems.first as? NSExtensionItem,
+              let attachments = inputItem.attachments, !attachments.isEmpty else {
             Task { @MainActor in
-                self?.isProcessing = false
-                if success {
-                    self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                self.activityIndicator.stopAnimating()
+                self.statusLabel.text = "No content to share"
+            }
+            return
+        }
+
+        func firstAttachment(matching type: String) -> NSItemProvider? {
+            return attachments.first { $0.hasItemConformingToTypeIdentifier(type) }
+        }
+
+        if let provider = firstAttachment(matching: "public.image") {
+            provider.loadItem(forTypeIdentifier: "public.image", options: nil) { [weak self] (item, error) in
+                guard let self = self else { return }
+                if let image = item as? UIImage {
+                    Task { @MainActor in
+                        self.sharedContent = .image(image)
+                        self.updatePreview()
+                    }
+                } else if let url = item as? URL {
+                    // For local file URL, try load data for preview
+                    Task {
+                        if url.isFileURL, let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+                            await MainActor.run {
+                                self.sharedContent = .image(image)
+                                self.updatePreview()
+                            }
+                        } else {
+                            await MainActor.run {
+                                self.sharedContent = .url(url)
+                                self.updatePreview()
+                            }
+                        }
+                    }
                 } else {
-                    self?.statusLabel.text = "Failed to add content"
+                    Task { @MainActor in
+                        self.activityIndicator.stopAnimating()
+                        self.statusLabel.text = "Unsupported image format"
+                    }
+                }
+            }
+        } else if let provider = firstAttachment(matching: "public.file-url") {
+            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { [weak self] (item, _) in
+                guard let self = self else { return }
+                if let url = item as? URL {
+                    Task { @MainActor in
+                        self.sharedContent = .fileURL(url)
+                        self.updatePreview()
+                    }
+                } else {
+                    Task { @MainActor in
+                        self.activityIndicator.stopAnimating()
+                        self.statusLabel.text = "Failed to read file URL"
+                    }
+                }
+            }
+        } else if let provider = firstAttachment(matching: "public.url") {
+            provider.loadItem(forTypeIdentifier: "public.url", options: nil) { [weak self] (item, _) in
+                guard let self = self else { return }
+                if let url = item as? URL {
+                    Task { @MainActor in
+                        self.sharedContent = url.isFileURL ? .fileURL(url) : .url(url)
+                        self.updatePreview()
+                    }
+                } else {
+                    Task { @MainActor in
+                        self.activityIndicator.stopAnimating()
+                        self.statusLabel.text = "Failed to read URL"
+                    }
+                }
+            }
+        } else if let provider = firstAttachment(matching: "public.text") {
+            provider.loadItem(forTypeIdentifier: "public.text", options: nil) { [weak self] (item, _) in
+                guard let self = self else { return }
+                if let text = item as? String {
+                    // If the text contains a URL, prefer the URL over the title
+                    Task {
+                        if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) {
+                            let range = NSRange(text.startIndex..<text.endIndex, in: text)
+                            if let match = detector.firstMatch(in: text, options: [], range: range), let foundURL = match.url {
+                                await MainActor.run {
+                                    self.sharedContent = .url(foundURL)
+                                    self.updatePreview()
+                                }
+                                return
+                            }
+                        }
+                        await MainActor.run {
+                            self.sharedContent = .text(text)
+                            self.updatePreview()
+                        }
+                    }
+                } else {
+                    Task { @MainActor in
+                        self.activityIndicator.stopAnimating()
+                        self.statusLabel.text = "Failed to read text"
+                    }
+                }
+            }
+        } else {
+            Task { @MainActor in
+                self.activityIndicator.stopAnimating()
+                self.statusLabel.text = "Unsupported content"
+            }
+        }
+    }
+
+    @objc private func addTapped() {
+        guard !isProcessing else { return }
+        guard let sharedContent = sharedContent else { return }
+        isProcessing = true
+        activityIndicator.startAnimating()
+        statusLabel.text = "Adding to omnibin..."
+        addButton.isEnabled = false
+        closeButton.isEnabled = false
+
+        switch sharedContent {
+        case .text(let text):
+            addTextToBin(text) { [weak self] success in
+                Task { @MainActor in
+                    self?.isProcessing = false
                     self?.activityIndicator.stopAnimating()
-                    self?.cancelButton.setTitle("Close", for: .normal)
+                    if success {
+                        self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                    } else {
+                        self?.statusLabel.text = "Failed to add content"
+                        self?.addButton.isEnabled = true
+                        self?.closeButton.isEnabled = true
+                    }
+                }
+            }
+        case .url(let url):
+            addURLToBin(url) { [weak self] success in
+                Task { @MainActor in
+                    self?.isProcessing = false
+                    self?.activityIndicator.stopAnimating()
+                    if success {
+                        self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                    } else {
+                        self?.statusLabel.text = "Failed to add content"
+                        self?.addButton.isEnabled = true
+                        self?.closeButton.isEnabled = true
+                    }
+                }
+            }
+        case .image(let image):
+            addImageToBin(image) { [weak self] success in
+                Task { @MainActor in
+                    self?.isProcessing = false
+                    self?.activityIndicator.stopAnimating()
+                    if success {
+                        self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                    } else {
+                        self?.statusLabel.text = "Failed to add content"
+                        self?.addButton.isEnabled = true
+                        self?.closeButton.isEnabled = true
+                    }
+                }
+            }
+        case .fileURL(let url):
+            addGenericFileFromURL(url) { [weak self] success in
+                Task { @MainActor in
+                    self?.isProcessing = false
+                    self?.activityIndicator.stopAnimating()
+                    if success {
+                        self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                    } else {
+                        self?.statusLabel.text = "Failed to add content"
+                        self?.addButton.isEnabled = true
+                        self?.closeButton.isEnabled = true
+                    }
                 }
             }
         }
+    }
+
+    private func updatePreview() {
+        activityIndicator.stopAnimating()
+        addButton.isEnabled = true
+
+        previewImageView.isHidden = true
+        previewTextView.isHidden = true
+
+        guard let sharedContent = sharedContent else {
+            statusLabel.text = "No content to preview"
+            return
+        }
+
+        switch sharedContent {
+        case .image(let image):
+            // Deactivate text max height for images
+            textPreviewMaxHeightConstraint?.isActive = false
+
+            // Update aspect ratio so the container hugs the actual image size
+            imageAspectConstraint?.isActive = false
+            let ratio = max(0.1, min(CGFloat(image.size.height / image.size.width), 5.0))
+            imageAspectConstraint = previewImageView.heightAnchor.constraint(equalTo: previewImageView.widthAnchor, multiplier: ratio)
+            imageAspectConstraint?.priority = .required
+            imageAspectConstraint?.isActive = true
+
+            previewImageView.image = image
+            previewImageView.isHidden = false
+            previewTextView.isHidden = true
+        case .text(let text):
+            // Cap text preview container height to 50% of screen
+            textPreviewMaxHeightConstraint?.isActive = false
+            textPreviewMaxHeightConstraint = previewContainer.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.5)
+            textPreviewMaxHeightConstraint?.priority = .required
+            textPreviewMaxHeightConstraint?.isActive = true
+
+            imageAspectConstraint?.isActive = false
+            previewTextView.isHidden = false
+            previewTextView.text = text
+            adjustTextHeightToContent()
+            previewTextView.setContentOffset(.zero, animated: false)
+        case .url(let url):
+            textPreviewMaxHeightConstraint?.isActive = false
+            textPreviewMaxHeightConstraint = previewContainer.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.5)
+            textPreviewMaxHeightConstraint?.priority = .required
+            textPreviewMaxHeightConstraint?.isActive = true
+
+            imageAspectConstraint?.isActive = false
+            previewTextView.isHidden = false
+            previewTextView.text = url.absoluteString
+            adjustTextHeightToContent()
+            previewTextView.setContentOffset(.zero, animated: false)
+        case .fileURL(let url):
+            textPreviewMaxHeightConstraint?.isActive = false
+            textPreviewMaxHeightConstraint = previewContainer.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.5)
+            textPreviewMaxHeightConstraint?.priority = .required
+            textPreviewMaxHeightConstraint?.isActive = true
+
+            imageAspectConstraint?.isActive = false
+            previewTextView.isHidden = false
+            previewTextView.text = url.lastPathComponent
+            adjustTextHeightToContent()
+            previewTextView.setContentOffset(.zero, animated: false)
+        }
+        // Clear any transient "ready" messaging once preview is visible
+        if let warning = limitWarningText, !warning.isEmpty {
+            warningLabel.text = warning
+            warningLabel.isHidden = false
+        } else {
+            warningLabel.text = ""
+            warningLabel.isHidden = true
+        }
+    }
+
+    private func adjustTextHeightToContent() {
+        // Measure text and set height so box hugs content up to a cap; enable scroll beyond cap
+        let horizontalInsets: CGFloat = 0
+        var fittingWidth = previewTextView.bounds.width - horizontalInsets
+        if fittingWidth <= 0 {
+            fittingWidth = drawerContainer.bounds.width - 32
+        }
+        let size = previewTextView.sizeThatFits(CGSize(width: fittingWidth, height: CGFloat.greatestFiniteMagnitude))
+        let maxHeight = view.bounds.height * 0.35
+        let finalHeight = min(size.height, maxHeight)
+        previewTextView.isScrollEnabled = size.height > maxHeight
+
+        previewTextHeightConstraint?.isActive = false
+        previewTextHeightConstraint = previewTextView.heightAnchor.constraint(equalToConstant: max(0, finalHeight))
+        previewTextHeightConstraint?.priority = .required
+        previewTextHeightConstraint?.isActive = true
+        previewTextView.layoutIfNeeded()
     }
     
     @objc private func cancelTapped() {
@@ -234,6 +749,63 @@ class ShareViewController: UIViewController {
             loadRemoteImage(from: url, completion: completion)
         }
     }
+
+    private func addGenericFileFromURL(_ url: URL, completion: @escaping (Bool) -> Void) {
+        // Upload arbitrary file contents using security-scoped URL
+        guard let accessToken = getAccessToken() else {
+            DispatchQueue.main.async {
+                self.statusLabel.text = "Not logged in"
+                self.activityIndicator.stopAnimating()
+            }
+            completion(false)
+            return
+        }
+
+        Task {
+            do {
+                var data: Data?
+                var contentType = "application/octet-stream"
+                let originalName = url.lastPathComponent
+
+                if url.isFileURL {
+                    let gained = url.startAccessingSecurityScopedResource()
+                    defer {
+                        if gained { url.stopAccessingSecurityScopedResource() }
+                    }
+                    data = try Data(contentsOf: url)
+
+                    if #available(iOS 14.0, *) {
+                        if let utType = UTType(filenameExtension: url.pathExtension) {
+                            contentType = utType.preferredMIMEType ?? contentType
+                        }
+                    }
+                } else {
+                    let (remoteData, response) = try await URLSession.shared.data(from: url)
+                    _ = response
+                    data = remoteData
+                }
+
+                guard let fileData = data else {
+                    await self.setStatusAndStopAnimating("Failed to read file")
+                    completion(false)
+                    return
+                }
+
+                let _ = try await self.addFileItemToAPI(
+                    fileData: fileData,
+                    originalName: originalName,
+                    contentType: contentType,
+                    imageWidth: nil,
+                    imageHeight: nil,
+                    accessToken: accessToken
+                )
+                await self.callCompletion(true, completion: completion)
+            } catch {
+                await self.setStatusAndStopAnimating("Upload failed")
+                completion(false)
+            }
+        }
+    }
     
     private func loadLocalImage(from url: URL, completion: @escaping (Bool) -> Void) {
         Task {
@@ -359,24 +931,46 @@ class ShareViewController: UIViewController {
             throw NSError(domain: "ShareExtension", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
         }
         
-        guard httpResponse.statusCode == 200 else {
+        guard (200...299).contains(httpResponse.statusCode) else {
             let responseString = String(data: data, encoding: .utf8) ?? "No response body"
             throw NSError(domain: "ShareExtension", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP error: \(httpResponse.statusCode) - \(responseString)"])
         }
         
-        // Parse response to BinItem
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard let itemData = json else {
-            throw NSError(domain: "ShareExtension", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
+        // Parse response to BinItem; tolerate empty or non-JSON bodies (e.g., 201/204)
+        if data.isEmpty {
+            return BinItem(
+                id: UUID().uuidString,
+                createdAt: "",
+                textItem: TextItem(content: content),
+                fileItem: nil
+            )
         }
-        
-        // Create a simple BinItem from the response
-        return BinItem(
-            id: itemData["id"] as? String ?? UUID().uuidString,
-            createdAt: itemData["createdAt"] as? String ?? "",
-            textItem: TextItem(content: content),
-            fileItem: nil
-        )
+
+        do {
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            if let itemData = json {
+                return BinItem(
+                    id: itemData["id"] as? String ?? UUID().uuidString,
+                    createdAt: itemData["createdAt"] as? String ?? "",
+                    textItem: TextItem(content: content),
+                    fileItem: nil
+                )
+            } else {
+                return BinItem(
+                    id: UUID().uuidString,
+                    createdAt: "",
+                    textItem: TextItem(content: content),
+                    fileItem: nil
+                )
+            }
+        } catch {
+            return BinItem(
+                id: UUID().uuidString,
+                createdAt: "",
+                textItem: TextItem(content: content),
+                fileItem: nil
+            )
+        }
     }
     
     private func addFileItemToAPI(fileData: Data, originalName: String, contentType: String, imageWidth: Int?, imageHeight: Int?, accessToken: String) async throws -> BinItem {
@@ -480,3 +1074,5 @@ struct FileItem {
     let contentType: String
     let size: Int
 }
+
+// (Quick Look integration removed)
