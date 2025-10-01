@@ -316,22 +316,31 @@ struct BinItemRow: View {
         isDownloading = true
         do {
             let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
-            let (tmp, _) = try await URLSession.shared.download(from: URL(string: downloadURL)!)
+            if item.fileItem?.contentType.hasPrefix("image/") == true {
+                // Save images (e.g., PNG, JPEG) directly to Photos
+                let (data, _) = try await URLSession.shared.data(from: URL(string: downloadURL)!)
+                if let image = UIImage(data: data) {
+                    await saveImageToPhotos(image)
+                } else {
+                    await setDownloadErrorUI(message: "Failed to decode image")
+                }
+            } else {
+                // Non-images: present Files exporter
+                let (tmp, _) = try await URLSession.shared.download(from: URL(string: downloadURL)!)
+                let data = try Data(contentsOf: tmp)
+                let name = item.fileItem?.originalName ?? "download"
+                let ext  = (name as NSString).pathExtension
+                let type = UTType(filenameExtension: ext) ?? .data
 
-            let data = try Data(contentsOf: tmp)
-            let name = item.fileItem?.originalName ?? "download"
-            let ext  = (name as NSString).pathExtension
-            let type = UTType(filenameExtension: ext) ?? .data
-
-            await MainActor.run {
-                exportType = type
-                exportName = name.isEmpty ? "download" : name
-                exportDoc  = DataDoc(data: data)
-                showExporter = true
+                await MainActor.run {
+                    exportType = type
+                    exportName = name.isEmpty ? "download" : name
+                    exportDoc  = DataDoc(data: data)
+                    showExporter = true
+                }
             }
         } catch {
             await setDownloadErrorUI(message: "Failed: \(error.localizedDescription)")
-            isDownloading = false
         }
     }
     

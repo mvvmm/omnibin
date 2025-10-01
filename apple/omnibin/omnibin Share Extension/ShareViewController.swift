@@ -1,5 +1,4 @@
 import UIKit
-import Social
 import Foundation
 import UniformTypeIdentifiers
 
@@ -32,6 +31,7 @@ class ShareViewController: UIViewController {
     private var imageAspectConstraint: NSLayoutConstraint?
     private var textPreviewMaxHeightConstraint: NSLayoutConstraint?
     private var previewTextHeightConstraint: NSLayoutConstraint?
+    private var imagePreviewMaxHeightConstraint: NSLayoutConstraint?
     private var limitWarningText: String?
     private let binItemsLimit = 10
     
@@ -280,12 +280,12 @@ class ShareViewController: UIViewController {
                     }
                 }
             await MainActor.run {
-                self.countLabel.text = "Items: \(min(count, binItemsLimit))/\(binItemsLimit)"
+                self.countLabel.text = "Items: \(min(count, binItemsLimit)) / \(binItemsLimit)"
                 self.countLabel.textColor = count >= binItemsLimit ? UIColor.systemRed : UIColor.secondaryLabel
             }
         } else {
             await MainActor.run {
-                self.countLabel.text = "Items: \(count)/\(binItemsLimit)"
+                self.countLabel.text = "Items: \(count) / \(binItemsLimit)"
                 self.countLabel.textColor = UIColor.secondaryLabel
                 self.warningLabel.isHidden = true
             }
@@ -516,8 +516,15 @@ class ShareViewController: UIViewController {
             imageAspectConstraint?.isActive = false
             let ratio = max(0.1, min(CGFloat(image.size.height / image.size.width), 5.0))
             imageAspectConstraint = previewImageView.heightAnchor.constraint(equalTo: previewImageView.widthAnchor, multiplier: ratio)
-            imageAspectConstraint?.priority = .required
+            // Lower the priority so it can yield to the max-height cap without constraint conflicts
+            imageAspectConstraint?.priority = .defaultHigh
             imageAspectConstraint?.isActive = true
+
+            // Cap image preview container height to 50% of screen to avoid overlapping status/count area
+            imagePreviewMaxHeightConstraint?.isActive = false
+            imagePreviewMaxHeightConstraint = previewContainer.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.5)
+            imagePreviewMaxHeightConstraint?.priority = .required
+            imagePreviewMaxHeightConstraint?.isActive = true
 
             previewImageView.image = image
             previewImageView.isHidden = false
@@ -683,8 +690,28 @@ class ShareViewController: UIViewController {
             return
         }
         
-        // Convert image to JPEG data
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+        let usePNG: Bool = {
+            guard let alphaInfo = image.cgImage?.alphaInfo else { return false }
+            switch alphaInfo {
+            case .first, .last, .premultipliedFirst, .premultipliedLast:
+                return true
+            default:
+                return false
+            }
+        }()
+        let imageData: Data?
+        let contentType: String
+        let fileExtension: String
+        if usePNG, let data = image.pngData() {
+            imageData = data
+            contentType = "image/png"
+            fileExtension = "png"
+        } else {
+            imageData = image.jpegData(compressionQuality: 0.8)
+            contentType = "image/jpeg"
+            fileExtension = "jpg"
+        }
+        guard let imageData else {
             Task { @MainActor in
                 self.statusLabel.text = "Failed to process image"
                 self.activityIndicator.stopAnimating()
@@ -710,7 +737,7 @@ class ShareViewController: UIViewController {
         
         // Generate a filename
         let timestamp = Int(Date().timeIntervalSince1970)
-        let filename = "shared_image_\(timestamp).jpg"
+        let filename = "shared_image_\(timestamp).\(fileExtension)"
         
         // Make API call to add file item
         Task {
@@ -718,7 +745,7 @@ class ShareViewController: UIViewController {
                 let _ = try await addFileItemToAPI(
                     fileData: imageData,
                     originalName: filename,
-                    contentType: "image/jpeg",
+                    contentType: contentType,
                     imageWidth: imageWidth,
                     imageHeight: imageHeight,
                     accessToken: accessToken
