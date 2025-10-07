@@ -6,12 +6,19 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { deleteBinItem } from "@/actions/deleteBinItem";
 import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
+import type { OgData } from "@/actions/getOpenGraphData";
 import type { BinItem } from "@/types/bin";
 import { formatFileSize } from "@/utils/formatFileSize";
 import { isCopyableFile } from "@/utils/isCopyableFile";
 import { Button } from "../ui/button";
 
-export function BinListItem({ item }: { item: BinItem }) {
+export function BinListItem({
+	item,
+	ogData,
+}: {
+	item: BinItem;
+	ogData?: OgData | null;
+}) {
 	const router = useRouter();
 
 	const [error, setError] = useState<string | null>(null);
@@ -226,6 +233,9 @@ export function BinListItem({ item }: { item: BinItem }) {
 
 	const renderTitle = () => {
 		if (item.kind === "TEXT" && item.textItem) {
+			if (ogData) {
+				return ogData.title || new URL(ogData.url).hostname;
+			}
 			return item.textItem.content;
 		}
 		if (item.kind === "FILE" && item.fileItem) {
@@ -284,7 +294,9 @@ export function BinListItem({ item }: { item: BinItem }) {
 				}}
 			>
 				<div className="flex items-start justify-between gap-3">
-					<div className="font-medium text-foreground">{renderTitle()}</div>
+					<div className="font-medium text-foreground flex-1 min-w-0 truncate">
+						{renderTitle()}
+					</div>
 					<div className="flex items-center gap-1.5">
 						{/* Copy Text Button */}
 						{item.kind === "TEXT" && item.textItem && (
@@ -388,6 +400,81 @@ export function BinListItem({ item }: { item: BinItem }) {
 
 				<div className="flex items-start justify-start gap-3">
 					<div className="min-w-0 flex-1 text-left">
+						{/* URL Open Graph Preview */}
+						{item.kind === "TEXT" && ogData && (
+							<a
+								href={ogData.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="block mt-2 mb-4 overflow-hidden rounded-lg border border-border hover:bg-muted/30"
+								onClick={(e) => {
+									e.stopPropagation();
+								}}
+							>
+								<div className="relative w-full overflow-hidden rounded-lg">
+									{ogData.image ? (
+										<>
+											{/* Image-dominant preview (image on top, text block below) */}
+											<div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-muted/20">
+												<Image
+													src={ogData.image}
+													alt={ogData.title ?? "link preview"}
+													fill
+													className="object-cover"
+													unoptimized
+													referrerPolicy="no-referrer"
+												/>
+											</div>
+											<div className="p-3">
+												<div className="text-sm font-medium truncate">
+													{ogData.title || new URL(ogData.url).hostname}
+												</div>
+												{ogData.description && (
+													<div className="text-xs text-muted-foreground line-clamp-2">
+														{ogData.description}
+													</div>
+												)}
+												<div className="mt-1 text-xs text-muted-foreground truncate">
+													{ogData.siteName ?? new URL(ogData.url).hostname}
+												</div>
+											</div>
+										</>
+									) : (
+										/* Compact preview without image */
+										<div className="border border-border rounded-lg p-3 bg-muted/10">
+											<div className="flex items-center gap-3 min-w-0">
+												{/* Favicon if present */}
+												{ogData.icon && (
+													<Image
+														src={ogData.icon}
+														alt="site icon"
+														width={24}
+														height={24}
+														className="rounded"
+														unoptimized
+														referrerPolicy="no-referrer"
+													/>
+												)}
+												<div className="min-w-0">
+													<div className="text-sm font-medium truncate">
+														{ogData.title || new URL(ogData.url).hostname}
+													</div>
+													{ogData.description && (
+														<div className="text-xs text-muted-foreground line-clamp-2">
+															{ogData.description}
+														</div>
+													)}
+													<div className="mt-1 text-xs text-muted-foreground truncate">
+														{ogData.siteName ?? new URL(ogData.url).hostname}
+													</div>
+												</div>
+											</div>
+										</div>
+									)}
+								</div>
+							</a>
+						)}
+
 						{item.kind === "FILE" &&
 							item.fileItem &&
 							item.fileItem.contentType.startsWith("image/") && (

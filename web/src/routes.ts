@@ -6,6 +6,7 @@ export const OMNIBIN_ROUTES = {
 
 export const OMNIBIN_API_ROUTES = {
 	BIN: "/api/bin",
+	OG: "/api/og",
 	BIN_ITEM: getBilledInvoicesDataRoute,
 };
 
