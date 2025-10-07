@@ -443,18 +443,23 @@ export function BinListItem({
 										/* Compact preview without image */
 										<div className="border border-border rounded-lg p-3 bg-muted/10">
 											<div className="flex items-center gap-3 min-w-0">
-												{/* Favicon if present */}
-												{ogData.icon && (
-													<Image
-														src={ogData.icon}
-														alt="site icon"
-														width={24}
-														height={24}
-														className="rounded"
-														unoptimized
-														referrerPolicy="no-referrer"
-													/>
-												)}
+												{/* Favicon (OG icon or fallback) */}
+												{(() => {
+													const src =
+														ogData.icon ??
+														new URL("/favicon.ico", ogData.url).toString();
+													return (
+														<Image
+															src={src}
+															alt="site icon"
+															width={24}
+															height={24}
+															className="rounded"
+															unoptimized
+															referrerPolicy="no-referrer"
+														/>
+													);
+												})()}
 												<div className="min-w-0">
 													<div className="text-sm font-medium truncate">
 														{ogData.title || new URL(ogData.url).hostname}

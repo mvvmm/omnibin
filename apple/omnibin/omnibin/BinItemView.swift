@@ -670,7 +670,10 @@ struct URLPreviewView: View {
                 // If we have OG, render image + text; otherwise render compact text card
                 if let og = og {
                 VStack(alignment: .leading, spacing: 0) {
-                    if let image = og.image, let imageURL = URL(string: image) {
+                    // Determine a valid image URL if provided
+                    let trimmedImage = og.image?.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let imageURL = (trimmedImage?.isEmpty == false) ? URL(string: trimmedImage!) : nil
+                    if let imageURL = imageURL {
                         AsyncImage(url: imageURL) { image in
                             image
                                 .resizable()
@@ -683,8 +686,24 @@ struct URLPreviewView: View {
                                 .frame(height: 200)
                         }
                     }
+                    // Title/description row. Only show favicon when there is no image.
+                    HStack(alignment: .center, spacing: 10) {
+                        if imageURL == nil, let iconURL = faviconURL(for: url, og: og) {
+                            AsyncImage(url: iconURL) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 20, height: 20)
+                                    .cornerRadius(4)
+                            } placeholder: {
+                                Rectangle()
+                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.25))
+                                    .frame(width: 20, height: 20)
+                                    .cornerRadius(4)
+                            }
+                        }
 
-                    VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 6) {
                         Text((og.title?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? url.absoluteString))
                             .font(.headline)
                             .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
@@ -698,6 +717,8 @@ struct URLPreviewView: View {
                         Text((og.siteName?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? ""))
                             .font(.caption)
                             .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -722,15 +743,32 @@ struct URLPreviewView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 } else {
                     // Compact fallback when no OG available
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(url.host ?? url.absoluteString)
-                            .font(.headline)
-                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                            .lineLimit(1)
-                        Text(url.absoluteString)
-                            .font(.caption)
-                            .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                            .lineLimit(1)
+                    HStack(alignment: .center, spacing: 10) {
+                        if let iconURL = faviconURL(for: url, og: nil) {
+                            AsyncImage(url: iconURL) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 20, height: 20)
+                                    .cornerRadius(4)
+                            } placeholder: {
+                                Rectangle()
+                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.25))
+                                    .frame(width: 20, height: 20)
+                                    .cornerRadius(4)
+                            }
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(url.host ?? url.absoluteString)
+                                .font(.headline)
+                                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                                .lineLimit(1)
+                            Text(url.absoluteString)
+                                .font(.caption)
+                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                                .lineLimit(1)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -785,6 +823,16 @@ private func firstURL(in text: String) -> String? {
         return String(text[swiftRange])
     }
     return nil
+}
+
+private func faviconURL(for pageURL: URL, og: BinAPI.OGData?) -> URL? {
+    if let icon = og?.icon, let iconURL = URL(string: icon) { return iconURL }
+    var comps = URLComponents()
+    comps.scheme = pageURL.scheme
+    comps.host = pageURL.host
+    comps.port = pageURL.port
+    comps.path = "/favicon.ico"
+    return comps.url
 }
 
 struct DataDoc: FileDocument {
