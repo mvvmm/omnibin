@@ -40,6 +40,7 @@ struct BinItemRow: View {
     @State private var exportDoc: DataDoc?
     @State private var exportType: UTType = .data
     @State private var exportName: String = "download"
+    @State private var urlOG: BinAPI.OGData?
     @Environment(\.colorScheme) private var colorScheme
     
     private let itemId: String
@@ -94,6 +95,11 @@ struct BinItemRow: View {
                     .frame(height: 200)
                     .clipped()
                     .contentShape(RoundedRectangle(cornerRadius: 8)) // Define tappable area to match visual bounds
+            }
+
+            // URL preview for text items using web OG endpoint
+            if item.isText, let textItem = item.textItem {
+                URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG)
             }
             
             // Action buttons section (only visible when expanded)
@@ -246,6 +252,12 @@ struct BinItemRow: View {
     
     private var itemTitle: String {
         if item.isText, let textItem = item.textItem {
+            // If the text is a URL and we have OG data, prefer OG title (like web)
+            if let _ = firstURL(in: textItem.content) {
+                if let title = urlOG?.title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    return title
+                }
+            }
             return textItem.content
         } else if item.isFile, let fileItem = item.fileItem {
             return fileItem.originalName
@@ -640,6 +652,139 @@ struct ImagePreviewView: View {
     private func setDownloadedImage(_ image: UIImage) async {
         downloadedImage = image
     }
+}
+
+// MARK: - URL Preview View (Open Graph)
+struct URLPreviewView: View {
+    let text: String
+    let accessToken: String?
+    let isDarkMode: Bool
+    @Binding var ogOut: BinAPI.OGData?
+
+    @State private var og: BinAPI.OGData?
+    @State private var isLoading = false
+
+    var body: some View {
+        Group {
+            if let urlString = extractFirstURL(from: text), let url = URL(string: urlString) {
+                // If we have OG, render image + text; otherwise render compact text card
+                if let og = og {
+                VStack(alignment: .leading, spacing: 0) {
+                    if let image = og.image, let imageURL = URL(string: image) {
+                        AsyncImage(url: imageURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(height: 200)
+                                .clipped()
+                        } placeholder: {
+                            Rectangle()
+                                .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                .frame(height: 200)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text((og.title?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? url.absoluteString))
+                            .font(.headline)
+                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                            .lineLimit(2)
+                        if let desc = og.description?.trimmingCharacters(in: .whitespacesAndNewlines), !desc.isEmpty {
+                            Text(desc)
+                                .font(.subheadline)
+                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                                .lineLimit(3)
+                        }
+                        Text((og.siteName?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? ""))
+                            .font(.caption)
+                            .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight])
+                            .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+                    )
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                )
+                .onTapGesture {
+                    UIApplication.shared.open(url)
+                }
+                } else if isLoading {
+                    Rectangle()
+                        .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.2))
+                        .frame(height: 60)
+                        .overlay(ProgressView().scaleEffect(0.8))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    // Compact fallback when no OG available
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(url.host ?? url.absoluteString)
+                            .font(.headline)
+                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                            .lineLimit(1)
+                        Text(url.absoluteString)
+                            .font(.caption)
+                            .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                            .lineLimit(1)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                            )
+                    )
+                    .onTapGesture { UIApplication.shared.open(url) }
+                }
+            }
+        }
+        .onAppear { Task { await loadOGIfNeeded() } }
+    }
+
+    private func extractFirstURL(from text: String) -> String? {
+        let types: NSTextCheckingResult.CheckingType = .link
+        let detector = try? NSDataDetector(types: types.rawValue)
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        let match = detector?.firstMatch(in: text, options: [], range: range)
+        if let r = match?.range, let swiftRange = Range(r, in: text) {
+            return String(text[swiftRange])
+        }
+        return nil
+    }
+
+    private func loadOGIfNeeded() async {
+        guard let token = accessToken, !token.isEmpty else { return }
+        guard let url = extractFirstURL(from: text) else { return }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            if let data = try await BinAPI.shared.fetchOpenGraph(url: url, accessToken: token) {
+                await MainActor.run { self.og = data; self.ogOut = data }
+            }
+        } catch {
+            // ignore; show nothing if OG fails
+        }
+    }
+}
+
+// MARK: - Helpers
+private func firstURL(in text: String) -> String? {
+    let types: NSTextCheckingResult.CheckingType = .link
+    let detector = try? NSDataDetector(types: types.rawValue)
+    let range = NSRange(text.startIndex..<text.endIndex, in: text)
+    let match = detector?.firstMatch(in: text, options: [], range: range)
+    if let r = match?.range, let swiftRange = Range(r, in: text) {
+        return String(text[swiftRange])
+    }
+    return nil
 }
 
 struct DataDoc: FileDocument {

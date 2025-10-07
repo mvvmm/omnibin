@@ -4,8 +4,27 @@ import Auth0
 class BinAPI: ObservableObject {
     static let shared = BinAPI()
     
-    private let baseURL = "https://www.omnib.in" // Use the full domain
+    // Base URL for the backend. Defaults to production, but can be overridden for dev/testing.
+    private var baseURL: String {
+        // 1) Runtime override via UserDefaults (useful for QA toggles)
+        if let override = UserDefaults.standard.string(forKey: "OMNIBIN_BASE_URL"), !override.isEmpty {
+            return override
+        }
+        // 2) Info.plist key (set per build configuration)
+        if let fromPlist = Bundle.main.object(forInfoDictionaryKey: "OMNIBIN_BASE_URL") as? String, !fromPlist.isEmpty {
+            return fromPlist
+        }
+        // 3) Debug env var for simulators
+        #if DEBUG
+        if let fromEnv = ProcessInfo.processInfo.environment["OMNIBIN_BASE_URL"], !fromEnv.isEmpty {
+            return fromEnv
+        }
+        #endif
+        // 4) Fallback to production
+        return "https://www.omnib.in"
+    }
     private let binEndpoint = "/api/bin"
+    private let ogEndpoint  = "/api/og"
     private let credentialsManager = CredentialsManager(authentication: Auth0.authentication())
     
     private init() {}
@@ -190,6 +209,35 @@ class BinAPI: ObservableObject {
         }
         
         return downloadURL
+    }
+
+    // MARK: - Open Graph (URL Preview)
+    struct OGData: Codable {
+        let url: String?
+        let title: String?
+        let description: String?
+        let image: String?
+        let icon: String?
+        let siteName: String?
+    }
+
+    private struct OGResponse: Codable { let og: OGData? }
+
+    func fetchOpenGraph(url: String, accessToken: String) async throws -> OGData? {
+        guard let requestURL = URL(string: baseURL + ogEndpoint) else {
+            throw BinAPIError.invalidURL
+        }
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: String] = ["url": url]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw BinAPIError.invalidResponse }
+        guard (200...299).contains(http.statusCode) else { return nil }
+        let decoded = try JSONDecoder().decode(OGResponse.self, from: data)
+        return decoded.og
     }
     
     // MARK: - Add File Item
