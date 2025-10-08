@@ -5,7 +5,7 @@ const he: { decode: (s: string) => string } = require("he");
 
 import { NextResponse } from "next/server";
 import { verifyAccessToken } from "@/lib/verifyAccessToken";
-import type { OgResult } from "@/types/og";
+import type { OgData } from "@/types/og";
 
 function sanitizeUrl(input: string): string | null {
 	try {
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
 
 		const html = await res.text();
 		const $ = load(html);
-		const og: OgResult = {};
+		const og: OgData = { url: safeUrl } as OgData;
 
 		const pick = (selectors: string[]): string | undefined => {
 			for (const s of selectors) {
@@ -96,6 +96,22 @@ export async function POST(req: Request) {
 			if (v) {
 				og.image = v;
 				break;
+			}
+		}
+
+		// Try to read dimensions if present
+		const w = $(
+			'meta[property="og:image:width"], meta[name="og:image:width"]',
+		).attr("content");
+		const h = $(
+			'meta[property="og:image:height"], meta[name="og:image:height"]',
+		).attr("content");
+		if (w && h) {
+			const wi = Number.parseInt(w, 10);
+			const hi = Number.parseInt(h, 10);
+			if (!Number.isNaN(wi) && !Number.isNaN(hi)) {
+				og.imageWidth = wi;
+				og.imageHeight = hi;
 			}
 		}
 

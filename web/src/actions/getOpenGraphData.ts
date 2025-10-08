@@ -2,15 +2,7 @@
 
 import { getAccessTokenOrReauth } from "@/lib/auth0";
 import { OMNIBIN_API_ROUTES } from "@/routes";
-
-export type OgData = {
-	url: string;
-	title?: string | null;
-	description?: string | null;
-	image?: string | null;
-	icon?: string | null;
-	siteName?: string | null;
-};
+import type { OgData } from "@/types/og";
 
 export async function getOpenGraphData(url: string) {
 	const token = await getAccessTokenOrReauth();
