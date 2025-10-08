@@ -227,10 +227,18 @@ export function BinListItem({
 		return res;
 	};
 
-	const aspect =
-		ogData?.imageWidth && ogData?.imageHeight
-			? `${ogData.imageWidth} / ${ogData.imageHeight}`
-			: "16 / 9";
+	// Prefer the image's native aspect ratio, but clamp very tall/portrait images to 16:9 like iOS
+	const aspect = (() => {
+		const w = ogData?.imageWidth ?? null;
+		const h = ogData?.imageHeight ?? null;
+		if (w && h && w > 0 && h > 0) {
+			const ratio = w / h; // width over height
+			// If portrait or unusually tall (e.g., < 1.3), use 16:9 container to avoid huge vertical cards
+			if (ratio < 1.3) return "16 / 9";
+			return `${w} / ${h}`;
+		}
+		return "16 / 9";
+	})();
 
 	if (deleteIsTransitioning) {
 		return null;
@@ -423,11 +431,21 @@ export function BinListItem({
 											className="relative w-full overflow-hidden bg-muted/20"
 											style={{ aspectRatio: aspect }}
 										>
+											{/* Background: clamped cover with subtle blur/opacity */}
 											<Image
 												src={ogData.image}
 												alt={ogData.title ?? "link preview"}
 												fill
-												className="object-cover"
+												className="object-cover opacity-50 blur-[1px] scale-105"
+												unoptimized
+												referrerPolicy="no-referrer"
+											/>
+											{/* Foreground: full image letterboxed (object-contain), centered */}
+											<Image
+												src={ogData.image}
+												alt={ogData.title ?? "link preview"}
+												fill
+												className="object-contain"
 												unoptimized
 												referrerPolicy="no-referrer"
 											/>
