@@ -217,6 +217,8 @@ class BinAPI: ObservableObject {
         let title: String?
         let description: String?
         let image: String?
+        let imageWidth: Int?
+        let imageHeight: Int?
         let icon: String?
         let siteName: String?
     }

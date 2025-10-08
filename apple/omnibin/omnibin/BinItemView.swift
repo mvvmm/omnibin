@@ -674,23 +674,21 @@ struct URLPreviewView: View {
                     let trimmedImage = og.image?.trimmingCharacters(in: .whitespacesAndNewlines)
                     let imageURL = (trimmedImage?.isEmpty == false) ? URL(string: trimmedImage!) : nil
                     if let imageURL = imageURL {
-                        GeometryReader { geo in
-                            // Always use 16:9
-                            let width = geo.size.width
-                            let height = width * 9.0 / 16.0
+                        let w = CGFloat(og.imageWidth ?? 16)
+                        let h = CGFloat(og.imageHeight ?? 9)
+                        ZStack {
                             AsyncImage(url: imageURL) { image in
                                 image
                                     .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: width, height: height)
+                                    .scaledToFill()
                                     .clipped()
                             } placeholder: {
                                 Rectangle()
                                     .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                                    .frame(width: width, height: height)
                             }
                         }
-                        .frame(height: UIScreen.main.bounds.width / 1.91)
+                        // Size the container purely by its aspect ratio to avoid any extra blank space
+                        .aspectRatio(CGSize(width: w, height: h), contentMode: .fit)
                     }
                     // Title/description row. Only show favicon when there is no image and icon URL exists
                     HStack(alignment: .center, spacing: 10) {

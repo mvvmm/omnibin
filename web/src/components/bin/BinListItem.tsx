@@ -431,21 +431,11 @@ export function BinListItem({
 											className="relative w-full overflow-hidden bg-muted/20"
 											style={{ aspectRatio: aspect }}
 										>
-											{/* Background: clamped cover with subtle blur/opacity */}
 											<Image
 												src={ogData.image}
 												alt={ogData.title ?? "link preview"}
 												fill
-												className="object-cover opacity-50 blur-[1px] scale-105"
-												unoptimized
-												referrerPolicy="no-referrer"
-											/>
-											{/* Foreground: full image letterboxed (object-contain), centered */}
-											<Image
-												src={ogData.image}
-												alt={ogData.title ?? "link preview"}
-												fill
-												className="object-contain"
+												className="object-cover"
 												unoptimized
 												referrerPolicy="no-referrer"
 											/>
