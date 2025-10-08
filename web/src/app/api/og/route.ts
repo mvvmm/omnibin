@@ -1,13 +1,11 @@
+import { load } from "cheerio";
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const he: { decode: (s: string) => string } = require("he");
+
 import { NextResponse } from "next/server";
 import { verifyAccessToken } from "@/lib/verifyAccessToken";
-
-type OgResult = {
-	title?: string | null;
-	description?: string | null;
-	image?: string | null;
-	icon?: string | null;
-	siteName?: string | null;
-};
+import type { OgResult } from "@/types/og";
 
 function sanitizeUrl(input: string): string | null {
 	try {
@@ -27,6 +25,8 @@ function absolutizeUrl(possiblyRelative: string, base: string): string | null {
 		return null;
 	}
 }
+
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
 	try {
@@ -62,138 +62,70 @@ export async function POST(req: Request) {
 		}
 
 		const html = await res.text();
-		// Very small, tolerant meta parsing without DOM dependencies
-		const metaTagRegex = /<meta\s+[^>]*>/gi;
-		const linkTagRegex = /<link\s+[^>]*>/gi;
-		// Helper to grab attribute values regardless of quoting style
-		const getAttr = (tag: string, name: string): string | null => {
-			const regex = new RegExp(
-				`(?:^|\\s)${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`,
-				"i",
-			);
-			const m = tag.match(regex);
-			if (!m) return null;
-			return m[1] ?? m[2] ?? m[3] ?? null;
-		};
+		const $ = load(html);
 		const og: OgResult = {};
 
-		// Collect image candidates to choose the best one (like iMessage)
-		const imageCandidates: Array<{
-			url: string;
-			width?: number;
-			height?: number;
-			source: "og" | "twitter";
-		}> = [];
-		let lastOgImageIndex: number | null = null;
-		let twitterCard: string | null = null;
+		const pick = (selectors: string[]): string | undefined => {
+			for (const s of selectors) {
+				const val = $(s).attr("content");
+				if (val) return he.decode(val);
+			}
+			return undefined;
+		};
+		og.title =
+			pick([
+				'meta[property="og:title"]',
+				'meta[name="og:title"]',
+				'meta[name="twitter:title"]',
+			]) ?? he.decode($("title").first().text() || "");
+		og.description = pick([
+			'meta[property="og:description"]',
+			'meta[name="og:description"]',
+			'meta[name="twitter:description"]',
+		]);
 
-		const tags = html.match(metaTagRegex) ?? [];
-		for (const tag of tags) {
-			const propRaw = getAttr(tag, "property") ?? getAttr(tag, "name");
-			const contentRaw = getAttr(tag, "content");
-			if (!propRaw || contentRaw == null) continue;
-			const decodeEntities = (s: string): string => {
-				// Minimal entity decoding for common cases (quotes, ampersand, lt/gt)
-				return s
-					.replace(/&quot;/g, '"')
-					.replace(/&#34;/g, '"')
-					.replace(/&apos;/g, "'")
-					.replace(/&#39;/g, "'")
-					.replace(/&amp;/g, "&")
-					.replace(/&lt;/g, "<")
-					.replace(/&gt;/g, ">");
-			};
-			const key = propRaw.toLowerCase();
-			const value = decodeEntities(contentRaw);
-			if (key === "og:title" || key === "twitter:title")
-				og.title = og.title ?? value;
-			if (key === "og:description" || key === "twitter:description")
-				og.description = og.description ?? value;
-			if (key === "twitter:card") twitterCard = value.toLowerCase();
-			if (
-				key === "og:image" ||
-				key === "og:image:url" ||
-				key === "og:image:secure_url"
-			) {
-				imageCandidates.push({ url: value, source: "og" });
-				lastOgImageIndex = imageCandidates.length - 1;
+		const imageSelectors = [
+			'meta[property="og:image"]',
+			'meta[property="og:image:url"]',
+			'meta[property="og:image:secure_url"]',
+			'meta[name="twitter:image"]',
+			'meta[name="twitter:image:src"]',
+		];
+		for (const s of imageSelectors) {
+			const v = $(s).attr("content");
+			if (v) {
+				og.image = v;
+				break;
 			}
-			if (key === "og:image:width" && lastOgImageIndex != null) {
-				const n = Number.parseInt(value, 10);
-				if (!Number.isNaN(n)) imageCandidates[lastOgImageIndex].width = n;
-			}
-			if (key === "og:image:height" && lastOgImageIndex != null) {
-				const n = Number.parseInt(value, 10);
-				if (!Number.isNaN(n)) imageCandidates[lastOgImageIndex].height = n;
-			}
-			if (key === "twitter:image" || key === "twitter:image:src") {
-				imageCandidates.push({ url: value, source: "twitter" });
-			}
-			if (key === "og:site_name") og.siteName = og.siteName ?? value;
-			if (key === "twitter:site") og.siteName = og.siteName ?? value;
+		}
+
+		const iconCandidates = $('link[rel~="apple-touch-icon"], link[rel~="icon"]')
+			.map((_, el) => $(el).attr("href") || "")
+			.get()
+			.filter(Boolean) as string[];
+		if (!og.icon && iconCandidates.length > 0) {
+			og.icon = iconCandidates[0];
 		}
 
 		// Fallbacks for title/icon
 		if (!og.title) {
 			const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-			if (titleMatch) og.title = titleMatch[1];
-		}
-		// Gather link icons and apple-touch-icons, pick the largest
-		const linkTags = html.match(linkTagRegex) ?? [];
-		let bestIconHref: string | null = null;
-		let bestIconSize = 0; // area in px
-		for (const tag of linkTags) {
-			const relRaw = getAttr(tag, "rel");
-			if (!relRaw) continue;
-			const relValue = relRaw.toLowerCase();
-			if (!/(icon|apple-touch-icon)/.test(relValue)) continue;
-			const hrefVal = getAttr(tag, "href");
-			if (!hrefVal) continue;
-			const sizesRaw = getAttr(tag, "sizes");
-			let sizeScore = 0;
-			if (sizesRaw) {
-				// e.g., "180x180" or multiple like "16x16 32x32"
-				const parts = sizesRaw.split(/\s+/).map((s) =>
+			if (titleMatch) {
+				const dec = (s: string) =>
 					s
-						.toLowerCase()
-						.split("x")
-						.map((n) => Number(n)),
-				);
-				for (const p of parts) {
-					if (p.length === 2 && !Number.isNaN(p[0]) && !Number.isNaN(p[1])) {
-						sizeScore = Math.max(sizeScore, p[0] * p[1]);
-					}
-				}
+						.replace(/&quot;/g, '"')
+						.replace(/&apos;/g, "'")
+						.replace(/&amp;/g, "&")
+						.replace(/&lt;/g, "<")
+						.replace(/&gt;/g, ">")
+						.replace(/&#(\d+);/g, (_, d: string) =>
+							String.fromCodePoint(Number.parseInt(d, 10) || 0),
+						)
+						.replace(/&#x([0-9a-fA-F]+);/g, (_, h: string) =>
+							String.fromCodePoint(Number.parseInt(h, 16) || 0),
+						);
+				og.title = dec(titleMatch[1]);
 			}
-			// Prefer apple-touch-icon if sizes are equal
-			if (
-				sizeScore > bestIconSize ||
-				(sizeScore === bestIconSize && relValue.includes("apple-touch-icon"))
-			) {
-				bestIconSize = sizeScore;
-				bestIconHref = hrefVal;
-			}
-		}
-		if (bestIconHref && !og.icon) og.icon = bestIconHref;
-
-		// Pick best image candidate (prefer largest dimensions; prefer twitter when card is large)
-		if (imageCandidates.length > 0) {
-			const scored = imageCandidates
-				.filter(
-					(c) => c.url && !/(favicon|sprite|logo|icon\.svg|\.ico)/i.test(c.url),
-				)
-				.map((c) => {
-					const area = (c.width ?? 0) * (c.height ?? 0);
-					const twitterBoost =
-						c.source === "twitter" &&
-						(twitterCard?.includes("summary_large_image") ?? false)
-							? 1.5
-							: 1;
-					const base = area > 0 ? area : 1;
-					return { ...c, score: base * twitterBoost };
-				});
-			const best = scored.sort((a, b) => b.score - a.score)[0];
-			if (best) og.image = best.url;
 		}
 
 		// No fallback to non-OG/Twitter images. If no candidate, leave og.image undefined/null.
@@ -201,6 +133,46 @@ export async function POST(req: Request) {
 		// Absolutize image/icon URLs
 		og.image = og.image ? absolutizeUrl(og.image, safeUrl) : null;
 		og.icon = og.icon ? absolutizeUrl(og.icon, safeUrl) : null;
+
+		// Favicon fallback: if no icon tag was present, try /favicon.ico
+		if (!og.icon) {
+			const fallbackFavicon = absolutizeUrl("/favicon.ico", safeUrl);
+			if (fallbackFavicon) {
+				try {
+					// Prefer HEAD; some servers don't support it, so fall back to GET
+					let headOk = false;
+					try {
+						const headRes = await fetch(fallbackFavicon, {
+							method: "HEAD",
+							cache: "no-store",
+							redirect: "follow",
+						});
+						headOk =
+							headRes.ok &&
+							(headRes.headers.get("content-type") ?? "").includes("image");
+					} catch {
+						/* ignore */
+					}
+					if (!headOk) {
+						const getRes = await fetch(fallbackFavicon, {
+							method: "GET",
+							cache: "no-store",
+							redirect: "follow",
+						});
+						if (
+							getRes.ok &&
+							(getRes.headers.get("content-type") ?? "").includes("image")
+						) {
+							og.icon = fallbackFavicon;
+						}
+					} else {
+						og.icon = fallbackFavicon;
+					}
+				} catch {
+					/* ignore */
+				}
+			}
+		}
 
 		return NextResponse.json({ og });
 	} catch (error) {
