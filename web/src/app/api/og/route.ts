@@ -146,6 +146,38 @@ export async function POST(req: Request) {
 
 		// No fallback to non-OG/Twitter images. If no candidate, leave og.image undefined/null.
 
+		// Provider-specific fallbacks (production-safe)
+		try {
+			const u = new URL(safeUrl);
+			const host = u.hostname.toLowerCase();
+			const isYouTube =
+				host.includes("youtube.com") ||
+				host === "youtu.be" ||
+				host.endsWith(".youtu.be");
+			if (isYouTube && (!og.title || !og.image)) {
+				const oembed = new URL("https://www.youtube.com/oembed");
+				oembed.searchParams.set("url", safeUrl);
+				oembed.searchParams.set("format", "json");
+				const oeRes = await fetch(oembed.toString(), {
+					method: "GET",
+					cache: "no-store",
+					headers: { "accept-language": "en" },
+					redirect: "follow",
+				});
+				if (oeRes.ok) {
+					const data = (await oeRes.json()) as {
+						title?: string;
+						thumbnail_url?: string;
+					};
+					og.title = og.title ?? (data.title ? he.decode(data.title) : null);
+					og.image = og.image ?? data.thumbnail_url ?? null;
+					og.siteName = og.siteName ?? "YouTube";
+				}
+			}
+		} catch {
+			// ignore
+		}
+
 		// Absolutize image/icon URLs
 		og.image = og.image ? absolutizeUrl(og.image, safeUrl) : null;
 		og.icon = og.icon ? absolutizeUrl(og.icon, safeUrl) : null;
