@@ -169,7 +169,7 @@ export async function POST(req: Request) {
 						title?: string;
 						thumbnail_url?: string;
 					};
-					og.title = og.title ?? (data.title ? he.decode(data.title) : null);
+					og.title = data.title ? he.decode(data.title) : (og.title ?? null);
 					og.image = og.image ?? data.thumbnail_url ?? null;
 					og.siteName = og.siteName ?? "YouTube";
 				}
