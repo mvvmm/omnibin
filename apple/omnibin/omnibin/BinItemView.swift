@@ -738,6 +738,8 @@ struct URLPreviewView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
                 )
+                // Make only the visible card area tappable
+                .contentShape(RoundedRectangle(cornerRadius: 8))
                 .onTapGesture {
                     UIApplication.shared.open(url)
                 }
@@ -786,6 +788,7 @@ struct URLPreviewView: View {
                                     .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
                             )
                     )
+                    .contentShape(RoundedRectangle(cornerRadius: 8))
                     .onTapGesture { UIApplication.shared.open(url) }
                 }
             }
