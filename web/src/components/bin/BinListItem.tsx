@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { deleteBinItem } from "@/actions/deleteBinItem";
 import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
-import type { OgData } from "@/actions/getOpenGraphData";
 import type { BinItem } from "@/types/bin";
+import type { OgData } from "@/types/og";
 import { formatFileSize } from "@/utils/formatFileSize";
 import { isCopyableFile } from "@/utils/isCopyableFile";
 import { Button } from "../ui/button";
@@ -227,6 +227,11 @@ export function BinListItem({
 		return res;
 	};
 
+	const aspect =
+		ogData?.imageWidth && ogData?.imageHeight
+			? `${ogData.imageWidth} / ${ogData.imageHeight}`
+			: "16 / 9";
+
 	if (deleteIsTransitioning) {
 		return null;
 	}
@@ -412,20 +417,35 @@ export function BinListItem({
 								}}
 							>
 								<div className="relative w-full overflow-hidden rounded-lg">
-									{ogData.image ? (
-										<>
-											{/* Image-dominant preview (image on top, text block below) */}
-											<div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-muted/20">
+									{/* When rendering the OG image container: */}
+									{ogData?.image ? (
+										<div
+											className="relative w-full overflow-hidden bg-muted/20"
+											style={{ aspectRatio: aspect }}
+										>
+											<Image
+												src={ogData.image}
+												alt={ogData.title ?? "link preview"}
+												fill
+												className="object-cover"
+												unoptimized
+												referrerPolicy="no-referrer"
+											/>
+										</div>
+									) : (
+										<div className="p-3 flex items-center gap-3">
+											{ogData.icon && (
 												<Image
-													src={ogData.image}
-													alt={ogData.title ?? "link preview"}
-													fill
-													className="object-cover"
+													src={ogData.icon}
+													alt="site icon"
+													width={20}
+													height={20}
+													className="rounded"
 													unoptimized
 													referrerPolicy="no-referrer"
 												/>
-											</div>
-											<div className="p-3">
+											)}
+											<div className="min-w-0">
 												<div className="text-sm font-medium truncate">
 													{ogData.title || new URL(ogData.url).hostname}
 												</div>
@@ -438,41 +458,21 @@ export function BinListItem({
 													{ogData.siteName ?? new URL(ogData.url).hostname}
 												</div>
 											</div>
-										</>
-									) : (
-										/* Compact preview without image */
-										<div className="border border-border rounded-lg p-3 bg-muted/10">
-											<div className="flex items-center gap-3 min-w-0">
-												{/* Favicon (OG icon or fallback) */}
-												{(() => {
-													const src =
-														ogData.icon ??
-														new URL("/favicon.ico", ogData.url).toString();
-													return (
-														<Image
-															src={src}
-															alt="site icon"
-															width={24}
-															height={24}
-															className="rounded"
-															unoptimized
-															referrerPolicy="no-referrer"
-														/>
-													);
-												})()}
-												<div className="min-w-0">
-													<div className="text-sm font-medium truncate">
-														{ogData.title || new URL(ogData.url).hostname}
-													</div>
-													{ogData.description && (
-														<div className="text-xs text-muted-foreground line-clamp-2">
-															{ogData.description}
-														</div>
-													)}
-													<div className="mt-1 text-xs text-muted-foreground truncate">
-														{ogData.siteName ?? new URL(ogData.url).hostname}
-													</div>
+										</div>
+									)}
+									{/* Details block (title/desc/site) */}
+									{ogData?.image && (
+										<div className="p-3">
+											<div className="text-sm font-medium truncate">
+												{ogData.title || new URL(ogData.url).hostname}
+											</div>
+											{ogData.description && (
+												<div className="text-xs text-muted-foreground line-clamp-2">
+													{ogData.description}
 												</div>
+											)}
+											<div className="mt-1 text-xs text-muted-foreground truncate">
+												{ogData.siteName ?? new URL(ogData.url).hostname}
 											</div>
 										</div>
 									)}

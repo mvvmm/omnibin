@@ -674,19 +674,25 @@ struct URLPreviewView: View {
                     let trimmedImage = og.image?.trimmingCharacters(in: .whitespacesAndNewlines)
                     let imageURL = (trimmedImage?.isEmpty == false) ? URL(string: trimmedImage!) : nil
                     if let imageURL = imageURL {
-                        AsyncImage(url: imageURL) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(height: 200)
-                                .clipped()
-                        } placeholder: {
-                            Rectangle()
-                                .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                                .frame(height: 200)
+                        GeometryReader { geo in
+                            // Always use 16:9
+                            let width = geo.size.width
+                            let height = width * 9.0 / 16.0
+                            AsyncImage(url: imageURL) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: width, height: height)
+                                    .clipped()
+                            } placeholder: {
+                                Rectangle()
+                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                    .frame(width: width, height: height)
+                            }
                         }
+                        .frame(height: UIScreen.main.bounds.width / 1.91)
                     }
-                    // Title/description row. Only show favicon when there is no image.
+                    // Title/description row. Only show favicon when there is no image and icon URL exists
                     HStack(alignment: .center, spacing: 10) {
                         if imageURL == nil, let iconURL = faviconURL(for: url, og: og) {
                             AsyncImage(url: iconURL) { image in
@@ -793,9 +799,20 @@ struct URLPreviewView: View {
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
         let match = detector?.firstMatch(in: text, options: [], range: range)
         if let r = match?.range, let swiftRange = Range(r, in: text) {
-            return String(text[swiftRange])
+            let raw = String(text[swiftRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+            return normalizeURLString(raw)
         }
         return nil
+    }
+
+    private func normalizeURLString(_ raw: String) -> String {
+        // Ensure we have an absolute URL with a scheme. Default to https.
+        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if s.hasPrefix("http://") || s.hasPrefix("https://") { return s }
+        if s.hasPrefix("//") { return "https:" + s }
+        if s.hasPrefix("www.") { return "https://" + s }
+        // If no scheme and not starting with www, still try https
+        return "https://" + s
     }
 
     private func loadOGIfNeeded() async {
@@ -826,13 +843,12 @@ private func firstURL(in text: String) -> String? {
 }
 
 private func faviconURL(for pageURL: URL, og: BinAPI.OGData?) -> URL? {
-    if let icon = og?.icon, let iconURL = URL(string: icon) { return iconURL }
-    var comps = URLComponents()
-    comps.scheme = pageURL.scheme
-    comps.host = pageURL.host
-    comps.port = pageURL.port
-    comps.path = "/favicon.ico"
-    return comps.url
+    // Only show a favicon when the OG response explicitly provides one.
+    // Do NOT synthesize /favicon.ico to avoid showing blank placeholders.
+    if let icon = og?.icon, let iconURL = URL(string: icon) {
+        return iconURL
+    }
+    return nil
 }
 
 struct DataDoc: FileDocument {
