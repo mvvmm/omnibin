@@ -118,6 +118,11 @@ export async function POST(req: Request) {
 					});
 					clearTimeout(timeoutId);
 
+					// Log for debugging in production
+					if (process.env.NODE_ENV === "production") {
+						console.log(`Twitch fetch status: ${res.status} for ${safeUrl}`);
+					}
+
 					if (res.ok) {
 						const html = await res.text();
 						const $ = load(html);
@@ -198,11 +203,28 @@ export async function POST(req: Request) {
 								image: image ? absolutizeUrl(image, safeUrl) : null,
 								siteName: "Twitch",
 							};
+
+							// Log successful extraction for debugging
+							if (process.env.NODE_ENV === "production") {
+								console.log(
+									`Twitch OG extracted: title="${title}", image="${image}"`,
+								);
+							}
+
 							return NextResponse.json({ og });
+						} else {
+							// Log when no data is found
+							if (process.env.NODE_ENV === "production") {
+								console.log(`No Twitch OG data found for ${safeUrl}`);
+							}
 						}
 					}
-				} catch {
+				} catch (error) {
 					clearTimeout(timeoutId);
+					// Log Twitch-specific errors for debugging
+					if (process.env.NODE_ENV === "production") {
+						console.log(`Twitch fetch error for ${safeUrl}:`, error);
+					}
 					// Fall through to regular HTML parsing if Twitch-specific handling fails
 				}
 			}
