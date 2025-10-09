@@ -41,14 +41,17 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
 		}
 
-		// Early YouTube detection - skip HTML parsing for YouTube links
+		// Early platform detection - handle YouTube and Twitch specially
 		try {
 			const u = new URL(safeUrl);
 			const host = u.hostname.toLowerCase();
+
 			const isYouTube =
 				host.includes("youtube.com") ||
 				host === "youtu.be" ||
 				host.endsWith(".youtu.be");
+
+			const isTwitch = host === "www.twitch.tv" || host === "twitch.tv";
 
 			if (isYouTube) {
 				const oembed = new URL("https://www.youtube.com/oembed");
@@ -84,6 +87,123 @@ export async function POST(req: Request) {
 				} catch {
 					clearTimeout(timeoutId);
 					// Fall through to regular HTML parsing if oembed fails
+				}
+			}
+
+			if (isTwitch) {
+				const isTwitchClip = u.pathname.includes("/clip/");
+				const isTwitchVod = u.pathname.includes("/videos/");
+				const isTwitchStream =
+					!isTwitchClip && !isTwitchVod && u.pathname !== "/";
+				// Enhanced HTML parsing for Twitch content
+				// Twitch often loads content dynamically, so we need a longer timeout
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => controller.abort(), 20000); // Longer timeout for Twitch
+
+				try {
+					const res = await fetch(safeUrl, {
+						method: "GET",
+						headers: {
+							"User-Agent":
+								"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+							Accept:
+								"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+							"Accept-Language": "en-US,en;q=0.9",
+							"Accept-Encoding": "gzip, deflate, br",
+							"Cache-Control": "no-cache",
+						},
+						redirect: "follow",
+						cache: "no-cache", // Don't cache Twitch content as it changes frequently
+						signal: controller.signal,
+					});
+					clearTimeout(timeoutId);
+
+					if (res.ok) {
+						const html = await res.text();
+						const $ = load(html);
+
+						// Try to extract title from various sources with fallbacks
+						let title =
+							$('meta[property="og:title"]').attr("content") ||
+							$('meta[name="twitter:title"]').attr("content") ||
+							$("title").text() ||
+							null;
+
+						// Try to extract description
+						const description =
+							$('meta[property="og:description"]').attr("content") ||
+							$('meta[name="twitter:description"]').attr("content") ||
+							null;
+
+						// Try to extract image with multiple fallbacks
+						const image =
+							$('meta[property="og:image"]').attr("content") ||
+							$('meta[name="twitter:image"]').attr("content") ||
+							$('meta[property="og:image:url"]').attr("content") ||
+							$('meta[property="og:image:secure_url"]').attr("content") ||
+							null;
+
+						// For Twitch clips, try to construct a better title if missing
+						if (isTwitchClip && !title) {
+							// Try to extract streamer name from various meta tags
+							const streamerName =
+								$('meta[property="og:video:tag"]').attr("content") ||
+								$('meta[name="twitter:label1"]').attr("content") ||
+								$('meta[property="og:site_name"]').attr("content") ||
+								$('meta[property="og:video:actor"]').attr("content");
+
+							if (streamerName) {
+								title = `Twitch Clip - ${streamerName}`;
+							} else {
+								// Try to extract from URL path as fallback
+								const pathParts = u.pathname.split("/");
+								const clipIndex = pathParts.indexOf("clip");
+								if (clipIndex > 0 && pathParts[clipIndex - 1]) {
+									title = `Twitch Clip - ${pathParts[clipIndex - 1]}`;
+								} else {
+									title = "Twitch Clip";
+								}
+							}
+						}
+
+						// For Twitch streams, try to get streamer name
+						if (isTwitchStream && !title) {
+							const streamerName = u.pathname.split("/")[1]; // Extract from URL path
+							if (
+								streamerName &&
+								streamerName !== "directory" &&
+								streamerName !== "videos"
+							) {
+								title = `${streamerName} - Twitch Stream`;
+							}
+						}
+
+						// For Twitch VODs, try to get video title
+						if (isTwitchVod && !title) {
+							const vodTitle =
+								$('h1[data-a-target="video-title"]').text() ||
+								$(".video-title").text() ||
+								$("h1").first().text();
+							if (vodTitle) {
+								title = vodTitle;
+							}
+						}
+
+						// If we got some data, return it
+						if (title || image) {
+							const og: OgData = {
+								url: safeUrl,
+								title: title ? he.decode(title) : null,
+								description: description ? he.decode(description) : null,
+								image: image ? absolutizeUrl(image, safeUrl) : null,
+								siteName: "Twitch",
+							};
+							return NextResponse.json({ og });
+						}
+					}
+				} catch {
+					clearTimeout(timeoutId);
+					// Fall through to regular HTML parsing if Twitch-specific handling fails
 				}
 			}
 		} catch {
