@@ -81,11 +81,13 @@ class BinAPI: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        // Use a custom URLSession configuration
+        // Use a custom URLSession configuration with caching
         let config = URLSessionConfiguration.default
         config.httpAdditionalHeaders = [
             "User-Agent": "omnibin-ios/1.0"
         ]
+        config.requestCachePolicy = .useProtocolCachePolicy
+        config.urlCache = URLCache.shared
         let session = URLSession(configuration: config)
         
         let (data, response) = try await session.data(for: request)
@@ -192,6 +194,7 @@ class BinAPI: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.cachePolicy = .useProtocolCachePolicy
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
@@ -233,6 +236,7 @@ class BinAPI: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.cachePolicy = .useProtocolCachePolicy
         let body: [String: String] = ["url": url]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, response) = try await URLSession.shared.data(for: request)

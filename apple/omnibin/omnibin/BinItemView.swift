@@ -41,6 +41,7 @@ struct BinItemRow: View {
     @State private var exportType: UTType = .data
     @State private var exportName: String = "download"
     @State private var urlOG: BinAPI.OGData?
+    @State private var isOGLoading = false
     @Environment(\.colorScheme) private var colorScheme
     
     private let itemId: String
@@ -99,7 +100,7 @@ struct BinItemRow: View {
 
             // URL preview for text items using web OG endpoint
             if item.isText, let textItem = item.textItem {
-                URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG)
+                URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG, isOGLoading: $isOGLoading)
             }
             
             // Action buttons section (only visible when expanded)
@@ -660,6 +661,7 @@ struct URLPreviewView: View {
     let accessToken: String?
     let isDarkMode: Bool
     @Binding var ogOut: BinAPI.OGData?
+    @Binding var isOGLoading: Bool
 
     @State private var og: BinAPI.OGData?
     @State private var isLoading = false
@@ -741,12 +743,58 @@ struct URLPreviewView: View {
                 .onTapGesture {
                     UIApplication.shared.open(url)
                 }
-                } else if isLoading {
-                    Rectangle()
-                        .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.2))
-                        .frame(height: 60)
-                        .overlay(ProgressView().scaleEffect(0.8))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else if isLoading || isOGLoading {
+                    // Skeleton loading state
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Image skeleton
+                        Rectangle()
+                            .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                            .frame(height: 120)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
+                            )
+                        
+                        // Content skeleton
+                        HStack(alignment: .center, spacing: 10) {
+                            // Icon skeleton
+                            Rectangle()
+                                .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                .frame(width: 20, height: 20)
+                                .cornerRadius(4)
+                            
+                            VStack(alignment: .leading, spacing: 6) {
+                                // Title skeleton
+                                Rectangle()
+                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                    .frame(height: 16)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                // Description skeleton
+                                Rectangle()
+                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                    .frame(height: 14)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                // Site name skeleton
+                                Rectangle()
+                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                    .frame(width: 80, height: 12)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight])
+                                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+                        )
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                    )
                 } else {
                     // Compact fallback when no OG available
                     HStack(alignment: .center, spacing: 10) {
@@ -791,7 +839,13 @@ struct URLPreviewView: View {
                 }
             }
         }
-        .onAppear { Task { await loadOGIfNeeded() } }
+        .onAppear { 
+            // Set loading state immediately if URL is detected
+            if extractFirstURL(from: text) != nil {
+                isOGLoading = true
+            }
+            Task { await loadOGIfNeeded() } 
+        }
     }
 
     private func extractFirstURL(from text: String) -> String? {
@@ -819,11 +873,26 @@ struct URLPreviewView: View {
     private func loadOGIfNeeded() async {
         guard let token = accessToken, !token.isEmpty else { return }
         guard let url = extractFirstURL(from: text) else { return }
-        isLoading = true
-        defer { isLoading = false }
+        
+        // Set loading state immediately
+        await MainActor.run { 
+            self.isLoading = true
+            self.isOGLoading = true
+        }
+        
+        defer { 
+            Task { @MainActor in
+                self.isLoading = false
+                self.isOGLoading = false
+            }
+        }
+        
         do {
             if let data = try await BinAPI.shared.fetchOpenGraph(url: url, accessToken: token) {
-                await MainActor.run { self.og = data; self.ogOut = data }
+                await MainActor.run { 
+                    self.og = data
+                    self.ogOut = data
+                }
             }
         } catch {
             // ignore; show nothing if OG fails

@@ -14,6 +14,7 @@ export async function getFileItemDownloadUrl(itemId: string) {
 		const res = await fetch(url, {
 			method: "GET",
 			headers: { Authorization: `Bearer ${token}` },
+			cache: "force-cache",
 		});
 		if (!res.ok) {
 			return {
