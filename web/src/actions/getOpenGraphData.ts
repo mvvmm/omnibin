@@ -17,7 +17,7 @@ export async function getOpenGraphData(url: string) {
 				Authorization: `Bearer ${token}`,
 				"content-type": "application/json",
 			},
-			cache: "no-cache", // Temporarily disable caching for debugging
+			cache: "force-cache",
 			body: JSON.stringify({ url }),
 		});
 		if (!res.ok) {
