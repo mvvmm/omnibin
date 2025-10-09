@@ -29,6 +29,7 @@ function absolutizeUrl(possiblyRelative: string, base: string): string | null {
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+	console.log("OG API called");
 	try {
 		await verifyAccessToken(req.headers.get("authorization") ?? undefined);
 
@@ -36,7 +37,9 @@ export async function POST(req: Request) {
 			| { url?: string }
 			| undefined;
 		const inputUrl = body?.url ?? "";
+		console.log("Input URL:", inputUrl);
 		const safeUrl = sanitizeUrl(inputUrl);
+		console.log("Safe URL:", safeUrl);
 		if (!safeUrl) {
 			return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
 		}
@@ -46,12 +49,20 @@ export async function POST(req: Request) {
 			const u = new URL(safeUrl);
 			const host = u.hostname.toLowerCase();
 
+			// Debug: Log all URL parsing
+			console.log(
+				`URL parsing: ${safeUrl}, host: ${host}, pathname: ${u.pathname}`,
+			);
+
 			const isYouTube =
 				host.includes("youtube.com") ||
 				host === "youtu.be" ||
 				host.endsWith(".youtu.be");
 
 			const isTwitch = host === "www.twitch.tv" || host === "twitch.tv";
+
+			// Debug: Log Twitch detection result
+			console.log(`Twitch detection: ${isTwitch} for host: ${host}`);
 
 			if (isYouTube) {
 				const oembed = new URL("https://www.youtube.com/oembed");
@@ -91,16 +102,28 @@ export async function POST(req: Request) {
 			}
 
 			if (isTwitch) {
+				// Debug: Log Twitch detection
+				console.log(
+					`Twitch detected: ${safeUrl}, host: ${host}, pathname: ${u.pathname}`,
+				);
+
 				const isTwitchClip = u.pathname.includes("/clip/");
 				const isTwitchVod = u.pathname.includes("/videos/");
 				const isTwitchStream =
 					!isTwitchClip && !isTwitchVod && u.pathname !== "/";
+
+				// Debug: Log Twitch type detection
+				console.log(
+					`Twitch type: clip=${isTwitchClip}, vod=${isTwitchVod}, stream=${isTwitchStream}`,
+				);
+
 				// Enhanced HTML parsing for Twitch content
 				// Twitch often loads content dynamically, so we need a longer timeout
 				const controller = new AbortController();
 				const timeoutId = setTimeout(() => controller.abort(), 20000); // Longer timeout for Twitch
 
 				try {
+					console.log("Fetching Twitch URL:", safeUrl);
 					const res = await fetch(safeUrl, {
 						method: "GET",
 						headers: {
@@ -117,14 +140,11 @@ export async function POST(req: Request) {
 						signal: controller.signal,
 					});
 					clearTimeout(timeoutId);
-
-					// Log for debugging in production
-					if (process.env.NODE_ENV === "production") {
-						console.log(`Twitch fetch status: ${res.status} for ${safeUrl}`);
-					}
+					console.log("Twitch fetch response status:", res.status);
 
 					if (res.ok) {
 						const html = await res.text();
+						console.log("HTML length:", html.length);
 						const $ = load(html);
 
 						// Try to extract title from various sources with fallbacks
@@ -134,11 +154,15 @@ export async function POST(req: Request) {
 							$("title").text() ||
 							null;
 
+						console.log("Extracted title:", title);
+
 						// Try to extract description
 						const description =
 							$('meta[property="og:description"]').attr("content") ||
 							$('meta[name="twitter:description"]').attr("content") ||
 							null;
+
+						console.log("Extracted description:", description);
 
 						// Try to extract image with multiple fallbacks
 						const image =
@@ -147,6 +171,8 @@ export async function POST(req: Request) {
 							$('meta[property="og:image:url"]').attr("content") ||
 							$('meta[property="og:image:secure_url"]').attr("content") ||
 							null;
+
+						console.log("Extracted image:", image);
 
 						// For Twitch clips, try to construct a better title if missing
 						if (isTwitchClip && !title) {
@@ -203,28 +229,11 @@ export async function POST(req: Request) {
 								image: image ? absolutizeUrl(image, safeUrl) : null,
 								siteName: "Twitch",
 							};
-
-							// Log successful extraction for debugging
-							if (process.env.NODE_ENV === "production") {
-								console.log(
-									`Twitch OG extracted: title="${title}", image="${image}"`,
-								);
-							}
-
 							return NextResponse.json({ og });
-						} else {
-							// Log when no data is found
-							if (process.env.NODE_ENV === "production") {
-								console.log(`No Twitch OG data found for ${safeUrl}`);
-							}
 						}
 					}
-				} catch (error) {
+				} catch {
 					clearTimeout(timeoutId);
-					// Log Twitch-specific errors for debugging
-					if (process.env.NODE_ENV === "production") {
-						console.log(`Twitch fetch error for ${safeUrl}:`, error);
-					}
 					// Fall through to regular HTML parsing if Twitch-specific handling fails
 				}
 			}
