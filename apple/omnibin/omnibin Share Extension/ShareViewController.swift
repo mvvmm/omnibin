@@ -23,6 +23,14 @@ class ShareViewController: UIViewController {
     private let previewImageView = UIImageView()
     private let previewTextView = UITextView()
     private let bottomLogoImageView = UIImageView()
+    
+    // URL Preview UI elements
+    private let urlPreviewContainer = UIView()
+    private let urlPreviewImageView = UIImageView()
+    private let urlPreviewTitleLabel = UILabel()
+    private let urlPreviewDescriptionLabel = UILabel()
+    private let urlPreviewSiteLabel = UILabel()
+    private let urlPreviewIconImageView = UIImageView()
     private let statusStack = UIStackView()
     private let countLabel = UILabel()
     private let warningLabel = UILabel()
@@ -34,6 +42,11 @@ class ShareViewController: UIViewController {
     private var imagePreviewMaxHeightConstraint: NSLayoutConstraint?
     private var limitWarningText: String?
     private let binItemsLimit = 10
+    
+    // URL Preview properties
+    private var ogData: OGData?
+    private var isOGLoading = false
+    private var titleLeadingConstraint: NSLayoutConstraint?
     
     private enum SharedContent {
         case text(String)
@@ -139,6 +152,53 @@ class ShareViewController: UIViewController {
         previewTextView.setContentHuggingPriority(.defaultHigh, for: .vertical)
         previewTextView.setContentCompressionResistancePriority(.required, for: .vertical)
         previewContainer.addSubview(previewTextView)
+        
+        // URL Preview setup
+        urlPreviewContainer.translatesAutoresizingMaskIntoConstraints = false
+        urlPreviewContainer.backgroundColor = UIColor.secondarySystemBackground
+        urlPreviewContainer.layer.cornerRadius = 8
+        urlPreviewContainer.isHidden = true
+        previewContainer.addSubview(urlPreviewContainer)
+        
+        // URL Preview Image
+        urlPreviewImageView.translatesAutoresizingMaskIntoConstraints = false
+        urlPreviewImageView.contentMode = .scaleAspectFill
+        urlPreviewImageView.clipsToBounds = true
+        urlPreviewImageView.layer.cornerRadius = 8
+        urlPreviewImageView.isHidden = true
+        urlPreviewContainer.addSubview(urlPreviewImageView)
+        
+        // URL Preview Icon
+        urlPreviewIconImageView.translatesAutoresizingMaskIntoConstraints = false
+        urlPreviewIconImageView.contentMode = .scaleAspectFit
+        urlPreviewIconImageView.layer.cornerRadius = 4
+        urlPreviewIconImageView.clipsToBounds = true
+        urlPreviewIconImageView.isHidden = true
+        urlPreviewContainer.addSubview(urlPreviewIconImageView)
+        
+        // URL Preview Title
+        urlPreviewTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        urlPreviewTitleLabel.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        urlPreviewTitleLabel.textColor = UIColor.label
+        urlPreviewTitleLabel.numberOfLines = 2
+        urlPreviewTitleLabel.isHidden = true
+        urlPreviewContainer.addSubview(urlPreviewTitleLabel)
+        
+        // URL Preview Description
+        urlPreviewDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        urlPreviewDescriptionLabel.font = UIFont.systemFont(ofSize: 14)
+        urlPreviewDescriptionLabel.textColor = UIColor.secondaryLabel
+        urlPreviewDescriptionLabel.numberOfLines = 3
+        urlPreviewDescriptionLabel.isHidden = true
+        urlPreviewContainer.addSubview(urlPreviewDescriptionLabel)
+        
+        // URL Preview Site
+        urlPreviewSiteLabel.translatesAutoresizingMaskIntoConstraints = false
+        urlPreviewSiteLabel.font = UIFont.systemFont(ofSize: 12)
+        urlPreviewSiteLabel.textColor = UIColor.tertiaryLabel
+        urlPreviewSiteLabel.numberOfLines = 1
+        urlPreviewSiteLabel.isHidden = true
+        urlPreviewContainer.addSubview(urlPreviewSiteLabel)
 
         // Activity + status (inline)
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
@@ -238,6 +298,39 @@ class ShareViewController: UIViewController {
             // Allow the text area to collapse fully when content is short
             previewTextView.heightAnchor.constraint(greaterThanOrEqualToConstant: 0),
             previewContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 0),
+            
+            // URL Preview constraints
+            urlPreviewContainer.topAnchor.constraint(equalTo: previewContainer.topAnchor),
+            urlPreviewContainer.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor),
+            urlPreviewContainer.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor),
+            urlPreviewContainer.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor),
+            
+            // URL Preview Image constraints
+            urlPreviewImageView.topAnchor.constraint(equalTo: urlPreviewContainer.topAnchor),
+            urlPreviewImageView.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor),
+            urlPreviewImageView.trailingAnchor.constraint(equalTo: urlPreviewContainer.trailingAnchor),
+            urlPreviewImageView.heightAnchor.constraint(equalToConstant: 200),
+            
+            // URL Preview Icon constraints
+            urlPreviewIconImageView.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12),
+            urlPreviewIconImageView.topAnchor.constraint(equalTo: urlPreviewImageView.bottomAnchor, constant: 12),
+            urlPreviewIconImageView.widthAnchor.constraint(equalToConstant: 20),
+            urlPreviewIconImageView.heightAnchor.constraint(equalToConstant: 20),
+            
+            // URL Preview Title constraints - will be updated dynamically based on favicon presence
+            urlPreviewTitleLabel.trailingAnchor.constraint(equalTo: urlPreviewContainer.trailingAnchor, constant: -12),
+            urlPreviewTitleLabel.topAnchor.constraint(equalTo: urlPreviewImageView.bottomAnchor, constant: 12),
+            
+            // URL Preview Description constraints
+            urlPreviewDescriptionLabel.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12),
+            urlPreviewDescriptionLabel.trailingAnchor.constraint(equalTo: urlPreviewContainer.trailingAnchor, constant: -12),
+            urlPreviewDescriptionLabel.topAnchor.constraint(equalTo: urlPreviewTitleLabel.bottomAnchor, constant: 6),
+            
+            // URL Preview Site constraints
+            urlPreviewSiteLabel.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12),
+            urlPreviewSiteLabel.trailingAnchor.constraint(equalTo: urlPreviewContainer.trailingAnchor, constant: -12),
+            urlPreviewSiteLabel.topAnchor.constraint(equalTo: urlPreviewDescriptionLabel.bottomAnchor, constant: 6),
+            urlPreviewSiteLabel.bottomAnchor.constraint(equalTo: urlPreviewContainer.bottomAnchor, constant: -12),
 
             // Count below preview (right aligned)
             countLabel.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.leadingAnchor, constant: 16),
@@ -261,6 +354,10 @@ class ShareViewController: UIViewController {
             bottomLogoImageView.heightAnchor.constraint(equalToConstant: 64),
             bottomLogoImageView.bottomAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.bottomAnchor, constant: -24)
         ])
+        
+        // Set up initial title constraint (will be updated dynamically)
+        titleLeadingConstraint = urlPreviewTitleLabel.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12)
+        titleLeadingConstraint?.isActive = true
 
         // Start animating while preparing
         activityIndicator.startAnimating()
@@ -344,13 +441,13 @@ class ShareViewController: UIViewController {
                         if url.isFileURL, let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
                             await MainActor.run {
                                 self.sharedContent = .image(image)
-                                self.updatePreview()
                             }
+                            await self.updatePreview()
                         } else {
                             await MainActor.run {
                                 self.sharedContent = .url(url)
-                                self.updatePreview()
                             }
+                            await self.updatePreview()
                         }
                     }
                 } else {
@@ -401,15 +498,15 @@ class ShareViewController: UIViewController {
                             if let match = detector.firstMatch(in: text, options: [], range: range), let foundURL = match.url {
                                 await MainActor.run {
                                     self.sharedContent = .url(foundURL)
-                                    self.updatePreview()
                                 }
+                                await self.updatePreview()
                                 return
                             }
                         }
                         await MainActor.run {
                             self.sharedContent = .text(text)
-                            self.updatePreview()
                         }
+                        await self.updatePreview()
                     }
                 } else {
                     Task { @MainActor in
@@ -495,12 +592,14 @@ class ShareViewController: UIViewController {
         }
     }
 
+    @MainActor
     private func updatePreview() {
         activityIndicator.stopAnimating()
         addButton.isEnabled = true
 
         previewImageView.isHidden = true
         previewTextView.isHidden = true
+        urlPreviewContainer.isHidden = true
 
         guard let sharedContent = sharedContent else {
             statusLabel.text = "No content to preview"
@@ -542,16 +641,77 @@ class ShareViewController: UIViewController {
             adjustTextHeightToContent()
             previewTextView.setContentOffset(.zero, animated: false)
         case .url(let url):
-            textPreviewMaxHeightConstraint?.isActive = false
-            textPreviewMaxHeightConstraint = previewContainer.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.5)
-            textPreviewMaxHeightConstraint?.priority = .required
-            textPreviewMaxHeightConstraint?.isActive = true
-
-            imageAspectConstraint?.isActive = false
-            previewTextView.isHidden = false
-            previewTextView.text = url.absoluteString
-            adjustTextHeightToContent()
-            previewTextView.setContentOffset(.zero, animated: false)
+            // Hide other previews
+            previewImageView.isHidden = true
+            previewTextView.isHidden = true
+            urlPreviewContainer.isHidden = false
+            
+            // Start fetching OpenGraph data
+            Task {
+                await fetchOpenGraphData(for: url)
+            }
+            
+            // Show loading state
+            if isOGLoading {
+                urlPreviewTitleLabel.text = "Loading preview..."
+                urlPreviewTitleLabel.isHidden = false
+                urlPreviewDescriptionLabel.isHidden = true
+                urlPreviewSiteLabel.isHidden = true
+                urlPreviewImageView.isHidden = true
+                urlPreviewIconImageView.isHidden = true
+            } else if let ogData = ogData {
+                // Show OpenGraph data
+                let hasImage = ogData.image != nil
+                
+                if let imageURLString = ogData.image, let imageURL = URL(string: imageURLString) {
+                    urlPreviewImageView.isHidden = false
+                    loadImage(from: imageURL, into: urlPreviewImageView)
+                } else {
+                    urlPreviewImageView.isHidden = true
+                }
+                
+                // Only show favicon if there's no image (same as web and iOS)
+                if !hasImage, let iconURLString = ogData.icon, let iconURL = URL(string: iconURLString) {
+                    urlPreviewIconImageView.isHidden = false
+                    loadImage(from: iconURL, into: urlPreviewIconImageView)
+                    // Title should be positioned after the favicon
+                    titleLeadingConstraint?.isActive = false
+                    titleLeadingConstraint = urlPreviewTitleLabel.leadingAnchor.constraint(equalTo: urlPreviewIconImageView.trailingAnchor, constant: 8)
+                    titleLeadingConstraint?.isActive = true
+                } else {
+                    urlPreviewIconImageView.isHidden = true
+                    // Title should be left-aligned when no favicon
+                    titleLeadingConstraint?.isActive = false
+                    titleLeadingConstraint = urlPreviewTitleLabel.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12)
+                    titleLeadingConstraint?.isActive = true
+                }
+                
+                urlPreviewTitleLabel.text = ogData.title ?? url.host ?? url.absoluteString
+                urlPreviewTitleLabel.isHidden = false
+                
+                if let description = ogData.description, !description.isEmpty {
+                    urlPreviewDescriptionLabel.text = description
+                    urlPreviewDescriptionLabel.isHidden = false
+                } else {
+                    urlPreviewDescriptionLabel.isHidden = true
+                }
+                
+                urlPreviewSiteLabel.text = ogData.siteName ?? url.host ?? ""
+                urlPreviewSiteLabel.isHidden = false
+            } else {
+                // Fallback to showing URL
+                urlPreviewTitleLabel.text = url.absoluteString
+                urlPreviewTitleLabel.isHidden = false
+                urlPreviewDescriptionLabel.isHidden = true
+                urlPreviewSiteLabel.text = url.host ?? ""
+                urlPreviewSiteLabel.isHidden = false
+                urlPreviewImageView.isHidden = true
+                urlPreviewIconImageView.isHidden = true
+                // Title should be left-aligned when no favicon
+                titleLeadingConstraint?.isActive = false
+                titleLeadingConstraint = urlPreviewTitleLabel.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12)
+                titleLeadingConstraint?.isActive = true
+            }
         case .fileURL(let url):
             textPreviewMaxHeightConstraint?.isActive = false
             textPreviewMaxHeightConstraint = previewContainer.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.5)
@@ -677,6 +837,69 @@ class ShareViewController: UIViewController {
     private func addURLToBin(_ url: URL, completion: @escaping (Bool) -> Void) {
         // Add URL as text for now
         addTextToBin(url.absoluteString, completion: completion)
+    }
+    
+    private func fetchOpenGraphData(for url: URL) async {
+        guard let accessToken = getAccessToken() else { return }
+        
+        await MainActor.run {
+            isOGLoading = true
+        }
+        
+        do {
+            let ogData = try await fetchOpenGraph(url: url.absoluteString, accessToken: accessToken)
+            await MainActor.run {
+                self.ogData = ogData
+                self.isOGLoading = false
+            }
+            await self.updatePreview()
+        } catch {
+            await MainActor.run {
+                self.isOGLoading = false
+            }
+            await self.updatePreview()
+        }
+    }
+    
+    private func fetchOpenGraph(url: String, accessToken: String) async throws -> OGData {
+        guard let apiURL = URL(string: "https://www.omnib.in/api/og") else {
+            throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+        }
+        
+        var request = URLRequest(url: apiURL)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let requestBody = ["url": url]
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "ShareExtension", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let responseString = String(data: data, encoding: .utf8) ?? "No response body"
+            throw NSError(domain: "ShareExtension", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP error: \(httpResponse.statusCode) - \(responseString)"])
+        }
+        
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let ogData = json?["og"] as? [String: Any] else {
+            throw NSError(domain: "ShareExtension", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid OG data"])
+        }
+        
+        return OGData(
+            url: ogData["url"] as? String,
+            title: ogData["title"] as? String,
+            description: ogData["description"] as? String,
+            image: ogData["image"] as? String,
+            imageWidth: ogData["imageWidth"] as? Int,
+            imageHeight: ogData["imageHeight"] as? Int,
+            icon: ogData["icon"] as? String,
+            siteName: ogData["siteName"] as? String
+        )
     }
     
     private func addImageToBin(_ image: UIImage, completion: @escaping (Bool) -> Void) {
@@ -925,6 +1148,21 @@ class ShareViewController: UIViewController {
     private func callAddImage(_ image: UIImage, completion: @escaping (Bool) -> Void) async {
         self.addImageToBin(image, completion: completion)
     }
+    
+    private func loadImage(from url: URL, into imageView: UIImageView) {
+        Task {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                if let image = UIImage(data: data) {
+                    await MainActor.run {
+                        imageView.image = image
+                    }
+                }
+            } catch {
+                // Image loading failed, keep imageView hidden
+            }
+        }
+    }
     // MARK: - API Integration
     
     private func getAccessToken() -> String? {
@@ -1100,6 +1338,17 @@ struct FileItem {
     let originalName: String
     let contentType: String
     let size: Int
+}
+
+struct OGData {
+    let url: String?
+    let title: String?
+    let description: String?
+    let image: String?
+    let imageWidth: Int?
+    let imageHeight: Int?
+    let icon: String?
+    let siteName: String?
 }
 
 // (Quick Look integration removed)

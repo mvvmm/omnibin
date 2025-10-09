@@ -39,5 +39,3 @@ struct SnackbarView: View {
         .padding(.bottom, 16)
     }
 }
-
-
