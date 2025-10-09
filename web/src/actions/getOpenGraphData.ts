@@ -14,6 +14,7 @@ export async function getOpenGraphData(url: string) {
 		const res = await fetch(endpoint, {
 			method: "POST",
 			headers: {
+				"x-fake-header": "true",
 				Authorization: `Bearer ${token}`,
 				"content-type": "application/json",
 			},
