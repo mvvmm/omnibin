@@ -19,6 +19,7 @@ export async function getOpenGraphData(url: string) {
 				Authorization: `Bearer ${token}`,
 				"content-type": "application/json",
 			},
+			// TODO: Fix this?
 			cache: isTwitch ? "no-cache" : "force-cache",
 			body: JSON.stringify({ url }),
 		});
