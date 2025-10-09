@@ -258,6 +258,10 @@ struct BinItemRow: View {
                 if let title = urlOG?.title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     return title
                 }
+                // If we're loading OG data for a URL, show a placeholder instead of the raw URL
+                if isOGLoading {
+                    return "Loading preview..."
+                }
             }
             return textItem.content
         } else if item.isFile, let fileItem = item.fileItem {
@@ -665,6 +669,7 @@ struct URLPreviewView: View {
 
     @State private var og: BinAPI.OGData?
     @State private var isLoading = false
+    @State private var isImageLoading = false
 
     var body: some View {
         Group {
@@ -684,7 +689,19 @@ struct URLPreviewView: View {
                                     .resizable()
                                     .scaledToFill()
                                     .clipped()
+                                    .onAppear {
+                                        isImageLoading = false
+                                    }
                             } placeholder: {
+                                Rectangle()
+                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                    .onAppear {
+                                        isImageLoading = true
+                                    }
+                            }
+                            
+                            // Show loading skeleton while image is loading
+                            if isImageLoading {
                                 Rectangle()
                                     .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
                             }
@@ -702,10 +719,7 @@ struct URLPreviewView: View {
                                     .frame(width: 20, height: 20)
                                     .cornerRadius(4)
                             } placeholder: {
-                                Rectangle()
-                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.25))
-                                    .frame(width: 20, height: 20)
-                                    .cornerRadius(4)
+                                EmptyView()
                             }
                         }
 
@@ -749,7 +763,7 @@ struct URLPreviewView: View {
                         // Image skeleton
                         Rectangle()
                             .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                            .frame(height: 120)
+                            .frame(height: 200)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
                                     .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
@@ -757,12 +771,6 @@ struct URLPreviewView: View {
                         
                         // Content skeleton
                         HStack(alignment: .center, spacing: 10) {
-                            // Icon skeleton
-                            Rectangle()
-                                .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                                .frame(width: 20, height: 20)
-                                .cornerRadius(4)
-                            
                             VStack(alignment: .leading, spacing: 6) {
                                 // Title skeleton
                                 Rectangle()
@@ -806,10 +814,7 @@ struct URLPreviewView: View {
                                     .frame(width: 20, height: 20)
                                     .cornerRadius(4)
                             } placeholder: {
-                                Rectangle()
-                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.25))
-                                    .frame(width: 20, height: 20)
-                                    .cornerRadius(4)
+                                EmptyView()
                             }
                         }
                         VStack(alignment: .leading, spacing: 6) {
