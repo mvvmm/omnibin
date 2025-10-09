@@ -41,19 +41,73 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
 		}
 
-		// Fetch HTML (no cookies, no credentials)
+		// Early YouTube detection - skip HTML parsing for YouTube links
+		try {
+			const u = new URL(safeUrl);
+			const host = u.hostname.toLowerCase();
+			const isYouTube =
+				host.includes("youtube.com") ||
+				host === "youtu.be" ||
+				host.endsWith(".youtu.be");
+
+			if (isYouTube) {
+				const oembed = new URL("https://www.youtube.com/oembed");
+				oembed.searchParams.set("url", safeUrl);
+				oembed.searchParams.set("format", "json");
+
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+				try {
+					const oeRes = await fetch(oembed.toString(), {
+						method: "GET",
+						cache: "force-cache",
+						headers: { "accept-language": "en" },
+						redirect: "follow",
+						signal: controller.signal,
+					});
+					clearTimeout(timeoutId);
+
+					if (oeRes.ok) {
+						const data = (await oeRes.json()) as {
+							title?: string;
+							thumbnail_url?: string;
+						};
+						const og: OgData = {
+							url: safeUrl,
+							title: data.title ? he.decode(data.title) : null,
+							image: data.thumbnail_url ?? null,
+							siteName: "YouTube",
+						};
+						return NextResponse.json({ og });
+					}
+				} catch {
+					clearTimeout(timeoutId);
+					// Fall through to regular HTML parsing if oembed fails
+				}
+			}
+		} catch {
+			// Fall through to regular HTML parsing if URL parsing fails
+		}
+
+		// Fetch HTML with range request and timeout
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
 		const res = await fetch(safeUrl, {
 			method: "GET",
 			headers: {
-				// Prefer HTML
+				Range: "bytes=0-8192", // First 8KB should contain meta tags
 				accept:
 					"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 				"user-agent":
 					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
 			},
 			redirect: "follow",
-			cache: "no-store",
+			cache: "force-cache",
+			signal: controller.signal,
 		});
+		clearTimeout(timeoutId);
 		if (!res.ok) {
 			return NextResponse.json(
 				{ error: `Failed to fetch URL (${res.status})` },
@@ -61,8 +115,48 @@ export async function POST(req: Request) {
 			);
 		}
 
-		const html = await res.text();
-		const $ = load(html);
+		let html = await res.text();
+		let $ = load(html);
+
+		// Check if we got a partial response (206) or full response (200)
+		// If partial and no meta tags found, we might need the full page
+		const isPartialResponse = res.status === 206;
+		const hasMetaTags =
+			$('meta[property^="og:"], meta[name^="twitter:"]').length > 0;
+
+		// Fallback: if we got a partial response but no meta tags, fetch the full page
+		if (isPartialResponse && !hasMetaTags) {
+			const fallbackController = new AbortController();
+			const fallbackTimeoutId = setTimeout(
+				() => fallbackController.abort(),
+				15000,
+			);
+
+			try {
+				const fullRes = await fetch(safeUrl, {
+					method: "GET",
+					headers: {
+						accept:
+							"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+						"user-agent":
+							"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+					},
+					redirect: "follow",
+					cache: "force-cache",
+					signal: fallbackController.signal,
+				});
+				clearTimeout(fallbackTimeoutId);
+
+				if (fullRes.ok) {
+					html = await fullRes.text();
+					$ = load(html);
+				}
+			} catch {
+				clearTimeout(fallbackTimeoutId);
+				// Continue with partial HTML if fallback fails
+			}
+		}
+
 		const og: OgData = { url: safeUrl } as OgData;
 
 		const pick = (selectors: string[]): string | undefined => {
@@ -72,12 +166,11 @@ export async function POST(req: Request) {
 			}
 			return undefined;
 		};
-		og.title =
-			pick([
-				'meta[property="og:title"]',
-				'meta[name="og:title"]',
-				'meta[name="twitter:title"]',
-			]) ?? he.decode($("title").first().text() || "");
+		og.title = pick([
+			'meta[property="og:title"]',
+			'meta[name="og:title"]',
+			'meta[name="twitter:title"]',
+		]);
 		og.description = pick([
 			'meta[property="og:description"]',
 			'meta[name="og:description"]',
@@ -123,104 +216,9 @@ export async function POST(req: Request) {
 			og.icon = iconCandidates[0];
 		}
 
-		// Fallbacks for title/icon
-		if (!og.title) {
-			const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-			if (titleMatch) {
-				const dec = (s: string) =>
-					s
-						.replace(/&quot;/g, '"')
-						.replace(/&apos;/g, "'")
-						.replace(/&amp;/g, "&")
-						.replace(/&lt;/g, "<")
-						.replace(/&gt;/g, ">")
-						.replace(/&#(\d+);/g, (_, d: string) =>
-							String.fromCodePoint(Number.parseInt(d, 10) || 0),
-						)
-						.replace(/&#x([0-9a-fA-F]+);/g, (_, h: string) =>
-							String.fromCodePoint(Number.parseInt(h, 16) || 0),
-						);
-				og.title = dec(titleMatch[1]);
-			}
-		}
-
-		// No fallback to non-OG/Twitter images. If no candidate, leave og.image undefined/null.
-
-		// Provider-specific fallbacks (production-safe)
-		try {
-			const u = new URL(safeUrl);
-			const host = u.hostname.toLowerCase();
-			const isYouTube =
-				host.includes("youtube.com") ||
-				host === "youtu.be" ||
-				host.endsWith(".youtu.be");
-			if (isYouTube && (!og.title || !og.image)) {
-				const oembed = new URL("https://www.youtube.com/oembed");
-				oembed.searchParams.set("url", safeUrl);
-				oembed.searchParams.set("format", "json");
-				const oeRes = await fetch(oembed.toString(), {
-					method: "GET",
-					cache: "no-store",
-					headers: { "accept-language": "en" },
-					redirect: "follow",
-				});
-				if (oeRes.ok) {
-					const data = (await oeRes.json()) as {
-						title?: string;
-						thumbnail_url?: string;
-					};
-					og.title = data.title ? he.decode(data.title) : (og.title ?? null);
-					og.image = og.image ?? data.thumbnail_url ?? null;
-					og.siteName = og.siteName ?? "YouTube";
-				}
-			}
-		} catch {
-			// ignore
-		}
-
 		// Absolutize image/icon URLs
 		og.image = og.image ? absolutizeUrl(og.image, safeUrl) : null;
 		og.icon = og.icon ? absolutizeUrl(og.icon, safeUrl) : null;
-
-		// Favicon fallback: if no icon tag was present, try /favicon.ico
-		if (!og.icon) {
-			const fallbackFavicon = absolutizeUrl("/favicon.ico", safeUrl);
-			if (fallbackFavicon) {
-				try {
-					// Prefer HEAD; some servers don't support it, so fall back to GET
-					let headOk = false;
-					try {
-						const headRes = await fetch(fallbackFavicon, {
-							method: "HEAD",
-							cache: "no-store",
-							redirect: "follow",
-						});
-						headOk =
-							headRes.ok &&
-							(headRes.headers.get("content-type") ?? "").includes("image");
-					} catch {
-						/* ignore */
-					}
-					if (!headOk) {
-						const getRes = await fetch(fallbackFavicon, {
-							method: "GET",
-							cache: "no-store",
-							redirect: "follow",
-						});
-						if (
-							getRes.ok &&
-							(getRes.headers.get("content-type") ?? "").includes("image")
-						) {
-							og.icon = fallbackFavicon;
-						}
-					} else {
-						og.icon = fallbackFavicon;
-					}
-				} catch {
-					/* ignore */
-				}
-			}
-		}
 
 		return NextResponse.json({ og });
 	} catch (error) {
