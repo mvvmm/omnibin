@@ -6,6 +6,8 @@ import type { OgData } from "@/types/og";
 
 export async function getOpenGraphData(url: string) {
 	const token = await getAccessTokenOrReauth();
+	const isTwitch = url.includes("twitch.tv");
+
 	try {
 		const endpoint = new URL(
 			OMNIBIN_API_ROUTES.OG,
@@ -14,11 +16,10 @@ export async function getOpenGraphData(url: string) {
 		const res = await fetch(endpoint, {
 			method: "POST",
 			headers: {
-				"x-fake-header": "true",
 				Authorization: `Bearer ${token}`,
 				"content-type": "application/json",
 			},
-			cache: "force-cache",
+			cache: isTwitch ? "no-cache" : "force-cache",
 			body: JSON.stringify({ url }),
 		});
 		if (!res.ok) {
