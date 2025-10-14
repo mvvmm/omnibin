@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { comfortaa, geistMono, geistSans } from "@/fonts";
 
@@ -64,6 +65,7 @@ export default function RootLayout({
 
 					{/* Content container with relative positioning */}
 					<div className="relative z-10">{children}</div>
+					<SpeedInsights />
 				</ThemeProvider>
 			</body>
 		</html>
