@@ -6,7 +6,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { awsCredentialsProvider } from "@vercel/functions/oidc";
-import { CACHE_DURATION_SECONDS } from "@/constants/constants";
+import { S3_URL_EXPIRATION_SECONDS } from "@/constants/constants";
 
 const region = process.env.AWS_REGION;
 const bucket = process.env.S3_BUCKET;
@@ -42,7 +42,7 @@ export async function createPresignedGetUrl(params: {
 	key: string;
 	expiresInSeconds?: number;
 }) {
-	const { key, expiresInSeconds = CACHE_DURATION_SECONDS } = params;
+	const { key, expiresInSeconds = S3_URL_EXPIRATION_SECONDS } = params;
 	const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
 	const url = await getSignedUrl(s3, cmd, { expiresIn: expiresInSeconds });
 	return url;
