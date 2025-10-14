@@ -14,6 +14,7 @@ import { isCopyableFile } from "@/utils/isCopyableFile";
 import { extractFirstUrl, isUrl } from "@/utils/isUrl";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export function BinListItem({ item }: { item: BinItem }) {
 	const router = useRouter();
@@ -165,29 +166,23 @@ export function BinListItem({ item }: { item: BinItem }) {
 						clipboardError,
 					);
 
-					// If it's an image, try simpler approaches first
+					// If it's an image, we need to convert to PNG for clipboard compatibility
 					if (mime.startsWith("image/")) {
-						// First try: just change the MIME type to PNG without conversion
 						try {
-							await navigator.clipboard.write([
-								new ClipboardItem({ "image/png": blob }),
-							]);
-							setCopied(true);
-						} catch (pngError) {
-							console.log("PNG MIME type failed, trying conversion:", pngError);
+							// Convert image to PNG format for clipboard compatibility
+							const canvas = document.createElement("canvas");
+							const ctx = canvas.getContext("2d");
+							const img = new window.Image();
 
-							// Second try: actually convert to PNG format
-							try {
-								const canvas = document.createElement("canvas");
-								const ctx = canvas.getContext("2d");
-								const img = new window.Image();
+							await new Promise<void>((resolve, reject) => {
+								img.onload = () => {
+									canvas.width = img.width;
+									canvas.height = img.height;
+									ctx?.drawImage(img, 0, 0);
 
-								await new Promise<void>((resolve, reject) => {
-									img.onload = () => {
-										canvas.width = img.width;
-										canvas.height = img.height;
-										ctx?.drawImage(img, 0, 0);
-										canvas.toBlob((pngBlob) => {
+									// Convert to PNG for clipboard (browsers typically only support PNG in clipboard)
+									canvas.toBlob(
+										(pngBlob) => {
 											if (pngBlob) {
 												navigator.clipboard
 													.write([new ClipboardItem({ "image/png": pngBlob })])
@@ -199,26 +194,18 @@ export function BinListItem({ item }: { item: BinItem }) {
 											} else {
 												reject(new Error("Failed to convert image to PNG"));
 											}
-										}, "image/png");
-									};
-									img.onerror = reject;
-									img.src = URL.createObjectURL(blob);
-								});
-							} catch (conversionError) {
-								console.log("Image conversion failed:", conversionError);
-
-								// Last resort: try with generic binary data
-								try {
-									await navigator.clipboard.write([
-										new ClipboardItem({ "application/octet-stream": blob }),
-									]);
-									setCopied(true);
-								} catch {
-									throw new Error(
-										`Failed to copy image to clipboard. This browser may not support image copying.`,
+										},
+										"image/png",
+										0.8,
 									);
-								}
-							}
+								};
+								img.onerror = reject;
+								img.src = URL.createObjectURL(blob);
+							});
+						} catch (conversionError) {
+							throw new Error(
+								`Failed to copy image to clipboard. This browser may not support image copying.`,
+							);
 						}
 					} else {
 						// For non-image files, try with generic binary data
@@ -385,33 +372,52 @@ export function BinListItem({ item }: { item: BinItem }) {
 						{item.kind === "FILE" &&
 							item.fileItem &&
 							isCopyableFile(item.fileItem.contentType) && (
-								<Button
-									variant="ghost"
-									size="icon"
-									className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-									aria-label="Copy file to clipboard"
-									title="Copy file"
-									disabled={
-										item.fileItem.contentType.startsWith("image/") &&
-										!item.fileItem?.preview
-									}
-									onClick={(e) => {
-										e.stopPropagation();
-										handleCopyFile(
-											item.id,
-											item?.fileItem?.contentType,
-											item?.fileItem?.preview ?? undefined,
-										);
-									}}
-								>
-									{copyIsTransitioning ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
-									) : copied ? (
-										<Check className="h-4 w-4 text-emerald-600" />
-									) : (
-										<Copy className="h-4 w-4" />
-									)}
-								</Button>
+								<div className="relative">
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												className={`${
+													item.fileItem.contentType.startsWith("image/") &&
+													!item.fileItem.contentType.includes("png")
+														? "text-amber-600 hover:bg-amber-500/10 hover:text-amber-500 dark:hover:text-amber-700"
+														: "text-muted-foreground hover:text-primary hover:bg-primary/10"
+												}`}
+												aria-label="Copy file to clipboard"
+												title="Copy file"
+												disabled={
+													item.fileItem.contentType.startsWith("image/") &&
+													!item.fileItem?.preview
+												}
+												onClick={(e) => {
+													e.stopPropagation();
+													handleCopyFile(
+														item.id,
+														item?.fileItem?.contentType,
+														item?.fileItem?.preview ?? undefined,
+													);
+												}}
+											>
+												{copyIsTransitioning ? (
+													<Loader2 className="h-4 w-4 animate-spin" />
+												) : copied ? (
+													<Check className="h-4 w-4 text-emerald-600" />
+												) : (
+													<Copy className="h-4 w-4" />
+												)}
+											</Button>
+										</TooltipTrigger>
+										{item.fileItem.contentType.startsWith("image/") &&
+											!item.fileItem.contentType.includes("png") && (
+												<TooltipContent side="top" className="max-w-[300px]">
+													Image will be converted to .png on copy. This can
+													cause much larger file sizes, amongst other issues.
+													Consider using download instead.
+												</TooltipContent>
+											)}
+									</Tooltip>
+								</div>
 							)}
 
 						{/* Download File Button */}
