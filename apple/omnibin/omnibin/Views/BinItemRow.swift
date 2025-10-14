@@ -57,7 +57,7 @@ struct BinItemRow: View {
                         Text(itemTitle)
                             .font(.headline)
                             .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                            .lineLimit(2)
+                            .lineLimit(item.isText ? 5 : 1)
                     }
                     
                     Text(itemSubtitle)

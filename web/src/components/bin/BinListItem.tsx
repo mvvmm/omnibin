@@ -351,7 +351,11 @@ export function BinListItem({ item }: { item: BinItem }) {
 				}}
 			>
 				<div className="flex items-start justify-between gap-3">
-					<div className="font-medium text-foreground flex-1 min-w-0 truncate">
+					<div
+						className={`font-medium text-foreground flex-1 min-w-0 ${
+							item.kind === "TEXT" ? "line-clamp-5" : "truncate"
+						}`}
+					>
 						{renderTitle()}
 					</div>
 					<div className="flex items-center gap-1.5">
