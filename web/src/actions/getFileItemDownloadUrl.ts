@@ -1,5 +1,6 @@
 "use server";
 
+import { CACHE_DURATION_SECONDS } from "@/constants/constants";
 import { getAccessTokenOrReauth } from "@/lib/auth0";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 
@@ -14,7 +15,7 @@ export async function getFileItemDownloadUrl(itemId: string) {
 		const res = await fetch(url, {
 			method: "GET",
 			headers: { Authorization: `Bearer ${token}` },
-			cache: "force-cache",
+			next: { revalidate: CACHE_DURATION_SECONDS },
 		});
 		if (!res.ok) {
 			return {
