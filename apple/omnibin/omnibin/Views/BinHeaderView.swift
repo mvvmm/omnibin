@@ -16,6 +16,22 @@ struct BinHeaderView: View {
             
             Menu {
                 Button(action: {
+                    if let url = URL(string: "https://www.omnib.in") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Label("Open on the web", systemImage: "safari")
+                }
+                
+                Button(action: {
+                    if let url = URL(string: "https://www.omnib.in/support") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Label("Support", systemImage: "questionmark.circle")
+                }
+                
+                Button(action: {
                     onLogout()
                 }) {
                     Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
