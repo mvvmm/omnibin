@@ -1,14 +1,7 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ContextMenu } from "@/components/context-menu";
 import { auth0 } from "@/lib/auth0";
-
-export const metadata: Metadata = {
-	title: "Support - omnibin",
-	description:
-		"Get help with omnibin. Report bugs, request features, or contact support for any questions about our cross-platform copy/paste tool.",
-};
 
 export default async function Layout({
 	children,

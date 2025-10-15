@@ -14,7 +14,8 @@ export const config = {
 		 * - _next/image (image optimization files)
 		 * - favicon.ico, sitemap.xml, robots.txt (metadata files)
 		 * - support (support page doesn't require auth)
+		 * - privacy-policy (privacy policy page doesn't require auth)
 		 */
-		"/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|support).*)",
+		"/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|support|privacy-policy).*)",
 	],
 };
