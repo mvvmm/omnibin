@@ -25,7 +25,7 @@ class BinItemService: ObservableObject {
             if item.fileItem?.contentType.hasPrefix("image/") == true {
                 // For images, return the data for Photos saving
                 let (data, _) = try await URLSession.shared.data(from: URL(string: downloadURL)!)
-                if let image = UIImage(data: data) {
+                if UIImage(data: data) != nil {
                     return (true, "Image ready for saving", (data, item.fileItem?.originalName ?? "image", .png))
                 } else {
                     return (false, "Failed to decode image", nil)

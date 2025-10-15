@@ -351,7 +351,7 @@ struct BinItemRow: View {
     }
     
     private func deleteItem() {
-        guard let token = accessToken else {
+        guard accessToken != nil else {
             onShowMessage("No access token available", .error)
             return
         }

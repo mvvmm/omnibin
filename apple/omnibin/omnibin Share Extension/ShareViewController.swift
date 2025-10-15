@@ -852,12 +852,12 @@ class ShareViewController: UIViewController {
                 self.ogData = ogData
                 self.isOGLoading = false
             }
-            await self.updatePreview()
+            self.updatePreview()
         } catch {
             await MainActor.run {
                 self.isOGLoading = false
             }
-            await self.updatePreview()
+            self.updatePreview()
         }
     }
     

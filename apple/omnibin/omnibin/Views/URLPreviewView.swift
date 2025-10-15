@@ -255,7 +255,7 @@ struct URLPreviewView: View {
 
     private func normalizeURLString(_ raw: String) -> String {
         // Ensure we have an absolute URL with a scheme. Default to https.
-        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         if s.hasPrefix("http://") || s.hasPrefix("https://") { return s }
         if s.hasPrefix("//") { return "https:" + s }
         if s.hasPrefix("www.") { return "https://" + s }
