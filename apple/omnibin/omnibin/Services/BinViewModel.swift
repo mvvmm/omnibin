@@ -11,8 +11,6 @@ class BinViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isSubmitting = false
     @Published var selectedPhoto: PhotosPickerItem?
-    @Published var snackbarMessage: String?
-    @Published var snackbarType: MessageType?
     @Published var showTextInputDialog = false
     @Published var textInput = ""
     
@@ -78,7 +76,6 @@ class BinViewModel: ObservableObject {
                     await MainActor.run {
                         self.binItems.insert(item, at: 0)
                         self.isSubmitting = false
-                        self.showSnackbar(message: "Text pasted successfully", type: .success)
                     }
                 } else if let image = pasteboard.image {
                     await addImageToBin(image: image, token: token)
@@ -112,7 +109,6 @@ class BinViewModel: ObservableObject {
                     self.textInput = ""
                     self.showTextInputDialog = false
                     self.isSubmitting = false
-                    self.showSnackbar(message: "Text added successfully", type: .success)
                 }
             } catch {
                 await MainActor.run {
@@ -169,19 +165,6 @@ class BinViewModel: ObservableObject {
         deletedItems.removeAll { $0.id == item.id }
     }
     
-    func showSnackbar(message: String, type: MessageType) {
-        snackbarMessage = message
-        snackbarType = type
-        
-        // Auto-hide after 3 seconds
-        Task {
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            await MainActor.run {
-                self.snackbarMessage = nil
-                self.snackbarType = nil
-            }
-        }
-    }
     
     // MARK: - Private Methods
     
@@ -207,7 +190,6 @@ class BinViewModel: ObservableObject {
             await MainActor.run {
                 self.binItems.insert(item, at: 0)
                 self.isSubmitting = false
-                self.showSnackbar(message: "Image added successfully", type: .success)
             }
         } catch {
             await MainActor.run {

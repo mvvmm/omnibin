@@ -7,7 +7,6 @@ struct BinItemRow: View {
     let accessToken: String?
     let onDelete: () -> Void
     let onRestore: (() -> Void)?
-    let onShowMessage: (String, MessageType) -> Void
     
     @State private var isCopied = false
     @State private var isDownloading = false
@@ -28,12 +27,11 @@ struct BinItemRow: View {
     
     private let itemId: String
     
-    init(item: BinItem, accessToken: String?, onDelete: @escaping () -> Void, onRestore: (() -> Void)? = nil, onShowMessage: @escaping (String, MessageType) -> Void) {
+    init(item: BinItem, accessToken: String?, onDelete: @escaping () -> Void, onRestore: (() -> Void)? = nil) {
         self.item = item
         self.accessToken = accessToken
         self.onDelete = onDelete
         self.onRestore = onRestore
-        self.onShowMessage = onShowMessage
         self.itemId = item.id
     }
     
@@ -230,7 +228,7 @@ struct BinItemRow: View {
                       defaultFilename: exportName) { result in
             switch result {
             case .success: showSuccessMessage("Saved to Files")
-            case .failure: onShowMessage("Failed to save file", .error)
+            case .failure: break
             }
             isDownloading = false
         }
@@ -288,7 +286,7 @@ struct BinItemRow: View {
                         isCopied = false
                     }
                 } else {
-                    onShowMessage(result.message, .error)
+                    // Error occurred but no snackbar shown
                 }
             }
         }
@@ -309,7 +307,7 @@ struct BinItemRow: View {
                                     if error.localizedDescription.contains("permission") || error.localizedDescription.contains("denied") {
                                         showPermissionAlert = true
                                     } else {
-                                        onShowMessage("Failed to save image: \(error.localizedDescription)", .error)
+                                        // Error occurred but no snackbar shown
                                     }
                                 } else {
                                     isSaved = true
@@ -325,7 +323,7 @@ struct BinItemRow: View {
                     } else {
                         await MainActor.run {
                             isDownloading = false
-                            onShowMessage("Failed to decode image", .error)
+                            // Error occurred but no snackbar shown
                         }
                     }
                 } else {
@@ -341,18 +339,17 @@ struct BinItemRow: View {
         } else {
             await MainActor.run {
                 isDownloading = false
-                onShowMessage(result.message, .error)
+                // Error occurred but no snackbar shown
             }
         }
     }
     
     private func showSuccessMessage(_ message: String) {
-        onShowMessage(message, .success)
+        // Success message functionality removed
     }
     
     private func deleteItem() {
         guard accessToken != nil else {
-            onShowMessage("No access token available", .error)
             return
         }
         
@@ -364,7 +361,6 @@ struct BinItemRow: View {
             let result = await binItemService.deleteItem(item: item, accessToken: accessToken)
             if !result.success {
                 await MainActor.run {
-                    onShowMessage(result.message, .error)
                     onRestore?()
                 }
             }

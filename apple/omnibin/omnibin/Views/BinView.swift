@@ -51,7 +51,6 @@ struct BinView: View {
                             isDarkMode: isDarkMode,
                             onDeleteItem: viewModel.deleteItemById,
                             onRestoreItem: viewModel.restoreItem,
-                            onShowMessage: viewModel.showSnackbar
                         )
                     }
                     .padding(.top, 8)
@@ -77,16 +76,6 @@ struct BinView: View {
                 Task {
                     await viewModel.loadPhoto(newPhoto)
                 }
-            }
-        }
-        .overlay(alignment: .bottom) {
-            if let snackbarMessage = viewModel.snackbarMessage, let snackbarType = viewModel.snackbarType {
-                SnackbarView(message: snackbarMessage, type: snackbarType) {
-                    viewModel.snackbarMessage = nil
-                    viewModel.snackbarType = nil
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .animation(.easeInOut(duration: 0.3), value: snackbarMessage)
             }
         }
         .alert("Add Text Item", isPresented: $viewModel.showTextInputDialog) {

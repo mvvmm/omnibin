@@ -8,7 +8,6 @@ struct BinItemsListView: View {
     let isDarkMode: Bool
     let onDeleteItem: (String) -> Void
     let onRestoreItem: (BinItem) -> Void
-    let onShowMessage: (String, MessageType) -> Void
     
     var body: some View {
         if isLoading {
@@ -44,8 +43,6 @@ struct BinItemsListView: View {
                         onDeleteItem(item.id)
                     }, onRestore: {
                         onRestoreItem(item)
-                    }, onShowMessage: { message, type in
-                        onShowMessage(message, type)
                     })
                     .id(item.id)
                 }
