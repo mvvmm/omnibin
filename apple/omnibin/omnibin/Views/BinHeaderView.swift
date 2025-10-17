@@ -28,7 +28,15 @@ struct BinHeaderView: View {
                         UIApplication.shared.open(url)
                     }
                 }) {
-                    Label("Support", systemImage: "questionmark.circle")
+                    Label("Get support", systemImage: "questionmark.circle")
+                }
+                
+                Button(action: {
+                    if let url = URL(string: "https://www.omnib.in/privacy-policy") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Label("Privacy policy", systemImage: "lock.document")
                 }
                 
                 Button(action: {
