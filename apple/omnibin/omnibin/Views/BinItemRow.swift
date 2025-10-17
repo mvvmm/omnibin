@@ -55,13 +55,13 @@ struct BinItemRow: View {
                             .cornerRadius(4)
                     } else {
                         Text(itemTitle)
-                            .font(.headline)
+                            .font(isIPad ? .system(size: 24, weight: .semibold) : .headline)
                             .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                             .lineLimit(item.isText ? 5 : 1)
                     }
                     
                     Text(itemSubtitle)
-                        .font(.caption)
+                        .font(isIPad ? .system(size: 17) : .caption)
                         .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                 }
                 
@@ -69,7 +69,7 @@ struct BinItemRow: View {
                 
                 // Chevron indicator
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: isIPad ? 24 : 14, weight: .medium))
                     .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
                     .animation(.easeInOut(duration: 0.2), value: isExpanded)
@@ -109,9 +109,9 @@ struct BinItemRow: View {
                                     .font(.system(size: 18, weight: .medium))
                             }
                             Text(isCopied ? "Copied" : "Copy")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: isIPad ? 24 : 14, weight: .medium))
                         }
-                        .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                        .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                         .background(
                             RoundedRectangle(cornerRadius: 8)
@@ -136,9 +136,9 @@ struct BinItemRow: View {
                                         .font(.system(size: 18, weight: .medium))
                                 }
                                 Text(isSaved ? "Saved" : "Save")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(.system(size: isIPad ? 24 : 14, weight: .medium))
                             }
-                            .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                            .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
                             .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
@@ -167,9 +167,9 @@ struct BinItemRow: View {
                                         .font(.system(size: 18, weight: .medium))
                                 }
                                 Text("Save")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(.system(size: isIPad ? 24 : 14, weight: .medium))
                             }
-                            .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                            .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
                             .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
@@ -185,9 +185,9 @@ struct BinItemRow: View {
                             Image(systemName: "trash")
                                 .font(.system(size: 18, weight: .medium))
                             Text("Delete")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: isIPad ? 24 : 14, weight: .medium))
                         }
-                        .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                        .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                         .background(
                             RoundedRectangle(cornerRadius: 8)

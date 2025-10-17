@@ -67,17 +67,17 @@ struct URLPreviewView: View {
 
                         VStack(alignment: .leading, spacing: 6) {
                         Text((og.title?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? url.absoluteString))
-                            .font(.headline)
+                            .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
                             .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                             .lineLimit(2)
                         if let desc = og.description?.trimmingCharacters(in: .whitespacesAndNewlines), !desc.isEmpty {
                             Text(desc)
-                                .font(.subheadline)
+                                .font(isIPad ? .system(size: 18) : .subheadline)
                                 .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                                 .lineLimit(3)
                         }
                         Text((og.siteName?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? ""))
-                            .font(.caption)
+                            .font(isIPad ? .system(size: 15) : .caption)
                             .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -184,11 +184,11 @@ struct URLPreviewView: View {
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text(url.host ?? url.absoluteString)
-                                .font(.headline)
+                                .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
                                 .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                                 .lineLimit(1)
                             Text(url.absoluteString)
-                                .font(.caption)
+                                .font(isIPad ? .system(size: 15) : .caption)
                                 .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                                 .lineLimit(1)
                         }

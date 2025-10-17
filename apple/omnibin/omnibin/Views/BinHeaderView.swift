@@ -8,7 +8,7 @@ struct BinHeaderView: View {
     var body: some View {
         HStack {
             Text("Your Bin")
-                .font(.largeTitle)
+                .font(isIPad ? .system(size: 36, weight: .bold) : .largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
             
@@ -38,7 +38,7 @@ struct BinHeaderView: View {
                 }
             } label: {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: isIPad ? 30 : 20, weight: .medium))
                     .foregroundColor(AppColors.Button.accentPrimary)
             }
         }

@@ -18,22 +18,22 @@ struct BinItemsListView: View {
                     .progressViewStyle(CircularProgressViewStyle(tint: AppColors.Button.accentPrimary))
                 
                 Text("Loading your bin...")
-                    .font(.headline)
+                    .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
                     .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
             }
             .padding(.top, 60)
         } else if binItems.isEmpty {
             VStack(spacing: 12) {
                 Image(systemName: "tray")
-                    .font(.system(size: 48))
+                    .font(.system(size: isIPad ? 72 : 48))
                     .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                 
                 Text("No items yet")
-                    .font(.headline)
+                    .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
                     .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                 
                 Text("Paste text or files to get started")
-                    .font(.subheadline)
+                    .font(isIPad ? .system(size: 18) : .subheadline)
                     .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
             }
             .padding(.top, 60)

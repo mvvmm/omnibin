@@ -22,11 +22,11 @@ struct BinFormView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
                         Image(systemName: "doc.on.clipboard")
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.system(size: isIPad ? 27 : 18, weight: .medium))
                     }
                     
                     Text(isSubmitting ? "Pasting..." : "Paste from Clipboard")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: isIPad ? 24 : 16, weight: .semibold))
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -54,14 +54,14 @@ struct BinFormView: View {
             }
             .disabled(isSubmitting)
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
+            .frame(height: isIPad ? 78 : 52)
             
             // Text and Photos buttons row
             HStack(spacing: 12) {
                 // Add Text button
                 Button(action: { showTextInputDialog = true }) {
                     Image(systemName: "textformat")
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: isIPad ? 27 : 18, weight: .medium))
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(
@@ -81,12 +81,12 @@ struct BinFormView: View {
                 }
                 .disabled(isSubmitting)
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .frame(height: isIPad ? 78 : 52)
                 
                 // Upload from Photos button
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     Image(systemName: "photo")
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: isIPad ? 27 : 18, weight: .medium))
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(
@@ -106,17 +106,17 @@ struct BinFormView: View {
                 }
                 .disabled(isSubmitting)
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .frame(height: isIPad ? 78 : 52)
             }
             
             VStack(alignment: .trailing, spacing: 2) {
                 Text("Items: \(binItemsCount) / \(binItemsLimit)")
-                    .font(.caption)
+                    .font(isIPad ? .system(size: 23) : .caption)
                     .foregroundColor(binItemsCount >= binItemsLimit ? .red : AppColors.mutedText(isDarkMode: isDarkMode))
                 
                 if binItemsCount >= binItemsLimit {
                     Text("Oldest item will be deleted on next add.")
-                        .font(.caption2)
+                        .font(isIPad ? .system(size: 12) : .caption2)
                         .foregroundColor(.red)
                 }
             }
@@ -124,7 +124,7 @@ struct BinFormView: View {
             
             if let error = errorMessage {
                 Text(error)
-                    .font(.caption)
+                    .font(isIPad ? .system(size: 15) : .caption)
                     .foregroundColor(.red)
             }
         }
