@@ -15,7 +15,7 @@ struct ImagePreviewView: View {
         // Use a fixed-size container to strictly limit the hit testing area
         Rectangle()
             .fill(Color.clear)
-            .frame(height: 200)
+            .frame(height: isIPad ? 350 : 200)
             .overlay(
                 Group {
                     if let imageURL = imageURL, let url = URL(string: imageURL) {
@@ -23,7 +23,7 @@ struct ImagePreviewView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(height: 200)
+                                .frame(height: isIPad ? 350 : 200)
                                 .clipped()
                                 .cornerRadius(8)
                                 .overlay(
@@ -70,7 +70,7 @@ struct ImagePreviewView: View {
                     } placeholder: {
                         Rectangle()
                             .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                            .frame(height: 200)
+                            .frame(height: isIPad ? 350 : 200)
                             .cornerRadius(8)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
@@ -84,7 +84,7 @@ struct ImagePreviewView: View {
                 } else if hasError {
                     Rectangle()
                         .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                        .frame(height: 200)
+                        .frame(height: isIPad ? 350 : 200)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
@@ -103,7 +103,7 @@ struct ImagePreviewView: View {
                 } else {
                     Rectangle()
                         .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                        .frame(height: 200)
+                        .frame(height: isIPad ? 350 : 200)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)

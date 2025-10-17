@@ -84,7 +84,7 @@ struct BinItemRow: View {
             // Image preview for image files (separate from tappable header)
             if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
                 ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
-                    .frame(height: 200)
+                    .frame(height: isIPad ? 350 : 200)
                     .clipped()
                     .contentShape(RoundedRectangle(cornerRadius: 8)) // Define tappable area to match visual bounds
             }
