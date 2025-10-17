@@ -100,11 +100,11 @@ struct BinItemRow: View {
                         HStack {
                             if isCopying {
                                 ProgressView()
-                                    .frame(width: 18, height: 18)
+                                    .frame(width: isIPad ? 23 : 18, height: isIPad ? 23 : 18)
                                     .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
                             } else {
                                 Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
-                                    .font(.system(size: 18, weight: .medium))
+                                    .font(.system(size: isIPad ? 23 : 18, weight: .medium))
                             }
                             Text(isCopied ? "Copied" : "Copy")
                                 .font(.system(size: isIPad ? 24 : 14, weight: .medium))
@@ -127,11 +127,11 @@ struct BinItemRow: View {
                             HStack {
                                 if isDownloading {
                                     ProgressView()
-                                        .frame(width: 18, height: 18)
+                                        .frame(width: isIPad ? 23 : 18, height: isIPad ? 23 : 18)
                                         .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
                                 } else {
                                     Image(systemName: isSaved ? "checkmark.circle.fill" : "square.and.arrow.down")
-                                        .font(.system(size: 18, weight: .medium))
+                                        .font(.system(size: isIPad ? 23 : 18, weight: .medium))
                                 }
                                 Text(isSaved ? "Saved" : "Save")
                                     .font(.system(size: isIPad ? 24 : 14, weight: .medium))
@@ -158,11 +158,11 @@ struct BinItemRow: View {
                             HStack {
                                 if isDownloading {
                                     ProgressView()
-                                        .frame(width: 18, height: 18)
+                                        .frame(width: isIPad ? 23 : 18, height: isIPad ? 23 : 18)
                                         .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
                                 } else {
                                     Image(systemName: "arrow.down.doc")
-                                        .font(.system(size: 18, weight: .medium))
+                                        .font(.system(size: isIPad ? 23 : 18, weight: .medium))
                                 }
                                 Text("Save")
                                     .font(.system(size: isIPad ? 24 : 14, weight: .medium))
@@ -181,7 +181,7 @@ struct BinItemRow: View {
                     Button(action: deleteItem) {
                         HStack {
                             Image(systemName: "trash")
-                                .font(.system(size: 18, weight: .medium))
+                                .font(.system(size: isIPad ? 23 : 18, weight: .medium))
                             Text("Delete")
                                 .font(.system(size: isIPad ? 24 : 14, weight: .medium))
                         }
