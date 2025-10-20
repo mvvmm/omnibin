@@ -6,8 +6,8 @@ import { comfortaa, geistMono, geistSans } from "@/fonts";
 
 export const metadata: Metadata = {
 	title: {
-		default: "omnibin - Cross-platform copy/paste",
-		template: "%s • omnibin",
+		template: "omnibin • %s",
+		default: "omnibin",
 	},
 	description:
 		"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. Copy. Paste. Anywhere.",
@@ -38,9 +38,6 @@ export const metadata: Metadata = {
 		locale: "en_US",
 		url: "/",
 		siteName: "omnibin",
-		title: "omnibin - copy. paste. anywhere.",
-		description:
-			"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. Copy. Paste. Anywhere.",
 	},
 	robots: {
 		index: true,

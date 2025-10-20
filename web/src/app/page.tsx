@@ -10,7 +10,7 @@ import { auth0 } from "@/lib/auth0";
 import { OMNIBIN_ROUTES } from "@/routes";
 
 export const metadata: Metadata = {
-	title: "Copy. Paste. Anywhere.",
+	title: "omnibin • Copy. Paste. Anywhere.",
 	description:
 		"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. One click copy and paste across all your devices.",
 };
