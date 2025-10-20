@@ -1,8 +1,18 @@
 "use client";
 
-import { Loader2, LogOutIcon, SettingsIcon } from "lucide-react";
+import { Loader2, LogOutIcon, SettingsIcon, Trash2Icon } from "lucide-react";
 import { redirect } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { deleteAccount } from "@/actions/deleteAccount";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -16,36 +26,170 @@ import { Button } from "./ui/button";
 
 export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
 	const [loggingOut, setLoggingOut] = useState(false);
+	const [isPending, startTransition] = useTransition();
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+	const handleDeleteAccount = () => {
+		setShowDeleteDialog(true);
+	};
+
+	const confirmDeleteAccount = () => {
+		startTransition(async () => {
+			try {
+				const result = await deleteAccount();
+
+				if (result.success) {
+					toast.success("Account deleted successfully", {
+						description:
+							"Your account, all bin items, and uploaded files have been permanently removed.",
+					});
+					// Redirect to login page after successful deletion
+					window.location.href = "/auth/login";
+				} else {
+					// Parse the error to provide more specific feedback
+					const errorMessage = result.error || "Unknown error occurred";
+
+					if (
+						errorMessage.includes("Auth0") ||
+						errorMessage.includes("auth0")
+					) {
+						toast.error("Partial deletion completed", {
+							description:
+								"Your bin items and files were deleted, but the Auth0 account couldn't be removed. Please contact support@omnib.in for assistance.",
+							duration: Infinity,
+						});
+					} else if (
+						errorMessage.includes("database") ||
+						errorMessage.includes("Database")
+					) {
+						toast.error("Partial deletion completed", {
+							description:
+								"Your Auth0 account was deleted, but some data may remain in our database. Please contact support@omnib.in for assistance.",
+							duration: Infinity,
+						});
+					} else if (
+						errorMessage.includes("S3") ||
+						errorMessage.includes("storage")
+					) {
+						toast.error("Partial deletion completed", {
+							description:
+								"Your account and bin items were deleted, but some files may remain in storage. Please contact support@omnib.in for assistance.",
+							duration: Infinity,
+						});
+					} else {
+						toast.error("Account deletion failed", {
+							description: `${errorMessage}. Please contact support@omnib.in for further assistance.`,
+							duration: Infinity,
+						});
+					}
+				}
+			} catch {
+				toast.error("An unexpected error occurred", {
+					description:
+						"Please contact support@omnib.in for assistance with account deletion.",
+					duration: Infinity,
+				});
+			} finally {
+				setShowDeleteDialog(false);
+			}
+		});
+	};
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button variant="outline" size="icon" className="p-3">
-					<SettingsIcon className="size-4" />
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent className="w-56" align="start" collisionPadding={12}>
-				{loggedIn && (
-					<>
-						<DropdownMenuItem
-							className="cursor-pointer"
-							onClick={() => {
-								setLoggingOut(true);
-								redirect(OMNIBIN_ROUTES.LOGOUT);
-							}}
+		<>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button variant="outline" size="icon" className="p-3">
+						<SettingsIcon className="size-4" />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent
+					className="w-56"
+					align="start"
+					collisionPadding={12}
+				>
+					{loggedIn && (
+						<>
+							<DropdownMenuItem
+								className="cursor-pointer"
+								onClick={() => {
+									setLoggingOut(true);
+									redirect(OMNIBIN_ROUTES.LOGOUT);
+								}}
+							>
+								{loggingOut ? (
+									<Loader2 className="size-3 animate-spin" />
+								) : (
+									<LogOutIcon className="size-3" />
+								)}
+								Log out
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								className="cursor-pointer text-red-400 focus:text-red-400"
+								onClick={handleDeleteAccount}
+								disabled={isPending}
+							>
+								{isPending ? (
+									<Loader2 className="size-3 animate-spin" />
+								) : (
+									<Trash2Icon className="size-3 text-red-400 focus:text-red-400" />
+								)}
+								Delete Account
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+						</>
+					)}
+					<ThemeToggle />
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2 text-red-400">
+							<Trash2Icon className="size-5 text-red-400" />
+							Delete Account
+						</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to delete your account? This action cannot
+							be undone and will permanently delete all your data, including:
+						</DialogDescription>
+					</DialogHeader>
+					<div className="my-4 space-y-2 text-sm text-muted-foreground">
+						<ul className="list-disc list-inside space-y-1">
+							<li>All your clipboard entries (text and files)</li>
+							<li>All uploaded files from storage</li>
+							<li>Your account and authentication data</li>
+						</ul>
+					</div>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setShowDeleteDialog(false)}
+							disabled={isPending}
 						>
-							{loggingOut ? (
-								<Loader2 className="size-3 animate-spin" />
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={confirmDeleteAccount}
+							disabled={isPending}
+							className="bg-red-400 hover:bg-red-500"
+						>
+							{isPending ? (
+								<>
+									<Loader2 className="size-4 animate-spin mr-2" />
+									Deleting...
+								</>
 							) : (
-								<LogOutIcon className="size-3" />
+								<>
+									<Trash2Icon className="size-4 mr-2" />
+									Delete Account
+								</>
 							)}
-							Log out
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-					</>
-				)}
-				<ThemeToggle />
-			</DropdownMenuContent>
-		</DropdownMenu>
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</>
 	);
 }
