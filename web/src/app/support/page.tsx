@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +8,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+	title: "Support",
+	description:
+		"Get help with omnibin. Report bugs, request features, or contact support for assistance with your cross-platform clipboard.",
+};
 
 const BUG_GITHUB_URL =
 	"https://github.com/mvvmm/omnibin/issues/new?template=bug_report.yml";

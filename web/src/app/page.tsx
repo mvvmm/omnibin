@@ -1,4 +1,5 @@
 import { ArrowRight, LogIn } from "lucide-react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { auth0 } from "@/lib/auth0";
 import { OMNIBIN_ROUTES } from "@/routes";
+
+export const metadata: Metadata = {
+	title: "Copy. Paste. Anywhere.",
+	description:
+		"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. One click copy and paste across all your devices.",
+};
 
 export default async function Home({
 	searchParams,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { BinList } from "@/components/bin/BinList";
 import { CreateItemForm } from "@/components/bin/CreateItemForm";
 import { Card } from "@/components/ui/card";
@@ -5,6 +6,12 @@ import { getAccessTokenOrReauth } from "@/lib/auth0";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 
 import type { BinItem } from "@/types/bin";
+
+export const metadata: Metadata = {
+	title: "Your Bin",
+	description:
+		"Access your shared clipboard items. View, manage, and sync your text, images, and files across all devices.",
+};
 
 export default async function Page() {
 	const token = await getAccessTokenOrReauth();

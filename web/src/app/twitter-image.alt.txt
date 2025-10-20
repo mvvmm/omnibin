@@ -1,0 +1,1 @@
+omnibin application logo showing "Copy. Paste. Anywhere." - A cross-platform clipboard service for syncing text, images, and files between devices

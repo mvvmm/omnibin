@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-	title: "Privacy Policy - omnibin",
-	description: "Privacy Policy for omnibin - cross-platform copy/paste",
+	title: "Privacy Policy",
+	description:
+		"Privacy Policy for omnibin - cross-platform copy/paste. Learn how we collect, use, and protect your data when using our clipboard sync service.",
 };
 
 const SUPPORT_EMAIL = "support@omnib.in";

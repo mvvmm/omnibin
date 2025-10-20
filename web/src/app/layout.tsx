@@ -5,10 +5,53 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { comfortaa, geistMono, geistSans } from "@/fonts";
 
 export const metadata: Metadata = {
-	title: "omnibin",
-	description: `cross-platform copy/paste`,
-	icons: {
-		icon: "/favicons/favicon-96x96.png",
+	title: {
+		default: "omnibin - Cross-platform copy/paste",
+		template: "%s • omnibin",
+	},
+	description:
+		"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. Copy. Paste. Anywhere.",
+	keywords: [
+		"clipboard",
+		"copy paste",
+		"cross-platform",
+		"sync",
+		"cloud clipboard",
+		"file sharing",
+		"text sharing",
+		"omnibin",
+	],
+	authors: [{ name: "omnibin" }],
+	creator: "omnibin",
+	publisher: "omnibin",
+	formatDetection: {
+		email: false,
+		address: false,
+		telephone: false,
+	},
+	metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://omnib.in"),
+	alternates: {
+		canonical: "/",
+	},
+	openGraph: {
+		type: "website",
+		locale: "en_US",
+		url: "/",
+		siteName: "omnibin",
+		title: "omnibin - copy. paste. anywhere.",
+		description:
+			"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. Copy. Paste. Anywhere.",
+	},
+	robots: {
+		index: true,
+		follow: true,
+		googleBot: {
+			index: true,
+			follow: true,
+			"max-video-preview": -1,
+			"max-image-preview": "large",
+			"max-snippet": -1,
+		},
 	},
 };
 
