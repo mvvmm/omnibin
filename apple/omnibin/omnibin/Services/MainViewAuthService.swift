@@ -109,4 +109,23 @@ class MainViewAuthService: ObservableObject {
                 }
             }
     }
+    
+    func clearSessionLocally() {
+        // Clear stored credentials
+        _ = credentialsManager.clear()
+        
+        // Clear shared Keychain
+        SecureStorageManager.shared.deleteAccessToken()
+        SecureStorageManager.shared.clearUserInfo()
+        
+        // Clear UserDefaults
+        if let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin") {
+            sharedDefaults.removeObject(forKey: "access_token")
+        }
+        
+        // Clear local state without triggering Auth0 logout
+        self.user = nil
+        self.accessToken = nil
+        self.isLoading = false
+    }
 }

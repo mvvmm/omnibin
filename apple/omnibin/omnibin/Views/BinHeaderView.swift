@@ -3,6 +3,7 @@ import SwiftUI
 // MARK: - Bin Header View
 struct BinHeaderView: View {
     let onLogout: () -> Void
+    let onDeleteAccount: () -> Void
     let isDarkMode: Bool
     
     var body: some View {
@@ -38,6 +39,15 @@ struct BinHeaderView: View {
                 }) {
                     Label("Privacy policy", systemImage: "lock.document")
                 }
+                
+                Divider()
+                
+                Button(action: {
+                    onDeleteAccount()
+                }) {
+                    Label("Delete Account", systemImage: "trash")
+                }
+                .foregroundColor(.red)
                 
                 Button(action: {
                     onLogout()

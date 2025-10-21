@@ -52,7 +52,7 @@ struct MainView: View {
                 }
                 .padding(.top, horizontalSizeClass == .regular ? 48 : 0)
             } else if authService.user != nil {
-                BinView(accessToken: authService.accessToken, onLogout: authService.logout)
+                BinView(accessToken: authService.accessToken, onLogout: authService.logout, authService: authService)
                     .padding(.top, horizontalSizeClass == .regular ? 48 : 0)
             } else {
                 GeometryReader { geometry in

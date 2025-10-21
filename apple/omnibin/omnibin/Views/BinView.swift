@@ -5,13 +5,17 @@ import PhotosUI
 struct BinView: View {
     let accessToken: String?
     let onLogout: () -> Void
+    let authService: MainViewAuthService
     
     @StateObject private var viewModel: BinViewModel
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showDeleteAccountAlert = false
+    @State private var isDeletingAccount = false
     
-    init(accessToken: String?, onLogout: @escaping () -> Void) {
+    init(accessToken: String?, onLogout: @escaping () -> Void, authService: MainViewAuthService) {
         self.accessToken = accessToken
         self.onLogout = onLogout
+        self.authService = authService
         self._viewModel = StateObject(wrappedValue: BinViewModel(accessToken: accessToken))
     }
     
@@ -19,14 +23,48 @@ struct BinView: View {
         colorScheme == .dark
     }
     
+    // MARK: - Account Deletion
+    
+    private func deleteAccount() async {
+        guard let accessToken = accessToken else {
+            print("❌ No access token available for account deletion")
+            return
+        }
+        
+        isDeletingAccount = true
+        
+        do {
+            let success = try await AccountDeletionService.shared.deleteAccount(accessToken: accessToken)
+            if success {
+                print("✅ Account successfully deleted")
+                // Clear session locally without triggering Auth0 logout popup
+                await MainActor.run {
+                    authService.clearSessionLocally()
+                }
+            } else {
+                print("❌ Account deletion failed")
+            }
+        } catch {
+            print("❌ Account deletion error: \(error.localizedDescription)")
+        }
+        
+        isDeletingAccount = false
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
                 // Header
-                BinHeaderView(onLogout: onLogout, isDarkMode: isDarkMode)
-                    .padding(.top, 20)
-                    .padding(.bottom, 16)
-                    .padding(.horizontal, min(24, geometry.size.width * 0.05))
+                BinHeaderView(
+                    onLogout: onLogout,
+                    onDeleteAccount: {
+                        showDeleteAccountAlert = true
+                    },
+                    isDarkMode: isDarkMode
+                )
+                .padding(.top, 20)
+                .padding(.bottom, 16)
+                .padding(.horizontal, min(24, geometry.size.width * 0.05))
                 
                 // Content
                 ScrollView {
@@ -71,6 +109,18 @@ struct BinView: View {
                 await viewModel.refreshBinItems()
             }
         }
+        .alert("Delete Account", isPresented: $showDeleteAccountAlert) {
+            Button("Cancel", role: .cancel) {
+                showDeleteAccountAlert = false
+            }
+            Button("Delete Account", role: .destructive) {
+                Task {
+                    await deleteAccount()
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data, including:\n\n• All your bin items (text, images, files, etc.)\n• All uploaded files from storage\n• Your account and authentication data")
+        }
         .onChange(of: viewModel.selectedPhoto) { _, newPhoto in
             if let newPhoto = newPhoto {
                 Task {
@@ -95,5 +145,5 @@ struct BinView: View {
 }
 
 #Preview {
-    BinView(accessToken: nil, onLogout: {})
+    BinView(accessToken: nil, onLogout: {}, authService: MainViewAuthService())
 }
