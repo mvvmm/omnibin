@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2, LogOutIcon, SettingsIcon, Trash2Icon } from "lucide-react";
-import { redirect } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAccount } from "@/actions/deleteAccount";
@@ -35,16 +34,16 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
 
 	const confirmDeleteAccount = () => {
 		startTransition(async () => {
+			let result: { success: boolean; error?: string } | undefined;
 			try {
-				const result = await deleteAccount();
+				result = await deleteAccount();
 
 				if (result.success) {
-					toast.success("Account deleted successfully", {
-						description:
-							"Your account, all bin items, and uploaded files have been permanently removed.",
-					});
-					// Redirect to login page after successful deletion
-					window.location.href = "/auth/login";
+					// Close dialog first, then redirect after a brief delay
+					setShowDeleteDialog(false);
+					setTimeout(() => {
+						window.location.href = OMNIBIN_ROUTES.LOGOUT;
+					}, 100);
 				} else {
 					// Parse the error to provide more specific feedback
 					const errorMessage = result.error || "Unknown error occurred";
@@ -90,7 +89,10 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
 					duration: Infinity,
 				});
 			} finally {
-				setShowDeleteDialog(false);
+				// Only close dialog if not already closed by success case
+				if (!result?.success) {
+					setShowDeleteDialog(false);
+				}
 			}
 		});
 	};
@@ -114,7 +116,7 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
 								className="cursor-pointer"
 								onClick={() => {
 									setLoggingOut(true);
-									redirect(OMNIBIN_ROUTES.LOGOUT);
+									window.location.href = OMNIBIN_ROUTES.LOGOUT;
 								}}
 							>
 								{loggingOut ? (
@@ -156,7 +158,7 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
 					</DialogHeader>
 					<div className="my-4 space-y-2 text-sm text-muted-foreground">
 						<ul className="list-disc list-inside space-y-1">
-							<li>All your clipboard entries (text and files)</li>
+							<li>All your bin items (text, images, files, etc.)</li>
 							<li>All uploaded files from storage</li>
 							<li>Your account and authentication data</li>
 						</ul>
