@@ -39,11 +39,12 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
 				result = await deleteAccount();
 
 				if (result.success) {
-					// Close dialog first, then redirect after a brief delay
+					// Close dialog first, then redirect after ensuring server action completes
 					setShowDeleteDialog(false);
+					// Wait longer in production to ensure server action fully completes
 					setTimeout(() => {
 						window.location.href = OMNIBIN_ROUTES.LOGOUT;
-					}, 100);
+					}, 1000);
 				} else {
 					// Parse the error to provide more specific feedback
 					const errorMessage = result.error || "Unknown error occurred";
