@@ -50,6 +50,7 @@ export default async function Home({
 							width={680}
 							height={200}
 							priority
+							quality={50}
 							className="h-auto w-full max-w-[720px]"
 						/>
 					</div>
