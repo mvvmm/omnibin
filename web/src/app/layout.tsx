@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Footer } from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { comfortaa, geistMono, geistSans } from "@/fonts";
@@ -105,7 +106,10 @@ export default function RootLayout({
 					</div>
 
 					{/* Content container with relative positioning */}
-					<div className="relative z-10">{children}</div>
+					<div className="relative z-10 min-h-screen flex flex-col">
+						<main className="flex-1">{children}</main>
+						<Footer />
+					</div>
 					<SpeedInsights />
 					<Toaster />
 				</ThemeProvider>
