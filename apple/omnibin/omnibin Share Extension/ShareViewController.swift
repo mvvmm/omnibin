@@ -157,6 +157,7 @@ class ShareViewController: UIViewController {
         urlPreviewContainer.translatesAutoresizingMaskIntoConstraints = false
         urlPreviewContainer.backgroundColor = UIColor.secondarySystemBackground
         urlPreviewContainer.layer.cornerRadius = 8
+        urlPreviewContainer.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         urlPreviewContainer.isHidden = true
         previewContainer.addSubview(urlPreviewContainer)
         
@@ -165,6 +166,7 @@ class ShareViewController: UIViewController {
         urlPreviewImageView.contentMode = .scaleAspectFill
         urlPreviewImageView.clipsToBounds = true
         urlPreviewImageView.layer.cornerRadius = 8
+        urlPreviewImageView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         urlPreviewImageView.isHidden = true
         urlPreviewContainer.addSubview(urlPreviewImageView)
         
