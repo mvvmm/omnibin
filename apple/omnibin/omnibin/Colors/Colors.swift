@@ -36,10 +36,10 @@ struct AppColors {
         static let darkBorder = Color.white.opacity(0.1)
         
         // Feature cards
-        static let lightFeatureBackground = Color.white.opacity(0.9)
+        static let lightFeatureBackground = Color.white.opacity(0.5)
         static let lightFeatureBorder = Color.gray.opacity(0.3)
         
-        static let darkFeatureBackground = Color(red: 0.09, green: 0.09, blue: 0.11).opacity(0.6)
+        static let darkFeatureBackground = Color(red: 0.09, green: 0.09, blue: 0.11).opacity(0.3)
         static let darkFeatureBorder = Color.white.opacity(0.2)
     }
     

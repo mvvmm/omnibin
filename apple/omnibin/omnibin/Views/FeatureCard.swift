@@ -29,10 +29,10 @@ struct FeatureCard: View {
         .padding(.horizontal, horizontalPadding)
         .padding(.vertical, verticalPadding)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 8)
                 .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: 8)
                         .stroke(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
                 )
                 .shadow(
