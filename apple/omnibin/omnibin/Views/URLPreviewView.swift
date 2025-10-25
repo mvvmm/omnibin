@@ -23,14 +23,11 @@ struct URLPreviewView: View {
                     let trimmedImage = og.image?.trimmingCharacters(in: .whitespacesAndNewlines)
                     let imageURL = (trimmedImage?.isEmpty == false) ? URL(string: trimmedImage!) : nil
                     if let imageURL = imageURL {
-                        let w = CGFloat(og.imageWidth ?? 16)
-                        let h = CGFloat(og.imageHeight ?? 9)
                         ZStack {
                             AsyncImage(url: imageURL) { image in
                                 image
                                     .resizable()
                                     .scaledToFill()
-                                    .clipped()
                                     .onAppear {
                                         isImageLoading = false
                                     }
@@ -48,8 +45,8 @@ struct URLPreviewView: View {
                                     .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
                             }
                         }
-                        // Size the container purely by its aspect ratio to avoid any extra blank space
-                        .aspectRatio(CGSize(width: w, height: h), contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: 300)
+                        .clipped()
                     }
                     // Title/description row. Only show favicon when there is no image and icon URL exists
                     HStack(alignment: .center, spacing: 10) {
