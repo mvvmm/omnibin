@@ -497,7 +497,7 @@
 				CODE_SIGN_ENTITLEMENTS = omnibin/omnibin.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = YSV22LA249;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -536,7 +536,7 @@
 				CODE_SIGN_ENTITLEMENTS = omnibin/omnibin.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = YSV22LA249;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -660,7 +660,7 @@
 				CODE_SIGN_ENTITLEMENTS = "omnibin Share Extension/omnibin Share Extension.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = YSV22LA249;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "omnibin Share Extension/Info.plist";
@@ -694,7 +694,7 @@
 				CODE_SIGN_ENTITLEMENTS = "omnibin Share Extension/omnibin Share Extension.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = YSV22LA249;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "omnibin Share Extension/Info.plist";
