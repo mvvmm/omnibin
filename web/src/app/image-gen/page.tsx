@@ -21,7 +21,7 @@ export default function Page() {
 	return (
 		<div className="flex min-h-screen items-center justify-center p-4">
 			{/* 1200x630 card container */}
-			<div className="relative" style={{ width: "1280px", height: "640px" }}>
+			<div className="relative" style={{ width: "1280px", height: "450px" }}>
 				{/* Background with floating orbs and grid - same as layout */}
 				<div className="absolute inset-0 pointer-events-none">
 					{/* Blob 1 */}
