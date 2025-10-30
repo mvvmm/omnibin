@@ -1,154 +1,66 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
+import { uploadPastedFile as uploadPastedFileAction } from "@/actions/uploadPastedFile";
+import { uploadText as uploadTextAction } from "@/actions/uploadText";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-	BIN_ITEMS_LIMIT,
-	MAX_CHAR_LIMIT,
-	MAX_FILE_SIZE,
-} from "@/constants/constants";
-import { OMNIBIN_API_ROUTES } from "@/routes";
+import { BIN_ITEMS_LIMIT } from "@/constants/constants";
 
-// TODO: get rid of token, use actions
-export function CreateItemForm({
-	token,
-	numItems,
-}: {
-	token: string;
-	numItems: number;
-}) {
+export function CreateItemForm({ numItems }: { numItems: number }) {
 	const router = useRouter();
 	const [content, setContent] = useState("");
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isDragOver, setIsDragOver] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const [isPending, startTransition] = useTransition();
 
 	async function uploadPastedFile(file: File) {
-		setIsSubmitting(true);
 		setError(null);
 
-		try {
-			if (file.size > MAX_FILE_SIZE) {
-				setError(
-					`${(file.size / 1024 / 1024).toFixed(2)}MB file size exceeds the ${MAX_FILE_SIZE / 1024 / 1024}MB limit`,
-				);
+		let imageWidth: number | undefined;
+		let imageHeight: number | undefined;
+		if (file.type.startsWith("image/")) {
+			await new Promise<void>((resolve) => {
+				const img = new Image();
+				img.onload = () => {
+					imageWidth = img.naturalWidth || img.width;
+					imageHeight = img.naturalHeight || img.height;
+					resolve();
+				};
+				img.onerror = () => resolve();
+				img.src = URL.createObjectURL(file);
+			});
+		}
+
+		const fd = new FormData();
+		fd.append("file", file);
+		if (imageWidth !== undefined) fd.append("imageWidth", String(imageWidth));
+		if (imageHeight !== undefined)
+			fd.append("imageHeight", String(imageHeight));
+
+		startTransition(async () => {
+			const result = await uploadPastedFileAction(fd);
+			if (!result.success) {
+				setError(result.error || "Upload failed");
 				return;
 			}
-			let imageWidth: number | undefined;
-			let imageHeight: number | undefined;
-			if (file.type.startsWith("image/")) {
-				await new Promise<void>((resolve) => {
-					const img = new Image();
-					img.onload = () => {
-						imageWidth = img.naturalWidth || img.width;
-						imageHeight = img.naturalHeight || img.height;
-						resolve();
-					};
-					img.onerror = () => resolve();
-					img.src = URL.createObjectURL(file);
-				});
-			}
-			const meta = {
-				originalName: file.name || "pasted-file",
-				contentType: file.type || "application/octet-stream",
-				size: file.size,
-				imageWidth,
-				imageHeight,
-			};
-
-			const url = new URL(
-				OMNIBIN_API_ROUTES.BIN,
-				process.env.NEXT_PUBLIC_BASE_URL,
-			);
-			const initRes = await fetch(url, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({ file: meta }),
-			});
-			if (!initRes.ok) {
-				const data = (await initRes.json().catch(() => ({}))) as {
-					error?: string;
-				};
-				throw new Error(
-					data.error || `Failed to init upload (${initRes.status})`,
-				);
-			}
-
-			const { uploadUrl } = (await initRes.json()) as {
-				uploadUrl: string;
-			};
-
-			const putRes = await fetch(uploadUrl, {
-				method: "PUT",
-				headers: { "Content-Type": meta.contentType },
-				body: file,
-			});
-			if (!putRes.ok) {
-				throw new Error(`Failed to upload to storage (${putRes.status})`);
-			}
-
 			router.refresh();
-		} catch (e) {
-			const err = e as Error;
-			setError(err.message);
-		} finally {
-			setIsSubmitting(false);
-		}
+		});
 	}
 
 	async function uploadText(text: string) {
-		if (isSubmitting) return;
 		setError(null);
-		const trimmed = text.trim();
-		if (!trimmed) {
-			setError("Please enter some content");
-			return;
-		}
-
-		// Check character limit
-		if (trimmed.length > MAX_CHAR_LIMIT) {
-			setError(
-				`Text content (${trimmed.length} characters) exceeds the ${MAX_CHAR_LIMIT} character limit`,
-			);
-			return;
-		}
-
-		setIsSubmitting(true);
-		try {
-			const url = new URL(
-				OMNIBIN_API_ROUTES.BIN,
-				process.env.NEXT_PUBLIC_BASE_URL,
-			);
-			const res = await fetch(url, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({ content: trimmed }),
-			});
-
-			if (!res.ok) {
-				const data = (await res.json().catch(() => ({}))) as {
-					error?: string;
-				};
-				throw new Error(data.error || `Failed to create item (${res.status})`);
+		startTransition(async () => {
+			const result = await uploadTextAction(text);
+			if (!result.success) {
+				setError(result.error || "Failed to add item");
+				return;
 			}
-
 			setContent("");
 			router.refresh();
-		} catch (e) {
-			const err = e as Error;
-			setError(err.message);
-		} finally {
-			setIsSubmitting(false);
-		}
+		});
 	}
 
 	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -222,7 +134,9 @@ export function CreateItemForm({
 					onDragEnter={handleDragEnter}
 					onDragLeave={handleDragLeave}
 					onDrop={handleDrop}
-					placeholder={isDragOver ? "Drop files here..." : "Paste something..."}
+					placeholder={
+						isDragOver ? "Drop files here..." : "Paste or drag files here..."
+					}
 					rows={3}
 					className={`mb-1 transition-all duration-200 ${
 						isDragOver
@@ -234,8 +148,8 @@ export function CreateItemForm({
 			</div>
 
 			<div className="flex items-end gap-3 justify-between">
-				<Button disabled={isSubmitting} type="submit" className="btn-omnibin">
-					{isSubmitting ? "Adding..." : "Add"}
+				<Button disabled={isPending} type="submit" className="btn-omnibin">
+					{isPending ? "Adding..." : "Add"}
 				</Button>
 
 				<div className="flex flex-col items-end col-gap-1 mr-1">

@@ -32,7 +32,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 		// Set loading immediately if this is a text item with a URL
 		if (item.kind === "TEXT" && item.textItem?.content) {
 			const url = extractFirstUrl(item.textItem.content);
-			return url && isUrl(url) ? true : false;
+			return !!url && isUrl(url);
 		}
 		return false;
 	});
@@ -411,9 +411,9 @@ export function BinListItem({ item }: { item: BinItem }) {
 										{item.fileItem.contentType.startsWith("image/") &&
 											!item.fileItem.contentType.includes("png") && (
 												<TooltipContent side="top" className="max-w-[300px]">
-													Image will be converted to .png on copy. This can
-													cause much larger file sizes, amongst other issues.
-													Consider using download instead.
+													Image will be converted to .png on copy due to browser
+													limitations. This can cause much larger file sizes,
+													amongst other issues. Consider using download instead.
 												</TooltipContent>
 											)}
 									</Tooltip>

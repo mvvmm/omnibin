@@ -8,7 +8,7 @@ export default async function CreateItemFormLoading() {
 			<div className="mb-4">
 				<Textarea
 					disabled
-					placeholder="Paste something..."
+					placeholder="Loading..."
 					rows={3}
 					className="mb-1 transition-all duration-200"
 				/>
