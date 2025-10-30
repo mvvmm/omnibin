@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { uploadPastedFile as uploadPastedFileAction } from "@/actions/uploadPastedFile";
 import { uploadText as uploadTextAction } from "@/actions/uploadText";
@@ -9,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { BIN_ITEMS_LIMIT } from "@/constants/constants";
 
 export function CreateItemForm({ numItems }: { numItems: number }) {
-	const router = useRouter();
 	const [content, setContent] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isDragOver, setIsDragOver] = useState(false);
