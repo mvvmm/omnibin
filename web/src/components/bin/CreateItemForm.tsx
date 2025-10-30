@@ -46,7 +46,6 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
 				setError(result.error || "Upload failed");
 				return;
 			}
-			router.refresh();
 		});
 	}
 
@@ -59,7 +58,6 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
 				return;
 			}
 			setContent("");
-			router.refresh();
 		});
 	}
 
