@@ -135,7 +135,7 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
 					onDragLeave={handleDragLeave}
 					onDrop={handleDrop}
 					placeholder={
-						isDragOver ? "Drop files here..." : "Paste or drag files here..."
+						isDragOver ? "Drop files here..." : "Paste or drag here..."
 					}
 					rows={3}
 					className={`mb-1 transition-all duration-200 ${
