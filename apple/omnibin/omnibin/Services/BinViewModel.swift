@@ -49,6 +49,8 @@ class BinViewModel: ObservableObject {
     func refreshBinItems() async {
         guard let token = accessToken else { return }
         
+        errorMessage = nil
+        
         do {
             let items = try await BinAPI.shared.fetchBinItems(accessToken: token)
             await MainActor.run {
