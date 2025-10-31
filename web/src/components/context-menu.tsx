@@ -1,6 +1,12 @@
 "use client";
 
-import { Loader2, LogOutIcon, SettingsIcon, Trash2Icon } from "lucide-react";
+import {
+	Loader2,
+	LogOutIcon,
+	SettingsIcon,
+	Smartphone,
+	Trash2Icon,
+} from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAccount } from "@/actions/deleteAccount";
@@ -111,6 +117,19 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
 					align="start"
 					collisionPadding={12}
 				>
+					<DropdownMenuItem
+						className="cursor-pointer"
+						onClick={() => {
+							window.open(
+								"https://apps.apple.com/us/app/omnibin/id6752793228",
+								"_blank",
+							);
+						}}
+					>
+						<Smartphone className="size-3" />
+						iOS App
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
 					{loggedIn && (
 						<>
 							<DropdownMenuItem
