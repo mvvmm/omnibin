@@ -110,7 +110,7 @@ struct BinFormView: View {
             }
             
             VStack(alignment: .trailing, spacing: 2) {
-                Text("Items: \(binItemsCount) / \(binItemsLimit)")
+                Text("Items: \(min(binItemsCount, binItemsLimit)) / \(binItemsLimit)")
                     .font(isIPad ? .system(size: 23) : .caption)
                     .foregroundColor(binItemsCount >= binItemsLimit ? .red : AppColors.mutedText(isDarkMode: isDarkMode))
                 

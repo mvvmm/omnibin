@@ -98,6 +98,8 @@ class BinViewModel: ObservableObject {
                         // Call success callback after item is added
                         onSuccess?()
                     }
+                    // Refresh items to get accurate state after adding (in case oldest was deleted)
+                    await refreshBinItems()
                 } else if let image = pasteboard.image {
                     await addImageToBin(image: image, token: token, onSuccess: onSuccess)
                 } else {
@@ -131,6 +133,8 @@ class BinViewModel: ObservableObject {
                     self.showTextInputDialog = false
                     self.isSubmitting = false
                 }
+                // Refresh items to get accurate state after adding (in case oldest was deleted)
+                await refreshBinItems()
             } catch {
                 await MainActor.run {
                     self.errorMessage = "Failed to add text: \(error.localizedDescription)"
@@ -213,6 +217,8 @@ class BinViewModel: ObservableObject {
                 self.isSubmitting = false
                 onSuccess?()
             }
+            // Refresh items to get accurate state after adding (in case oldest was deleted)
+            await refreshBinItems()
         } catch {
             await MainActor.run {
                 self.errorMessage = "Failed to add image: \(error.localizedDescription)"
