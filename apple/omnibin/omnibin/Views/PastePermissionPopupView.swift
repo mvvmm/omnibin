@@ -25,7 +25,7 @@ struct PastePermissionPopupView: View {
                     
                     // Message
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("To paste content from other apps into omnibin without asking for permission every time, always allow 'Paste from Other Apps' in Settings.")
+                        Text("To paste content from other apps into omnibin without being asked for permission every time, always allow 'Paste from Other Apps' in Settings.")
                             .font(.system(size: isIPad ? 20 : 16))
                             .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
                     }
@@ -40,19 +40,16 @@ struct PastePermissionPopupView: View {
                         .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.1), radius: 8, x: 0, y: 4)
                     
                     // Note about accessing setting later
-                    VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .center, spacing: 12) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: isIPad ? 22 : 18, weight: .medium))
+                            .foregroundColor(AppColors.Button.accentPrimary)
+                        
                         Text("This setting can always be accessed later in the omnibin settings")
                             .font(.system(size: isIPad ? 20 : 16))
                             .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
                     }
                     .padding(.horizontal, 4)
-                    
-                    // Gear icon in its own container
-                    Image(systemName: "gearshape")
-                        .font(.system(size: isIPad ? 33 : 27, weight: .medium))
-                        .foregroundColor(AppColors.Button.accentPrimary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 8)
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity)
@@ -64,7 +61,7 @@ struct PastePermissionPopupView: View {
                 // Open Settings button
                 Button(action: onOpenSettings) {
                     HStack {
-                        Image(systemName: "gearshape")
+                        Image(systemName: "gear")
                             .font(.system(size: isIPad ? 22 : 18, weight: .medium))
                         Text("Open Settings")
                             .font(.system(size: isIPad ? 22 : 17, weight: .semibold))

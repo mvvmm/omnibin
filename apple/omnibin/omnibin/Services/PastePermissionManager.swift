@@ -3,6 +3,9 @@ import Foundation
 class PastePermissionManager {
     static let shared = PastePermissionManager()
     
+    // Debug flag: if true, always show the settings popup regardless of whether it's been shown before
+    private let ALWAYS_SHOW_SETTINGS_POPUP = true
+    
     private let hasShownPopupKey = "hasShownPastePermissionPopup"
     
     private init() {}
@@ -18,6 +21,10 @@ class PastePermissionManager {
     }
     
     func shouldShowPopup() -> Bool {
+        // If debug flag is enabled, always show the popup
+        if ALWAYS_SHOW_SETTINGS_POPUP {
+            return true
+        }
         return !hasShownPopup()
     }
 }
