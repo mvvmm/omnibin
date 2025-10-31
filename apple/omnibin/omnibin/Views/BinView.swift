@@ -79,7 +79,14 @@ struct BinView: View {
                             binItemsCount: viewModel.binItems.count,
                             binItemsLimit: viewModel.binItemsLimit,
                             isDarkMode: isDarkMode,
-                            onPasteFromClipboard: viewModel.pasteFromClipboard
+                            onPasteFromClipboard: {
+                                viewModel.pasteFromClipboard {
+                                    // Show settings popup after successful paste (if it hasn't been shown before)
+                                    if PastePermissionManager.shared.shouldShowPopup() {
+                                        showPastePermissionPopup = true
+                                    }
+                                }
+                            }
                         )
                         
                         // Items list
@@ -104,10 +111,6 @@ struct BinView: View {
         }
         .onAppear {
             viewModel.loadBinItems()
-            // Check if we should show paste permission popup on login
-            if PastePermissionManager.shared.shouldShowPopup() {
-                showPastePermissionPopup = true
-            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
             Task {

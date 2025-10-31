@@ -80,7 +80,7 @@ class BinViewModel: ObservableObject {
         }
     }
     
-    func pasteFromClipboard() {
+    func pasteFromClipboard(onSuccess: (() -> Void)? = nil) {
         guard let token = accessToken else { return }
         
         isSubmitting = true
@@ -95,9 +95,11 @@ class BinViewModel: ObservableObject {
                     await MainActor.run {
                         self.binItems.insert(item, at: 0)
                         self.isSubmitting = false
+                        // Call success callback after item is added
+                        onSuccess?()
                     }
                 } else if let image = pasteboard.image {
-                    await addImageToBin(image: image, token: token)
+                    await addImageToBin(image: image, token: token, onSuccess: onSuccess)
                 } else {
                     await MainActor.run {
                         self.errorMessage = "No text or image found in clipboard"
@@ -187,7 +189,7 @@ class BinViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
-    private func addImageToBin(image: UIImage, token: String) async {
+    private func addImageToBin(image: UIImage, token: String, onSuccess: (() -> Void)? = nil) async {
         do {
             guard let imageData = image.jpegData(compressionQuality: 0.8) else {
                 await MainActor.run {
@@ -209,6 +211,7 @@ class BinViewModel: ObservableObject {
             await MainActor.run {
                 self.binItems.insert(item, at: 0)
                 self.isSubmitting = false
+                onSuccess?()
             }
         } catch {
             await MainActor.run {
