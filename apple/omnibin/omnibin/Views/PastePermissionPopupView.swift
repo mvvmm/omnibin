@@ -17,7 +17,7 @@ struct PastePermissionPopupView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // Title
-                    Text("Always Allow Paste from Other Apps")
+                    Text("Allow Paste from Other Apps")
                         .font(.system(size: isIPad ? 28 : 22, weight: .bold))
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                         .multilineTextAlignment(.center)
@@ -25,7 +25,7 @@ struct PastePermissionPopupView: View {
                     
                     // Message
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("To paste content from other apps into omnibin without being asked for permission every time, always allow 'Paste from Other Apps' in Settings.")
+                        Text("To paste content from other apps into omnibin without being asked for permission every time, allow 'Paste from Other Apps' in Settings.")
                             .font(.system(size: isIPad ? 20 : 16))
                             .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
                     }
