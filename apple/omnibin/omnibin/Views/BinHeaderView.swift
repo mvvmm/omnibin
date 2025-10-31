@@ -40,6 +40,14 @@ struct BinHeaderView: View {
                     Label("Privacy policy", systemImage: "lock.document")
                 }
                 
+                Button(action: {
+                    if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(settingsUrl)
+                    }
+                }) {
+                    Label("Always Allow Paste", systemImage: "doc.on.clipboard")
+                }
+                
                 Divider()
                 
                 Button(action: {

@@ -11,6 +11,7 @@ struct BinView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var showDeleteAccountAlert = false
     @State private var isDeletingAccount = false
+    @State private var showPastePermissionPopup = false
     
     init(accessToken: String?, onLogout: @escaping () -> Void, authService: MainViewAuthService) {
         self.accessToken = accessToken
@@ -103,6 +104,10 @@ struct BinView: View {
         }
         .onAppear {
             viewModel.loadBinItems()
+            // Check if we should show paste permission popup on login
+            if PastePermissionManager.shared.shouldShowPopup() {
+                showPastePermissionPopup = true
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
             Task {
@@ -140,6 +145,23 @@ struct BinView: View {
             .disabled(viewModel.textInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         } message: {
             Text("Enter the text you want to add to your bin.")
+        }
+        .sheet(isPresented: $showPastePermissionPopup) {
+            PastePermissionPopupView(
+                onDismiss: {
+                    showPastePermissionPopup = false
+                    PastePermissionManager.shared.markPopupAsShown()
+                },
+                onOpenSettings: {
+                    if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(settingsUrl)
+                    }
+                    showPastePermissionPopup = false
+                    PastePermissionManager.shared.markPopupAsShown()
+                }
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
     }
 }
