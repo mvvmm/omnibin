@@ -51,12 +51,29 @@ class BinViewModel: ObservableObject {
         
         errorMessage = nil
         
+        // Use Task.detached to run the network request outside of SwiftUI's refreshable lifecycle
+        // This prevents the task from being cancelled when the refresh gesture completes
+        // Also bypass cache to ensure we get fresh data
         do {
-            let items = try await BinAPI.shared.fetchBinItems(accessToken: token)
+            let items = try await Task.detached(priority: .userInitiated) {
+                try await BinAPI.shared.fetchBinItems(accessToken: token, bypassCache: true)
+            }.value
+            
             await MainActor.run {
                 self.binItems = items
             }
         } catch {
+            // Silently ignore cancellation errors - these occur when the user
+            // releases the refresh gesture before completion, which is normal behavior
+            if error is CancellationError {
+                return
+            }
+            
+            // Also check for URLSession cancellation errors
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                return
+            }
+            
             await MainActor.run {
                 self.errorMessage = "Failed to refresh items: \(error.localizedDescription)"
             }

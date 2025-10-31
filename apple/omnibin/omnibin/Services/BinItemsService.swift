@@ -11,26 +11,28 @@ class BinItemsService {
     private init() {}
     
     // MARK: - Fetch Bin Items
-    func fetchBinItems(accessToken: String) async throws -> [BinItem] {
+    func fetchBinItems(accessToken: String, bypassCache: Bool = false) async throws -> [BinItem] {
         do {
-            return try await performFetchBinItems(accessToken: accessToken)
+            return try await performFetchBinItems(accessToken: accessToken, bypassCache: bypassCache)
         } catch BinAPIError.httpError(401, _) {
             // Token might be expired, try to refresh
             let refreshedToken = try await authService.refreshTokenIfNeeded()
-            return try await performFetchBinItems(accessToken: refreshedToken)
+            return try await performFetchBinItems(accessToken: refreshedToken, bypassCache: bypassCache)
         }
     }
     
-    private func performFetchBinItems(accessToken: String) async throws -> [BinItem] {
+    private func performFetchBinItems(accessToken: String, bypassCache: Bool = false) async throws -> [BinItem] {
         guard authService.validateToken(accessToken) else {
             throw BinAPIError.httpError(401, message: "No access token provided")
         }
         
         let headers = ["Authorization": "Bearer \(accessToken)"]
+        let cachePolicy: URLRequest.CachePolicy = bypassCache ? .reloadIgnoringLocalAndRemoteCacheData : .useProtocolCachePolicy
         let (data, _) = try await networkClient.makeRequest(
             endpoint: networkConfig.binEndpoint,
             method: .GET,
-            headers: headers
+            headers: headers,
+            cachePolicy: cachePolicy
         )
         
         let binResponse = try JSONDecoder().decode(BinResponse.self, from: data)

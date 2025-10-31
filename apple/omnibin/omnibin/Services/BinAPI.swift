@@ -16,8 +16,8 @@ class BinAPI: ObservableObject {
 
     // MARK: - Public API Methods (Facade Pattern)
 
-    func fetchBinItems(accessToken: String) async throws -> [BinItem] {
-        return try await binItemsService.fetchBinItems(accessToken: accessToken)
+    func fetchBinItems(accessToken: String, bypassCache: Bool = false) async throws -> [BinItem] {
+        return try await binItemsService.fetchBinItems(accessToken: accessToken, bypassCache: bypassCache)
     }
 
     func addTextItem(content: String, accessToken: String) async throws -> BinItem {
