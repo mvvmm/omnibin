@@ -34,7 +34,7 @@ export default async function Home({
 				<ContextMenu loggedIn={!!session} />
 			</div>
 
-			<div className="relative z-10 mx-auto flex max-w-6xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+			<div className="relative z-10 mx-auto flex max-w-6xl items-center justify-center px-4 pb-8 sm:px-6 lg:px-8">
 				<Card
 					className="mx-auto w-full max-w-3xl p-8 text-center md:p-12"
 					style={{
