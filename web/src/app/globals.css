@@ -13,7 +13,7 @@
 
 	/* glass surfaces and accents */
 	--card-bg: rgba(255, 255, 255, 0.6);
-	--card-bg-opaque: rgba(255, 255, 255, 0.85);
+	--card-bg-opaque: rgba(255, 255, 255, 1);
 	--grid-line: rgba(0, 0, 0, 0.06);
 	--border: oklch(0.922 0 0);
 	--muted-80: #404040; /* neutral-700 */

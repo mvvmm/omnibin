@@ -26,9 +26,9 @@ export function PopupA() {
 			{/* Backdrop overlay - only on small screens */}
 			<div className="fixed inset-0 z-40 backdrop-blur-[1px] bg-black/40 md:hidden" />
 
-			<div className="fixed left-1/2 top-1/2 z-50 w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-gradient-to-r from-omnibin-primary to-omnibin-secondary p-[2px] shadow-2xl md:w-auto md:max-w-md md:bottom-4 md:right-4 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0">
+			<div className="fixed left-1/2 top-1/2 z-50 w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-gradient-to-r from-omnibin-primary to-omnibin-secondary p-[4px] shadow-2xl md:w-auto md:max-w-md md:bottom-4 md:right-4 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0">
 				<div
-					className="rounded-lg border p-6 backdrop-blur-md"
+					className="rounded-md p-6 backdrop-blur-md"
 					style={{
 						backgroundColor: "var(--card-bg-opaque)",
 						borderColor: "var(--border)",
