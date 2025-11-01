@@ -111,9 +111,14 @@ struct URLPreviewView: View {
                     
                     Button(action: {
                         let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                           let window = windowScene.windows.first {
-                            window.rootViewController?.present(activityVC, animated: true)
+                        if let topViewController = topMostViewController() {
+                            // Configure for iPad
+                            if let popover = activityVC.popoverPresentationController {
+                                popover.sourceView = topViewController.view
+                                popover.sourceRect = CGRect(x: topViewController.view.bounds.midX, y: topViewController.view.bounds.midY, width: 0, height: 0)
+                                popover.permittedArrowDirections = []
+                            }
+                            topViewController.present(activityVC, animated: true)
                         }
                     }) {
                         Label("Share", systemImage: "square.and.arrow.up")
@@ -218,9 +223,14 @@ struct URLPreviewView: View {
                         
                         Button(action: {
                             let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                               let window = windowScene.windows.first {
-                                window.rootViewController?.present(activityVC, animated: true)
+                            if let topViewController = topMostViewController() {
+                                // Configure for iPad
+                                if let popover = activityVC.popoverPresentationController {
+                                    popover.sourceView = topViewController.view
+                                    popover.sourceRect = CGRect(x: topViewController.view.bounds.midX, y: topViewController.view.bounds.midY, width: 0, height: 0)
+                                    popover.permittedArrowDirections = []
+                                }
+                                topViewController.present(activityVC, animated: true)
                             }
                         }) {
                             Label("Share", systemImage: "square.and.arrow.up")
@@ -287,5 +297,22 @@ struct URLPreviewView: View {
         } catch {
             // ignore; show nothing if OG fails
         }
+    }
+    
+    // MARK: - Helper to find topmost view controller
+    @MainActor
+    private func topMostViewController() -> UIViewController? {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first,
+              let rootViewController = window.rootViewController else {
+            return nil
+        }
+        
+        var topViewController = rootViewController
+        while let presentedViewController = topViewController.presentedViewController {
+            topViewController = presentedViewController
+        }
+        
+        return topViewController
     }
 }

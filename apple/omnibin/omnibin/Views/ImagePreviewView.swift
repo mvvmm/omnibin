@@ -50,9 +50,14 @@ struct ImagePreviewView: View {
                                             Task { @MainActor in
                                                 // Share sheet
                                                 let activityVC = UIActivityViewController(activityItems: [downloadedImage], applicationActivities: nil)
-                                                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                                                   let window = windowScene.windows.first {
-                                                    window.rootViewController?.present(activityVC, animated: true)
+                                                if let topViewController = topMostViewController() {
+                                                    // Configure for iPad
+                                                    if let popover = activityVC.popoverPresentationController {
+                                                        popover.sourceView = topViewController.view
+                                                        popover.sourceRect = CGRect(x: topViewController.view.bounds.midX, y: topViewController.view.bounds.midY, width: 0, height: 0)
+                                                        popover.permittedArrowDirections = []
+                                                    }
+                                                    topViewController.present(activityVC, animated: true)
                                                 }
                                             }
                                         }) {
@@ -156,5 +161,22 @@ struct ImagePreviewView: View {
     @MainActor
     private func setDownloadedImage(_ image: UIImage) async {
         downloadedImage = image
+    }
+    
+    // MARK: - Helper to find topmost view controller
+    @MainActor
+    private func topMostViewController() -> UIViewController? {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first,
+              let rootViewController = window.rootViewController else {
+            return nil
+        }
+        
+        var topViewController = rootViewController
+        while let presentedViewController = topViewController.presentedViewController {
+            topViewController = presentedViewController
+        }
+        
+        return topViewController
     }
 }
