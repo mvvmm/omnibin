@@ -18,11 +18,12 @@ enum StorageProvider {
 }
 
 model User {
-  id        String           @id @default(cuid())
-  auth0Id   String           @unique
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  entries   BinItem[]
+  id            String           @id @default(cuid())
+  auth0Id       String           @unique
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  ignoreWebPopupA Boolean        @default(false)
+  entries       BinItem[]
 }
 
 model BinItem {

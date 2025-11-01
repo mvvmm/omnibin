@@ -9,6 +9,8 @@ export const OMNIBIN_API_ROUTES = {
 	OG: "/api/og",
 	BIN_ITEM: getBinItemRoute,
 	ACCOUNT_DELETE: "/api/account/delete",
+	USER: "/api/user",
+	DISMISS_WEB_POPUP_A: "/api/user/ignoreWebPopupA",
 };
 
 function getBinItemRoute({ itemId }: { itemId: string }) {

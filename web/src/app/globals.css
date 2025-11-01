@@ -13,6 +13,7 @@
 
 	/* glass surfaces and accents */
 	--card-bg: rgba(255, 255, 255, 0.6);
+	--card-bg-opaque: rgba(255, 255, 255, 0.85);
 	--grid-line: rgba(0, 0, 0, 0.06);
 	--border: oklch(0.922 0 0);
 	--muted-80: #404040; /* neutral-700 */
@@ -63,6 +64,7 @@
 	--bg-via: #0f0f10; /* near zinc-950 */
 	--bg-to: #111113; /* near zinc-900 */
 	--card-bg: rgba(24, 24, 27, 0.25);
+	--card-bg-opaque: rgba(15, 15, 17, 0.85);
 	--grid-line: rgba(255, 255, 255, 0.06);
 	--muted-80: #d4d4d4; /* neutral-300 */
 	--muted-60: #a3a3a3; /* neutral-400 */
