@@ -4,7 +4,7 @@ class PastePermissionManager {
     static let shared = PastePermissionManager()
     
     // Debug flag: if true, always show the settings popup regardless of whether it's been shown before
-    private let ALWAYS_SHOW_SETTINGS_POPUP = true
+    private let ALWAYS_SHOW_SETTINGS_POPUP = false
     
     private let hasShownPopupKey = "hasShownPastePermissionPopup"
     
