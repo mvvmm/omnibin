@@ -17,11 +17,11 @@ export default function Page() {
 		notFound();
 	}
 
-	// app store promo image
+	// Linkedin promo
 	return (
 		<div className="flex min-h-screen items-center justify-center p-4">
 			{/* 1200x900 promo image container */}
-			<div className="relative" style={{ width: "1000px", height: "800px" }}>
+			<div className="relative" style={{ width: "1000px", height: "1100px" }}>
 				{/* Background with floating orbs and grid - same as layout */}
 				<div className="absolute inset-0 pointer-events-none">
 					{/* Blob 1 */}
@@ -84,47 +84,175 @@ export default function Page() {
 						</h1>
 
 						{/* App Store badge */}
-						<div className="flex items-center justify-center py-4">
+						<div className="flex items-center justify-center gap-3 py-4">
+							<span className="btn-omnibin !px-4 !py-2 !rounded-md">
+								www.omnib.in
+							</span>
+							or
 							<Image
 								src="/popups/a/download-on-app-store-white.svg"
 								alt="Download on the App Store"
-								width={150}
-								height={50}
+								width={120}
+								height={40}
 								priority
 							/>
 						</div>
 					</div>
 
-					{/* Middle section - iPhone and iPad (will overflow at bottom) */}
-					<div className="flex items-start justify-center gap-8 flex-1 relative">
-						{/* iPhone */}
+					{/* Middle section - MacBook on top, iPhone and iPad below */}
+					<div className="flex flex-col items-center justify-center gap-6 flex-1 relative">
+						{/* MacBook */}
 						<div className="flex-shrink-0">
 							<Image
-								src="/popups/a/iphone.png"
-								alt="iPhone"
-								width={320}
-								height={640}
+								src="/popups/a/macbook.png"
+								alt="MacBook"
+								width={480}
+								height={320}
 								priority
 								className="h-auto w-auto drop-shadow-2xl"
 							/>
 						</div>
 
-						{/* iPad */}
-						<div className="flex-shrink-0">
-							<Image
-								src="/popups/a/ipad.png"
-								alt="iPad"
-								width={500}
-								height={667}
-								priority
-								className="h-auto w-auto drop-shadow-2xl"
-							/>
+						{/* iPhone and iPad */}
+						<div className="flex items-start justify-center gap-8">
+							{/* iPhone */}
+							<div className="flex-shrink-0">
+								<Image
+									src="/popups/a/iphone.png"
+									alt="iPhone"
+									width={240}
+									height={480}
+									priority
+									className="h-auto w-auto drop-shadow-2xl"
+								/>
+							</div>
+
+							{/* iPad */}
+							<div className="flex-shrink-0">
+								<Image
+									src="/popups/a/ipad.png"
+									alt="iPad"
+									width={380}
+									height={500}
+									priority
+									className="h-auto w-auto drop-shadow-2xl"
+								/>
+							</div>
 						</div>
 					</div>
 				</Card>
 			</div>
 		</div>
 	);
+
+	// app store promo image
+	// return (
+	// 	<div className="flex min-h-screen items-center justify-center p-4">
+	// 		{/* 1200x900 promo image container */}
+	// 		<div className="relative" style={{ width: "1000px", height: "800px" }}>
+	// 			{/* Background with floating orbs and grid - same as layout */}
+	// 			<div className="absolute inset-0 pointer-events-none">
+	// 				{/* Blob 1 */}
+	// 				<div
+	// 					className="absolute -top-32 -left-32 h-[42rem] w-[42rem] rounded-full blur-3xl"
+	// 					style={{
+	// 						backgroundColor: "var(--blob-1)",
+	// 						opacity: "var(--blob-opacity)",
+	// 					}}
+	// 				/>
+
+	// 				{/* Blob 2 */}
+	// 				<div
+	// 					className="absolute -bottom-40 -right-40 h-[46rem] w-[46rem] rounded-full blur-3xl"
+	// 					style={{
+	// 						backgroundColor: "var(--blob-2)",
+	// 						opacity: "var(--blob-opacity)",
+	// 					}}
+	// 				/>
+
+	// 				{/* Grid */}
+	// 				<div
+	// 					className="absolute inset-0 opacity-20 [mask-image:radial-gradient(60rem_60rem_at_center,white,transparent)]"
+	// 					style={{
+	// 						backgroundImage:
+	// 							"linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px)",
+	// 						backgroundSize: "36px 36px",
+	// 					}}
+	// 				/>
+	// 			</div>
+
+	// 			{/* Main card */}
+	// 			<Card
+	// 				className="relative z-10 flex h-full w-full flex-col items-center justify-between overflow-hidden rounded-none"
+	// 				style={{
+	// 					backgroundColor: "var(--card-bg)",
+	// 					borderColor: "var(--border)",
+	// 				}}
+	// 			>
+	// 				{/* Top section - Logo, tagline, and App Store badge */}
+	// 				<div className="flex flex-col items-center space-y-6 pt-8">
+	// 					{/* Logo */}
+	// 					<div className="flex items-center justify-center">
+	// 						<Image
+	// 							src="/omnibin-logo6.png"
+	// 							alt="omnibin logo"
+	// 							width={400}
+	// 							height={120}
+	// 							priority
+	// 							className="h-auto w-auto"
+	// 						/>
+	// 					</div>
+
+	// 					{/* Tagline */}
+	// 					<h1
+	// 						className="font-comfortaa text-5xl font-semibold tracking-tight"
+	// 						style={{ color: "var(--foreground)" }}
+	// 					>
+	// 						Copy. Paste. Anywhere.
+	// 					</h1>
+
+	// 					{/* App Store badge */}
+	// 					<div className="flex items-center justify-center py-4">
+	// 						<Image
+	// 							src="/popups/a/download-on-app-store-white.svg"
+	// 							alt="Download on the App Store"
+	// 							width={150}
+	// 							height={50}
+	// 							priority
+	// 						/>
+	// 					</div>
+	// 				</div>
+
+	// 				{/* Middle section - iPhone and iPad (will overflow at bottom) */}
+	// 				<div className="flex items-start justify-center gap-8 flex-1 relative">
+	// 					{/* iPhone */}
+	// 					<div className="flex-shrink-0">
+	// 						<Image
+	// 							src="/popups/a/iphone.png"
+	// 							alt="iPhone"
+	// 							width={320}
+	// 							height={640}
+	// 							priority
+	// 							className="h-auto w-auto drop-shadow-2xl"
+	// 						/>
+	// 					</div>
+
+	// 					{/* iPad */}
+	// 					<div className="flex-shrink-0">
+	// 						<Image
+	// 							src="/popups/a/ipad.png"
+	// 							alt="iPad"
+	// 							width={500}
+	// 							height={667}
+	// 							priority
+	// 							className="h-auto w-auto drop-shadow-2xl"
+	// 						/>
+	// 					</div>
+	// 				</div>
+	// 			</Card>
+	// 		</div>
+	// 	</div>
+	// );
 
 	// ios preview
 	// return (
