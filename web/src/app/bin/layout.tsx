@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ContextMenu } from "@/components/context-menu";
 import { HomeLogo } from "@/components/home-logo";
 import { PopupA } from "@/components/popupA";
+import { ALWAYS_SHOW_POPUP_A } from "@/constants/constants";
 import { auth0, getAccessTokenOrReauth } from "@/lib/auth0";
 import { OMNIBIN_API_ROUTES, OMNIBIN_ROUTES } from "@/routes";
 
@@ -35,7 +36,7 @@ export default async function Layout({
 	}
 
 	const { user } = await response.json();
-	const shouldShowPopupA = !user.ignoreWebPopupA;
+	const shouldShowPopupA = ALWAYS_SHOW_POPUP_A || !user.ignoreWebPopupA;
 
 	return (
 		<>
