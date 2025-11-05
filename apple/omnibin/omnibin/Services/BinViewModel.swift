@@ -39,7 +39,28 @@ class BinViewModel: ObservableObject {
                 }
             } catch {
                 await MainActor.run {
-                    self.errorMessage = "Failed to load items: \(error.localizedDescription)"
+                    // Create a user-friendly error message
+                    let friendlyMessage: String
+                    if let apiError = error as? BinAPIError {
+                        switch apiError {
+                        case .httpError(_, let message):
+                            if let msg = message, (msg.contains("<html") || msg.contains("<!DOCTYPE")) {
+                                friendlyMessage = "Network request blocked. Please try again later."
+                            } else {
+                                friendlyMessage = message ?? "Network error occurred"
+                            }
+                        default:
+                            friendlyMessage = "Network error occurred"
+                        }
+                    } else {
+                        let errorDesc = error.localizedDescription
+                        if errorDesc.contains("<html") || errorDesc.contains("<!DOCTYPE") || errorDesc.count > 500 {
+                            friendlyMessage = "Network request blocked. Please try again later."
+                        } else {
+                            friendlyMessage = errorDesc
+                        }
+                    }
+                    self.errorMessage = "Failed to load items: \(friendlyMessage)"
                     self.isLoading = false
                 }
             }
@@ -75,7 +96,30 @@ class BinViewModel: ObservableObject {
             }
             
             await MainActor.run {
-                self.errorMessage = "Failed to refresh items: \(error.localizedDescription)"
+                // Create a user-friendly error message
+                let friendlyMessage: String
+                if let apiError = error as? BinAPIError {
+                    switch apiError {
+                    case .httpError(_, let message):
+                        // If message contains HTML tags, provide a generic message
+                        if let msg = message, (msg.contains("<html") || msg.contains("<!DOCTYPE")) {
+                            friendlyMessage = "Network request blocked. Please try again later."
+                        } else {
+                            friendlyMessage = message ?? "Network error occurred"
+                        }
+                    default:
+                        friendlyMessage = "Network error occurred"
+                    }
+                } else {
+                    // For other errors, check if localizedDescription contains HTML
+                    let errorDesc = error.localizedDescription
+                    if errorDesc.contains("<html") || errorDesc.contains("<!DOCTYPE") || errorDesc.count > 500 {
+                        friendlyMessage = "Network request blocked. Please try again later."
+                    } else {
+                        friendlyMessage = errorDesc
+                    }
+                }
+                self.errorMessage = "Failed to refresh items: \(friendlyMessage)"
             }
         }
     }

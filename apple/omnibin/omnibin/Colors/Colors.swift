@@ -35,20 +35,20 @@ struct AppColors {
     
     // MARK: - Card Colors
     struct Card {
-        // Light mode
+        // Light mode - matching web: oklch(0.922 0 0) ≈ rgb(235, 235, 235)
         static let lightBackground = Color.white.opacity(0.6)
-        static let lightBorder = Color.gray.opacity(0.2)
+        static let lightBorder = Color(red: 0.922, green: 0.922, blue: 0.922) // oklch(0.922 0 0)
         
-        // Dark mode
+        // Dark mode - matching web: oklch(1 0 0 / 10%)
         static let darkBackground = Color(red: 0.09, green: 0.09, blue: 0.11).opacity(0.25) // zinc-900 with opacity
         static let darkBorder = Color.white.opacity(0.1)
         
-        // Feature cards
+        // Feature cards - use same subtle borders as regular cards
         static let lightFeatureBackground = Color.white.opacity(0.5)
-        static let lightFeatureBorder = Color.gray.opacity(0.3)
+        static let lightFeatureBorder = Color(red: 0.922, green: 0.922, blue: 0.922) // oklch(0.922 0 0)
         
         static let darkFeatureBackground = Color(red: 0.09, green: 0.09, blue: 0.11).opacity(0.3)
-        static let darkFeatureBorder = Color.white.opacity(0.2)
+        static let darkFeatureBorder = Color.white.opacity(0.1) // Match regular dark border
     }
     
     // MARK: - Text Colors

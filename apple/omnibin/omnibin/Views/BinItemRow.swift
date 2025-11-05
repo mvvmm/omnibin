@@ -40,7 +40,7 @@ struct BinItemRow: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             // Header section with tap gesture
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -57,10 +57,6 @@ struct BinItemRow: View {
                             .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                             .lineLimit(item.isText ? 5 : 1)
                     }
-                    
-                    Text(itemSubtitle)
-                        .font(isIPad ? .system(size: 17) : .caption)
-                        .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                 }
                 
                 Spacer()
@@ -72,6 +68,7 @@ struct BinItemRow: View {
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
                     .animation(.easeInOut(duration: 0.2), value: isExpanded)
             }
+            .padding(16)
             .contentShape(Rectangle())
             .onTapGesture {
                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -79,18 +76,30 @@ struct BinItemRow: View {
                 }
             }
             
-            // Image preview for image files (separate from tappable header)
+            // Image preview for image files (separate from tappable header) - full width, no padding
             if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
                 ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
+                    .frame(maxWidth: .infinity)
                     .frame(height: isIPad ? 350 : 200)
-                    .clipped()
-                    .contentShape(RoundedRectangle(cornerRadius: 8)) // Define tappable area to match visual bounds
+                    .contentShape(Rectangle()) // Define tappable area to match visual bounds
+                    .padding(.top, 8) // mt-2 from web
+                    .padding(.bottom, 16) // mb-4 from web
             }
 
-            // URL preview for text items using web OG endpoint
+            // URL preview for text items using web OG endpoint - full width, no padding
             if item.isText, let textItem = item.textItem {
                 URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG, isOGLoading: $isOGLoading)
+                    .padding(.top, 8) // mt-2 from web
+                    .padding(.bottom, urlOG?.image == nil ? 16 : 0) // mb-4 from web (only when no image)
             }
+            
+            // Metadata section - displayed below image/preview like web
+            Text(itemSubtitle)
+                .font(isIPad ? .system(size: 17) : .caption)
+                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                .padding(.horizontal, 16)
+                .padding(.top, 4) // mt-1 from web
+                .padding(.bottom, 0)
             
             // Action buttons section (only visible when expanded)
             if isExpanded {
@@ -193,18 +202,22 @@ struct BinItemRow: View {
                         )
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 16) // Add top spacing to buttons
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
             
         }
-        .padding(16)
+        .padding(.bottom, 16) // Add bottom spacing to entire card
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .inset(by: 0.5)
+                .stroke(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
         )
         .shadow(
             color: AppColors.cardShadow(isDarkMode: isDarkMode),
@@ -243,7 +256,7 @@ struct BinItemRow: View {
     private var itemTitle: String {
         if item.isText, let textItem = item.textItem {
             // If the text is a URL and we have OG data, prefer OG title (like web)
-            if let _ = firstURL(in: textItem.content) {
+            if let urlString = firstURL(in: textItem.content) {
                 if let title = urlOG?.title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     return title
                 }
@@ -251,12 +264,31 @@ struct BinItemRow: View {
                 if isOGLoading {
                     return textItem.content
                 }
+                // If OG data failed to load or doesn't exist, show hostname instead of raw URL
+                let normalizedURL = normalizeURLString(urlString)
+                if let url = URL(string: normalizedURL) {
+                    return url.host ?? url.absoluteString
+                }
+                // Fallback: try to extract hostname from the raw string
+                if let url = URL(string: urlString) {
+                    return url.host ?? url.absoluteString
+                }
             }
             return textItem.content
         } else if item.isFile, let fileItem = item.fileItem {
             return fileItem.originalName
         }
         return ""
+    }
+    
+    private func normalizeURLString(_ raw: String) -> String {
+        // Ensure we have an absolute URL with a scheme. Default to https.
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if s.hasPrefix("http://") || s.hasPrefix("https://") { return s }
+        if s.hasPrefix("//") { return "https:" + s }
+        if s.hasPrefix("www.") { return "https://" + s }
+        // If no scheme and not starting with www, still try https
+        return "https://" + s
     }
     
     private var itemSubtitle: String {

@@ -28,12 +28,25 @@ class BinItemsService {
         
         let headers = ["Authorization": "Bearer \(accessToken)"]
         let cachePolicy: URLRequest.CachePolicy = bypassCache ? .reloadIgnoringLocalAndRemoteCacheData : .useProtocolCachePolicy
-        let (data, _) = try await networkClient.makeRequest(
+        let (data, response) = try await networkClient.makeRequest(
             endpoint: networkConfig.binEndpoint,
             method: .GET,
             headers: headers,
             cachePolicy: cachePolicy
         )
+        
+        // Check if response is HTML (e.g., Vercel Security Checkpoint)
+        if let contentType = response.value(forHTTPHeaderField: "Content-Type"),
+           contentType.contains("text/html") {
+            throw BinAPIError.httpError(response.statusCode, message: "Received HTML response instead of JSON. This may be a security checkpoint or rate limit.")
+        }
+        
+        // Try to validate it's JSON before decoding
+        if let dataString = String(data: data, encoding: .utf8),
+           dataString.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("<!DOCTYPE") ||
+           dataString.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("<html") {
+            throw BinAPIError.httpError(response.statusCode, message: "Received HTML response instead of JSON. This may be a security checkpoint or rate limit.")
+        }
         
         let binResponse = try JSONDecoder().decode(BinResponse.self, from: data)
         return binResponse.items

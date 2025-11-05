@@ -18,10 +18,11 @@ struct URLPreviewView: View {
             if let urlString = extractFirstURL(from: text), let url = URL(string: urlString) {
                 // If we have OG, render image + text; otherwise render compact text card
                 if let og = og {
+                // Determine a valid image URL if provided
+                let trimmedImage = og.image?.trimmingCharacters(in: .whitespacesAndNewlines)
+                let imageURL = (trimmedImage?.isEmpty == false) ? URL(string: trimmedImage!) : nil
+                
                 VStack(alignment: .leading, spacing: 0) {
-                    // Determine a valid image URL if provided
-                    let trimmedImage = og.image?.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let imageURL = (trimmedImage?.isEmpty == false) ? URL(string: trimmedImage!) : nil
                     if let imageURL = imageURL {
                         ZStack {
                             AsyncImage(url: imageURL) { image in
@@ -46,7 +47,6 @@ struct URLPreviewView: View {
                             }
                         }
                         .frame(maxWidth: .infinity, maxHeight: 300)
-                        .clipped()
                     }
                     // Title/description row. Only show favicon when there is no image and icon URL exists
                     HStack(alignment: .center, spacing: 10) {
@@ -79,20 +79,27 @@ struct URLPreviewView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight])
-                            .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, imageURL != nil ? 12 : 16)
+                    .padding(.bottom, 16)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                    // Add top and bottom borders when there's no image
+                    Group {
+                        if imageURL == nil {
+                            VStack(spacing: 0) {
+                                Rectangle()
+                                    .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
+                                    .frame(height: 1)
+                                Spacer()
+                                Rectangle()
+                                    .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
+                                    .frame(height: 1)
+                            }
+                        }
+                    }
                 )
-                // Make only the visible card area tappable
-                .contentShape(RoundedRectangle(cornerRadius: 8))
+                .contentShape(Rectangle())
                 .onTapGesture {
                     UIApplication.shared.open(url)
                 }
@@ -126,15 +133,12 @@ struct URLPreviewView: View {
                 }
                 } else if isLoading || isOGLoading {
                     // Skeleton loading state
-                    VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 12) {
                         // Image skeleton
                         Rectangle()
                             .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                            .frame(maxWidth: .infinity, maxHeight: 200)
                             .frame(height: 200)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .strokeBorder(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3), lineWidth: 1)
-                            )
                         
                         // Content skeleton
                         HStack(alignment: .center, spacing: 10) {
@@ -158,18 +162,8 @@ struct URLPreviewView: View {
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight])
-                                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                        )
+                        .padding(16)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-                    )
                 } else {
                     // Compact fallback when no OG available
                     HStack(alignment: .center, spacing: 10) {
