@@ -13,6 +13,9 @@ export const metadata: Metadata = {
 	title: "omnibin • Copy. Paste. Anywhere.",
 	description:
 		"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. One click copy and paste across all your devices.",
+	alternates: {
+		canonical: "https://omnib.in/",
+	},
 };
 
 export default async function Home({

@@ -13,44 +13,18 @@ export const metadata: Metadata = {
 	},
 	description:
 		"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. Copy. Paste. Anywhere.",
-	keywords: [
-		"clipboard",
-		"copy paste",
-		"cross-platform",
-		"sync",
-		"cloud clipboard",
-		"file sharing",
-		"text sharing",
-		"omnibin",
-	],
-	authors: [{ name: "omnibin" }],
-	creator: "omnibin",
-	publisher: "omnibin",
+	authors: [{ name: "mvm" }],
+	creator: "mvm",
 	formatDetection: {
 		email: false,
 		address: false,
 		telephone: false,
 	},
 	metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://omnib.in"),
-	alternates: {
-		canonical: "/",
-	},
 	openGraph: {
 		type: "website",
 		locale: "en_US",
-		url: "/",
 		siteName: "omnibin",
-	},
-	robots: {
-		index: true,
-		follow: true,
-		googleBot: {
-			index: true,
-			follow: true,
-			"max-video-preview": -1,
-			"max-image-preview": "large",
-			"max-snippet": -1,
-		},
 	},
 };
 

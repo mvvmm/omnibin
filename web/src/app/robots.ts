@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
 		rules: {
 			userAgent: "*",
 			allow: "/",
-			disallow: ["/api/"], // Disallow API routes and private bin pages
+			disallow: ["/api/", "/bin"], // Disallow API routes and private bin pages
 		},
 		sitemap: `${baseUrl}/sitemap.xml`,
 	};
