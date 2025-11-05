@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Footer } from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -84,6 +85,7 @@ export default function RootLayout({
 						<main className="flex-1">{children}</main>
 						<Footer />
 					</div>
+					<Analytics />
 					<SpeedInsights />
 					<Toaster />
 				</ThemeProvider>
