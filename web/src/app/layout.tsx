@@ -45,7 +45,6 @@ export default function RootLayout({
 				style={{
 					backgroundImage:
 						"linear-gradient(to bottom right, var(--bg-from), var(--bg-via), var(--bg-to))",
-					backgroundAttachment: "fixed",
 				}}
 			>
 				<ThemeProvider>
@@ -53,7 +52,7 @@ export default function RootLayout({
 					<div className="fixed inset-0 pointer-events-none">
 						{/* Blob 1 - Top Left */}
 						<div
-							className="absolute blur-[200px]"
+							className="absolute blur-[60px] sm:blur-[100px] md:blur-[200px]"
 							style={{
 								backgroundColor: "var(--blob-1)",
 								opacity: "var(--blob-opacity)",
@@ -67,7 +66,7 @@ export default function RootLayout({
 
 						{/* Blob 2 - Bottom Right */}
 						<div
-							className="absolute blur-[200px]"
+							className="absolute blur-[60px] sm:blur-[100px] md:blur-[200px]"
 							style={{
 								backgroundColor: "var(--blob-2)",
 								opacity: "var(--blob-opacity)",
@@ -81,7 +80,7 @@ export default function RootLayout({
 
 						{/* Blob 3 - Top Center */}
 						<div
-							className="absolute blur-[200px]"
+							className="absolute blur-[60px] sm:blur-[100px] md:blur-[200px]"
 							style={{
 								backgroundColor: "var(--blob-3)",
 								opacity: "var(--blob-opacity)",
@@ -95,7 +94,7 @@ export default function RootLayout({
 
 						{/* Blob 4 - Bottom Center */}
 						<div
-							className="absolute blur-[200px]"
+							className="absolute blur-[60px] sm:blur-[100px] md:blur-[200px]"
 							style={{
 								backgroundColor: "var(--blob-4)",
 								opacity: "var(--blob-opacity)",
@@ -109,7 +108,7 @@ export default function RootLayout({
 
 						{/* Blob 5 - Bottom Left */}
 						<div
-							className="absolute blur-[200px]"
+							className="absolute blur-[60px] sm:blur-[100px] md:blur-[200px]"
 							style={{
 								backgroundColor: "var(--blob-5)",
 								opacity: "var(--blob-opacity)",
@@ -123,7 +122,7 @@ export default function RootLayout({
 
 						{/* Blob 6 - Top Right */}
 						<div
-							className="absolute blur-[200px]"
+							className="absolute blur-[60px] sm:blur-[100px] md:blur-[200px]"
 							style={{
 								backgroundColor: "var(--blob-6)",
 								opacity: "var(--blob-opacity)",
