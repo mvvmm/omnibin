@@ -30,10 +30,18 @@ struct AppColors {
         // Light mode
         static let lightBackground = Color.white.opacity(0.6)
         static let lightBorder = Color.gray.opacity(0.2)
+        static let lightGlassTint = Color.white.opacity(0.0)
+        static let lightGlassBorder = Color.white.opacity(0.1)
+        static let lightGlassHighlightTop = Color.white.opacity(0.02)
+        static let lightGlassHighlightMid = Color.white.opacity(0.0)
         
         // Dark mode
         static let darkBackground = Color(red: 0.09, green: 0.09, blue: 0.11).opacity(0.25) // zinc-900 with opacity
         static let darkBorder = Color.white.opacity(0.1)
+        static let darkGlassTint = Color(red: 36 / 255, green: 36 / 255, blue: 40 / 255).opacity(0.0)
+        static let darkGlassBorder = Color.white.opacity(0.045)
+        static let darkGlassHighlightTop = Color.white.opacity(0.015)
+        static let darkGlassHighlightMid = Color.white.opacity(0.0)
         
         // Feature cards
         static let lightFeatureBackground = Color.white.opacity(0.5)
@@ -123,6 +131,24 @@ extension AppColors {
     
     static func featureCardBorder(isDarkMode: Bool) -> Color {
         isDarkMode ? Card.darkFeatureBorder : Card.lightFeatureBorder
+    }
+    
+    static func glassTint(isDarkMode: Bool) -> Color {
+        isDarkMode ? Card.darkGlassTint : Card.lightGlassTint
+    }
+    
+    static func glassBorder(isDarkMode: Bool) -> Color {
+        isDarkMode ? Card.darkGlassBorder : Card.lightGlassBorder
+    }
+    
+    static func glassHighlight(isDarkMode: Bool) -> LinearGradient {
+        let top = isDarkMode ? Card.darkGlassHighlightTop : Card.lightGlassHighlightTop
+        let mid = isDarkMode ? Card.darkGlassHighlightMid : Card.lightGlassHighlightMid
+        return LinearGradient(
+            gradient: Gradient(colors: [top, mid, .clear]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
     
     static func primaryText(isDarkMode: Bool) -> Color {

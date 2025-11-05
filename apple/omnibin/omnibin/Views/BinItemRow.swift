@@ -199,12 +199,7 @@ struct BinItemRow: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-                )
+            GlassBackground(isDarkMode: isDarkMode, cornerRadius: 12)
         )
         .shadow(
             color: AppColors.cardShadow(isDarkMode: isDarkMode),
