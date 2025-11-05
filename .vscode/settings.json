@@ -10,5 +10,10 @@
 		"editor.defaultFormatter": "biomejs.biome",
 		"editor.tabSize": 2
 	},
-	"editor.linkedEditing": true
+	"editor.linkedEditing": true,
+	"[plaintext]": {
+		"editor.wordWrap": "wordWrapColumn",
+		"editor.wordWrapColumn": 80,
+		"editor.rulers": [80]
+	}
 }
