@@ -54,13 +54,7 @@ export default function Page() {
 				</div>
 
 				{/* Main card */}
-				<Card
-					className="relative z-10 flex h-full w-full flex-col items-center justify-between overflow-hidden rounded-none"
-					style={{
-						backgroundColor: "var(--card-bg)",
-						borderColor: "var(--border)",
-					}}
-				>
+				<Card className="relative z-10 flex h-full w-full flex-col items-center justify-between overflow-hidden rounded-none glass">
 					{/* Top section - Logo, tagline, and App Store badge */}
 					<div className="flex flex-col items-center space-y-6 pt-8">
 						{/* Logo */}

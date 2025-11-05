@@ -38,14 +38,7 @@ export default async function Home({
 			</div>
 
 			<div className="relative z-10 mx-auto flex max-w-6xl items-center justify-center px-4 pb-8 sm:px-6 lg:px-8">
-				<Card
-					className="mx-auto w-full max-w-3xl p-8 text-center md:p-12"
-					style={{
-						backgroundColor: "var(--card-bg)",
-						borderColor: "var(--border)",
-						gap: "0px",
-					}}
-				>
+				<Card className="mx-auto w-full max-w-3xl p-8 text-center md:p-12 glass bg-accent/10 !gap-0">
 					<div className="flex items-center justify-center">
 						<Image
 							src="/omnibin-logo.webp"
@@ -53,15 +46,13 @@ export default async function Home({
 							width={680}
 							height={200}
 							priority
+							loading="eager"
 							quality={50}
 							className="h-auto w-full max-w-[720px]"
 						/>
 					</div>
 
-					<h1
-						className="mt-8 font-comfortaa text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl"
-						style={{ color: "var(--foreground)" }}
-					>
+					<h1 className="mt-8 font-comfortaa text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl text-foreground">
 						Copy. Paste. Anywhere.
 					</h1>
 					<p
@@ -86,24 +77,15 @@ export default async function Home({
 					</div>
 
 					<div className="mt-10 grid grid-cols-1 gap-4 text-left sm:grid-cols-3">
-						<Card
-							className="rounded-xl shadow-none p-4"
-							style={{
-								backgroundColor: "var(--card-bg)",
-								borderColor: "var(--border)",
-								color: "var(--foreground)",
-							}}
-						>
+						<Card className="rounded-xl shadow-none p-4 text-foreground glass">
 							<p className="text-sm">Cross-platform</p>
 							<p className="mt-1 text-xs" style={{ color: "var(--muted-60)" }}>
 								Share one bin on all devices.
 							</p>
 						</Card>
 						<Card
-							className="rounded-xl shadow-none p-4"
+							className="rounded-xl shadow-none p-4 glass"
 							style={{
-								backgroundColor: "var(--card-bg)",
-								borderColor: "var(--border)",
 								color: "var(--foreground)",
 							}}
 						>
@@ -113,10 +95,8 @@ export default async function Home({
 							</p>
 						</Card>
 						<Card
-							className="rounded-xl shadow-none p-4"
+							className="rounded-xl shadow-none p-4 glass"
 							style={{
-								backgroundColor: "var(--card-bg)",
-								borderColor: "var(--border)",
 								color: "var(--foreground)",
 							}}
 						>

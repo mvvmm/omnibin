@@ -10,7 +10,7 @@ export default async function CreateItemFormLoading() {
 					disabled
 					placeholder="Loading..."
 					rows={3}
-					className="mb-1 transition-all duration-200"
+					className="mb-1 transition-all duration-200 bg-red-500 glass"
 				/>
 			</div>
 

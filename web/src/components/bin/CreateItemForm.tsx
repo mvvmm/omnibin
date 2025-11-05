@@ -134,7 +134,7 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
 						isDragOver ? "Drop files here..." : "Paste or drag here..."
 					}
 					rows={3}
-					className={`mb-1 transition-all duration-200 ${
+					className={`mb-1 transition-all duration-200 glass ${
 						isDragOver
 							? "border-omnibin-primary bg-omnibin-primary/5 ring-2 ring-omnibin-primary/20"
 							: ""

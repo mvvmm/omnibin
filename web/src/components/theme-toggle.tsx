@@ -7,13 +7,7 @@ export function ThemeToggle() {
 	const { setTheme } = useTheme();
 
 	return (
-		<div
-			className="flex w-full"
-			style={{
-				backgroundColor: "var(--card-bg)",
-				borderColor: "var(--border)",
-			}}
-		>
+		<div className="flex w-full">
 			<Button
 				variant="ghost"
 				size="sm"

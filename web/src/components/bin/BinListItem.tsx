@@ -1,9 +1,16 @@
 "use client";
 
-import { Check, Copy, Download, Loader2, Trash2 } from "lucide-react";
+import {
+	Check,
+	Copy,
+	Download,
+	ExternalLink,
+	Loader2,
+	Trash2,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { deleteBinItem } from "@/actions/deleteBinItem";
 import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
 import { getOpenGraphData } from "@/actions/getOpenGraphData";
@@ -13,6 +20,7 @@ import { formatFileSize } from "@/utils/formatFileSize";
 import { isCopyableFile } from "@/utils/isCopyableFile";
 import { extractFirstUrl, isUrl } from "@/utils/isUrl";
 import { Button } from "../ui/button";
+import { Card } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
@@ -25,17 +33,19 @@ export function BinListItem({ item }: { item: BinItem }) {
 	const [imageLoading, setImageLoading] = useState<boolean>(true);
 	const [imageError, setImageError] = useState<boolean>(false);
 
+	// Extract and validate URL once
+	const itemUrl = useMemo(() => {
+		if (item.kind !== "TEXT" || !item.textItem?.content) {
+			return null;
+		}
+		const url = extractFirstUrl(item.textItem.content);
+		return url && isUrl(url) ? url : null;
+	}, [item.kind, item.textItem?.content]);
+
 	// OG data state
 	const [ogData, setOgData] = useState<OgData | null>(null);
 	const [ogError, setOgError] = useState<boolean>(false);
-	const [ogLoading, setOgLoading] = useState<boolean>(() => {
-		// Set loading immediately if this is a text item with a URL
-		if (item.kind === "TEXT" && item.textItem?.content) {
-			const url = extractFirstUrl(item.textItem.content);
-			return !!url && isUrl(url);
-		}
-		return false;
-	});
+	const [ogLoading, setOgLoading] = useState<boolean>(!!itemUrl);
 	const hasFetchedOg = useRef<boolean>(false);
 
 	const [deleteIsTransitioning, startDeleteTransition] = useTransition();
@@ -57,33 +67,26 @@ export function BinListItem({ item }: { item: BinItem }) {
 
 	// Fetch OG data for text items with URLs
 	useEffect(() => {
-		if (
-			item.kind === "TEXT" &&
-			item.textItem?.content &&
-			!hasFetchedOg.current
-		) {
-			const url = extractFirstUrl(item.textItem.content);
-			if (url && isUrl(url)) {
-				hasFetchedOg.current = true;
-				setOgError(false);
+		if (itemUrl && !hasFetchedOg.current) {
+			hasFetchedOg.current = true;
+			setOgError(false);
 
-				startOgTransition(async () => {
-					try {
-						const result = await getOpenGraphData(url);
-						if (result.success) {
-							setOgData(result.og);
-						} else {
-							setOgError(true);
-						}
-					} catch (error) {
+			startOgTransition(async () => {
+				try {
+					const result = await getOpenGraphData(itemUrl);
+					if (result.success) {
+						setOgData(result.og);
+					} else {
 						setOgError(true);
-					} finally {
-						setOgLoading(false);
 					}
-				});
-			}
+				} catch (error) {
+					setOgError(true);
+				} finally {
+					setOgLoading(false);
+				}
+			});
 		}
-	}, [item.kind, item.textItem?.content]);
+	}, [itemUrl]);
 
 	const handleDelete = async (id: string) => {
 		startDeleteTransition(async () => {
@@ -291,9 +294,8 @@ export function BinListItem({ item }: { item: BinItem }) {
 	return (
 		<li key={item.id}>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: I do what I want */}
-			<div
-				className="w-full rounded border p-3 text-foreground hover:scale-[101%] hover:cursor-pointer"
-				style={{ backgroundColor: "var(--background)" }}
+			<Card
+				className="w-full p-3 text-foreground hover:scale-[101%] hover:cursor-pointer transition-transform !gap-0 glass"
 				onClick={() => {
 					if (item.kind === "TEXT" && item.textItem) {
 						handleCopyText(item.textItem.content);
@@ -348,24 +350,41 @@ export function BinListItem({ item }: { item: BinItem }) {
 					<div className="flex items-center gap-1.5">
 						{/* Copy Text Button */}
 						{item.kind === "TEXT" && item.textItem && (
-							<Button
-								variant="ghost"
-								size="icon"
-								className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-								aria-label="Copy to clipboard"
-								title="Copy"
-								disabled={copyIsTransitioning}
-								onClick={(e) => {
-									e.stopPropagation();
-									item.textItem && handleCopyText(item.textItem.content);
-								}}
-							>
-								{copied ? (
-									<Check className="h-4 w-4 text-emerald-600" />
-								) : (
-									<Copy className="h-4 w-4" />
+							<>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+									aria-label="Copy to clipboard"
+									title="Copy"
+									disabled={copyIsTransitioning}
+									onClick={(e) => {
+										e.stopPropagation();
+										item.textItem && handleCopyText(item.textItem.content);
+									}}
+								>
+									{copied ? (
+										<Check className="h-4 w-4 text-emerald-600" />
+									) : (
+										<Copy className="h-4 w-4" />
+									)}
+								</Button>
+								{itemUrl && (
+									<Button
+										variant="ghost"
+										size="icon"
+										className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+										aria-label="Open link in new tab"
+										title="Open in new tab"
+										onClick={(e) => {
+											e.stopPropagation();
+											window.open(itemUrl, "_blank", "noopener,noreferrer");
+										}}
+									>
+										<ExternalLink className="h-4 w-4" />
+									</Button>
 								)}
-							</Button>
+							</>
 						)}
 
 						{/* Copy File Button */}
@@ -470,23 +489,23 @@ export function BinListItem({ item }: { item: BinItem }) {
 						{/* URL Open Graph Preview */}
 						{item.kind === "TEXT" &&
 							(ogData || ogLoading || ogIsTransitioning) && (
-								<a
-									href={ogData?.url}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="block mt-2 mb-4 overflow-hidden rounded-lg border border-border hover:bg-muted/30"
-									onClick={(e) => {
-										e.stopPropagation();
+								<div
+									className={`block mt-2 -mx-3 overflow-hidden ${
+										ogData && !ogData?.image ? "border-t border-b mb-4" : ""
+									}`}
+									style={{
+										borderColor:
+											ogData && !ogData?.image ? "var(--border)" : undefined,
 									}}
 								>
-									<div className="relative w-full overflow-hidden rounded-lg">
+									<div className="relative w-full overflow-hidden">
 										{/* Loading state */}
 										{ogLoading && (
 											<div
 												className="relative w-full overflow-hidden bg-muted/20"
 												style={{ aspectRatio: "16 / 9" }}
 											>
-												<Skeleton className="h-full w-full" />
+												<Skeleton className="h-full w-full rounded-none dark:hidden" />
 											</div>
 										)}
 
@@ -584,9 +603,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 												{ogLoading ? (
 													<>
 														<Skeleton className="h-4 w-3/4 mb-2" />
-														<Skeleton className="h-3 w-full mb-1" />
-														<Skeleton className="h-3 w-4/5 mb-1" />
-														<Skeleton className="h-3 w-1/2" />
+														<Skeleton className="h-3 w-[150px]" />
 													</>
 												) : (
 													<>
@@ -608,15 +625,15 @@ export function BinListItem({ item }: { item: BinItem }) {
 											</div>
 										)}
 									</div>
-								</a>
+								</div>
 							)}
 
 						{item.kind === "FILE" &&
 							item.fileItem &&
 							item.fileItem.contentType.startsWith("image/") && (
-								<div className="mb-4 mt-2">
+								<div className="mb-4 mt-2 -mx-3">
 									{item.fileItem.preview && (
-										<div className="h-[300px] w-full overflow-hidden rounded-lg bg-muted/30 relative border border-border">
+										<div className="h-[300px] w-full overflow-hidden bg-muted/30 relative">
 											{imageLoading && (
 												<div className="absolute inset-0 flex items-center justify-center">
 													<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -678,7 +695,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 						{error && <div className="mt-1 text-xs text-red-600">{error}</div>}
 					</div>
 				</div>
-			</div>
+			</Card>
 		</li>
 	);
 }

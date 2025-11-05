@@ -85,13 +85,7 @@ export default function SupportPage() {
 
 	return (
 		<div className="relative z-10 mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-			<Card
-				className="mx-auto w-full p-8 md:p-12"
-				style={{
-					backgroundColor: "var(--card-bg)",
-					borderColor: "var(--border)",
-				}}
-			>
+			<Card className="mx-auto w-full p-8 md:p-12 glass">
 				<CardHeader className="px-0">
 					<CardTitle className="text-3xl">Support</CardTitle>
 					<CardDescription className="text-base">

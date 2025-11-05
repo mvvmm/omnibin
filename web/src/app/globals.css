@@ -1,27 +1,31 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@variant dark (&:where([data-theme="dark"] *));
+@variant dark (&:where(.dark *));
 
 :root {
 	/* base light mode (overridden by dark media or explicit data-theme) */ /* zinc-50 */ /* neutral-900 */
 
 	/* gradient stops */
-	--bg-from: #fafafa; /* zinc-50 */
-	--bg-via: #f5f5f5; /* zinc-100 */
-	--bg-to: #e5e5e5; /* zinc-200 */
+	--bg-from: #f9f7f2; /* off-white */
+	--bg-via: #f4f2ec; /* off-white */
+	--bg-to: #e8e6df; /* off-white */
 
 	/* glass surfaces and accents */
-	--card-bg: rgba(255, 255, 255, 0.6);
+	--card-bg: rgba(255, 255, 255, 0.4);
 	--card-bg-opaque: rgba(255, 255, 255, 1);
 	--grid-line: rgba(0, 0, 0, 0.06);
 	--border: oklch(0.922 0 0);
 	--muted-80: #404040; /* neutral-700 */
 	--muted-60: #737373; /* neutral-500 */
-	--blob-1: #a5b4fc; /* indigo-300 */
-	--blob-2: #c4b5fd; /* violet-300 */
+	--blob-1: #6366f1; /* indigo-500 */
+	--blob-2: #8b5cf6; /* violet-500 */
+	--blob-3: #a855f7; /* purple-500 */
+	--blob-4: #ec4899; /* pink-500 */
+	--blob-5: #3b82f6; /* blue-500 */
+	--blob-6: #06b6d4; /* cyan-500 */
 	/* visibility control for background orbs (higher on light, lower on dark) */
-	--blob-opacity: 0.35;
+	--blob-opacity: 0.315;
 	--radius: 0.625rem;
 	--card: oklch(1 0 0);
 	--card-foreground: oklch(0.145 0 0);
@@ -32,7 +36,7 @@
 	--secondary: oklch(0.97 0 0);
 	--secondary-foreground: oklch(0.205 0 0);
 	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
+	--muted-foreground: oklch(0.404 0 0);
 	--accent: oklch(0.97 0 0);
 	--accent-foreground: oklch(0.205 0 0);
 	--destructive: oklch(0.577 0.245 27.325);
@@ -63,14 +67,18 @@
 	--bg-from: #09090b; /* zinc-950 */
 	--bg-via: #0f0f10; /* near zinc-950 */
 	--bg-to: #111113; /* near zinc-900 */
-	--card-bg: rgba(24, 24, 27, 0.25);
+	--card-bg: rgba(24, 24, 27, 0.4);
 	--card-bg-opaque: rgba(15, 15, 17, 0.85);
 	--grid-line: rgba(255, 255, 255, 0.06);
 	--muted-80: #d4d4d4; /* neutral-300 */
 	--muted-60: #a3a3a3; /* neutral-400 */
 	--blob-1: #4f46e5; /* indigo-600 */
 	--blob-2: #6d28d9; /* violet-700 */
-	--blob-opacity: 0.18;
+	--blob-3: #9333ea; /* purple-600 */
+	--blob-4: #db2777; /* pink-600 */
+	--blob-5: #2563eb; /* blue-600 */
+	--blob-6: #0891b2; /* cyan-600 */
+	--blob-opacity: 0.162;
 
 	/* shadcn */
 	--card: oklch(0.205 0 0);
@@ -104,6 +112,7 @@
 	--sidebar-ring: oklch(0.556 0 0);
 }
 
+html,
 body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -166,5 +175,11 @@ body {
 @layer utilities {
 	.btn-omnibin {
 		@apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-omnibin-primary to-omnibin-secondary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-omnibin-primary/30 transition-transform duration-200 focus:outline-none hover:scale-105 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/60;
+	}
+
+	.glass {
+		@apply backdrop-blur-md border;
+		background-color: var(--card-bg);
+		border-color: var(--border);
 	}
 }
