@@ -42,8 +42,23 @@ struct PastePermissionPopupView: View {
                     // Note about accessing setting later
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "gearshape")
-                            .font(.system(size: isIPad ? 22 : 18, weight: .medium))
-                            .foregroundColor(AppColors.Button.accentPrimary)
+                            .font(.system(size: isIPad ? 24 : 16, weight: .medium))
+                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                            .frame(width: isIPad ? 70 : 46, height: isIPad ? 70 : 46)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                                    )
+                                    .shadow(
+                                        color: AppColors.cardShadow(isDarkMode: isDarkMode),
+                                        radius: 4,
+                                        x: 0,
+                                        y: 2
+                                    )
+                            )
                         
                         Text("This setting can always be accessed later in the omnibin settings")
                             .font(.system(size: isIPad ? 20 : 16))
