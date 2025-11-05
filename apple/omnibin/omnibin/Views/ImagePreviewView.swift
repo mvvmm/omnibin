@@ -24,14 +24,14 @@ struct ImagePreviewView: View {
                                     isLoading = false
                                 }
                         } placeholder: {
-                            Rectangle()
-                                .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                            RoundedRectangle(cornerRadius: 0)
+                              .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
                         }
                         
                         // Show loading skeleton while image is loading
                         if isLoading {
-                            Rectangle()
-                                .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                           RoundedRectangle(cornerRadius: 0)
+                              .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: isIPad ? 350 : 200)
@@ -94,13 +94,8 @@ struct ImagePreviewView: View {
                             }
                         )
                 } else {
-                    Rectangle()
-                        .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                        .frame(maxWidth: .infinity, maxHeight: isIPad ? 350 : 200)
-                        .overlay(
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        )
+                    RoundedRectangle(cornerRadius: 0)
+                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
                 }
             }
         }

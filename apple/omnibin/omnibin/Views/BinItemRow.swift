@@ -19,7 +19,7 @@ struct BinItemRow: View {
     @State private var exportType: UTType = .data
     @State private var exportName: String = "download"
     @State private var urlOG: OGData?
-    @State private var isOGLoading = false
+    @State private var isOGLoading = true
     @Environment(\.colorScheme) private var colorScheme
     
     @StateObject private var binItemService = BinItemService()
@@ -44,13 +44,11 @@ struct BinItemRow: View {
             // Header section with tap gesture
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    if item.isText, let textItem = item.textItem, let _ = firstURL(in: textItem.content), isOGLoading {
-                        // Show skeleton when loading OG data for URL
-                        Rectangle()
-                            .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                            .frame(height: 20)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .cornerRadius(4)
+                    if item.isText, let textItem = item.textItem, let _ = firstURL(in: textItem.content), isOGLoading && urlOG?.title == nil {
+                        // Show skeleton when loading OG data for URL and OG title not yet loaded
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.25))
+                            .frame(width: isIPad ? 240 : 280, height: isIPad ? 24 : 20)
                     } else {
                         Text(itemTitle)
                             .font(isIPad ? .system(size: 24, weight: .semibold) : .headline)
@@ -90,7 +88,7 @@ struct BinItemRow: View {
             if item.isText, let textItem = item.textItem {
                 URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG, isOGLoading: $isOGLoading)
                     .padding(.top, 8) // mt-2 from web
-                    .padding(.bottom, urlOG?.image == nil ? 16 : 0) // mb-4 from web (only when no image)
+                    .padding(.bottom, (isOGLoading || urlOG?.image == nil) ? 16 : 0) // Keep consistent padding when loading
             }
             
             // Metadata section - displayed below image/preview like web

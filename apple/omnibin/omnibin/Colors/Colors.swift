@@ -172,4 +172,8 @@ extension AppColors {
     static func gridColor(isDarkMode: Bool) -> Color {
         isDarkMode ? Grid.dark : Grid.light
     }
+    
+    static func skeletonColor(isDarkMode: Bool) -> Color {
+        mutedText(isDarkMode: isDarkMode).opacity(0.25)
+    }
 }

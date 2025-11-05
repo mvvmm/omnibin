@@ -33,8 +33,8 @@ struct URLPreviewView: View {
                                         isImageLoading = false
                                     }
                             } placeholder: {
-                                Rectangle()
-                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                 RoundedRectangle(cornerRadius: 0)
+                                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
                                     .onAppear {
                                         isImageLoading = true
                                     }
@@ -42,11 +42,17 @@ struct URLPreviewView: View {
                             
                             // Show loading skeleton while image is loading
                             if isImageLoading {
-                                Rectangle()
-                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                                 RoundedRectangle(cornerRadius: 0)
+                                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: isIPad ? 350 : 200)
+                                    .padding(.bottom, 0)
                             }
                         }
-                        .frame(maxWidth: .infinity, maxHeight: 300)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: isIPad ? 350 : 200)
+                        .clipped()
+                        .contentShape(Rectangle())
                     }
                     // Title/description row. Only show favicon when there is no image and icon URL exists
                     HStack(alignment: .center, spacing: 10) {
@@ -58,7 +64,12 @@ struct URLPreviewView: View {
                                     .frame(width: 20, height: 20)
                                     .cornerRadius(4)
                             } placeholder: {
-                                EmptyView()
+                               RoundedRectangle(cornerRadius: 4)
+                                     .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                     .frame(width: 20, height: 20)
+                                    .onAppear {
+                                        isImageLoading = true
+                                    }
                             }
                         }
 
@@ -132,37 +143,31 @@ struct URLPreviewView: View {
                     }
                 }
                 } else if isLoading || isOGLoading {
-                    // Skeleton loading state
-                    VStack(alignment: .leading, spacing: 12) {
+                    // Skeleton loading state - matching BinItemsListView skeleton
+                    VStack(alignment: .leading, spacing: 0) {
                         // Image skeleton
-                        Rectangle()
-                            .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                            .frame(maxWidth: .infinity, maxHeight: 200)
-                            .frame(height: 200)
+                        RoundedRectangle(cornerRadius: 0)
+                            .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: isIPad ? 350 : 200)
+                            .padding(.bottom, 0)
                         
-                        // Content skeleton
-                        HStack(alignment: .center, spacing: 10) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                // Title skeleton
-                                Rectangle()
-                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                                    .frame(height: 16)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                                // Description skeleton
-                                Rectangle()
-                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                                    .frame(height: 14)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                                // Site name skeleton
-                                Rectangle()
-                                    .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                                    .frame(width: 80, height: 12)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        // URL preview text section - matching BinItemsListView structure
+                        VStack(alignment: .leading, spacing: 0) {
+                            // Title skeleton
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
+                                .frame(width: isIPad ? 336 : 260, height: isIPad ? 20 : 18)
+                            
+                            // Description skeleton - slightly shorter than title
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
+                                .frame(width: isIPad ? 308 : 100, height: isIPad ? 16 : 14)
+                                .padding(.top, 6)
                         }
-                        .padding(16)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        .padding(.bottom, 0) // Match "has image" case - BinItemRow will add padding when urlOG?.image is nil
                     }
                 } else {
                     // Compact fallback when no OG available
@@ -284,12 +289,16 @@ struct URLPreviewView: View {
         do {
             if let data = try await BinAPI.shared.fetchOpenGraph(url: url, accessToken: token) {
                 await MainActor.run { 
-                    self.og = data
-                    self.ogOut = data
+                    self.og = data  // Allow OG data to display
+                    self.ogOut = data  // Allow ogOut to be set so metadata can show
+                    self.isOGLoading = false  // Ensure loading state is cleared when OG data loads
                 }
             }
         } catch {
             // ignore; show nothing if OG fails
+            await MainActor.run {
+                self.isOGLoading = false  // Clear loading state even on error
+            }
         }
     }
     
