@@ -21,7 +21,7 @@ export default function Page() {
 	return (
 		<div className="flex min-h-screen items-center justify-center p-4">
 			{/* 1200x900 promo image container */}
-			<div className="relative" style={{ width: "1000px", height: "1100px" }}>
+			<div className="relative" style={{ width: "800px", height: "900px" }}>
 				{/* Background with floating orbs and grid - same as layout */}
 				<div className="absolute inset-0 pointer-events-none">
 					{/* Blob 1 */}
@@ -106,8 +106,8 @@ export default function Page() {
 							<Image
 								src="/popups/a/macbook.png"
 								alt="MacBook"
-								width={480}
-								height={320}
+								width={400}
+								height={267}
 								priority
 								className="h-auto w-auto drop-shadow-2xl"
 							/>
@@ -120,8 +120,8 @@ export default function Page() {
 								<Image
 									src="/popups/a/iphone.png"
 									alt="iPhone"
-									width={240}
-									height={480}
+									width={185}
+									height={370}
 									priority
 									className="h-auto w-auto drop-shadow-2xl"
 								/>
@@ -132,8 +132,8 @@ export default function Page() {
 								<Image
 									src="/popups/a/ipad.png"
 									alt="iPad"
-									width={380}
-									height={500}
+									width={320}
+									height={420}
 									priority
 									className="h-auto w-auto drop-shadow-2xl"
 								/>
