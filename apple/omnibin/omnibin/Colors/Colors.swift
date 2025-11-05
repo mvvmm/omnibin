@@ -3,26 +3,34 @@ import SwiftUI
 struct AppColors {
     // MARK: - Background Colors
     struct Background {
-        // Light mode
-        static let lightFrom = Color(red: 0.98, green: 0.98, blue: 0.98) // zinc-50
-        static let lightVia = Color(red: 0.96, green: 0.96, blue: 0.96)  // zinc-100
-        static let lightTo = Color(red: 0.90, green: 0.90, blue: 0.90)   // zinc-200
+        // Light mode - matching web colors
+        static let lightFrom = Color(red: 0.976, green: 0.969, blue: 0.949) // #f9f7f2
+        static let lightVia = Color(red: 0.957, green: 0.949, blue: 0.925)  // #f4f2ec
+        static let lightTo = Color(red: 0.910, green: 0.902, blue: 0.875)    // #e8e6df
         
-        // Dark mode
-        static let darkFrom = Color(red: 0.04, green: 0.04, blue: 0.04)  // zinc-950
-        static let darkVia = Color(red: 0.06, green: 0.06, blue: 0.06)   // near zinc-950
-        static let darkTo = Color(red: 0.07, green: 0.07, blue: 0.07)    // near zinc-900
+        // Dark mode - matching web colors
+        static let darkFrom = Color(red: 0.035, green: 0.035, blue: 0.043)  // #09090b
+        static let darkVia = Color(red: 0.059, green: 0.059, blue: 0.063)   // #0f0f10
+        static let darkTo = Color(red: 0.067, green: 0.067, blue: 0.075)    // #111113
     }
     
     // MARK: - Blob Colors
     struct Blob {
-        // Light mode
-        static let light1 = Color(red: 0.65, green: 0.71, blue: 0.99)    // indigo-300
-        static let light2 = Color(red: 0.77, green: 0.71, blue: 0.99)    // violet-300
+        // Light mode - matching web colors
+        static let light1 = Color(red: 0.388, green: 0.404, blue: 0.945)    // indigo-500 #6366f1
+        static let light2 = Color(red: 0.545, green: 0.361, blue: 0.965)    // violet-500 #8b5cf6
+        static let light3 = Color(red: 0.659, green: 0.333, blue: 0.969)    // purple-500 #a855f7
+        static let light4 = Color(red: 0.925, green: 0.282, blue: 0.600)    // pink-500 #ec4899
+        static let light5 = Color(red: 0.231, green: 0.510, blue: 0.965)    // blue-500 #3b82f6
+        static let light6 = Color(red: 0.024, green: 0.714, blue: 0.831)    // cyan-500 #06b6d4
         
-        // Dark mode
-        static let dark1 = Color(red: 0.31, green: 0.27, blue: 0.90)     // indigo-600
-        static let dark2 = Color(red: 0.43, green: 0.16, blue: 0.85)     // violet-700
+        // Dark mode - matching web colors
+        static let dark1 = Color(red: 0.310, green: 0.275, blue: 0.898)     // indigo-600 #4f46e5
+        static let dark2 = Color(red: 0.427, green: 0.157, blue: 0.851)    // violet-700 #6d28d9
+        static let dark3 = Color(red: 0.576, green: 0.200, blue: 0.918)     // purple-600 #9333ea
+        static let dark4 = Color(red: 0.859, green: 0.153, blue: 0.467)    // pink-600 #db2777
+        static let dark5 = Color(red: 0.145, green: 0.388, blue: 0.922)     // blue-600 #2563eb
+        static let dark6 = Color(red: 0.031, green: 0.565, blue: 0.698)     // cyan-600 #0891b2
     }
     
     // MARK: - Card Colors
@@ -105,8 +113,24 @@ extension AppColors {
         isDarkMode ? Blob.dark2 : Blob.light2
     }
     
+    static func blob3Color(isDarkMode: Bool) -> Color {
+        isDarkMode ? Blob.dark3 : Blob.light3
+    }
+    
+    static func blob4Color(isDarkMode: Bool) -> Color {
+        isDarkMode ? Blob.dark4 : Blob.light4
+    }
+    
+    static func blob5Color(isDarkMode: Bool) -> Color {
+        isDarkMode ? Blob.dark5 : Blob.light5
+    }
+    
+    static func blob6Color(isDarkMode: Bool) -> Color {
+        isDarkMode ? Blob.dark6 : Blob.light6
+    }
+    
     static func blobOpacity(isDarkMode: Bool) -> Double {
-        isDarkMode ? 0.18 : 0.35
+        isDarkMode ? 0.131 : 0.152  // Matching web blob opacity
     }
     
     static func cardBackground(isDarkMode: Bool) -> Color {

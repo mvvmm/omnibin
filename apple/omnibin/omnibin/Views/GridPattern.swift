@@ -6,7 +6,7 @@ struct GridPattern: View {
     
     var body: some View {
         Canvas { context, size in
-            let gridSize: CGFloat = 36
+            let gridSize: CGFloat = 48
             let lineWidth: CGFloat = 1
             let gridColor = AppColors.gridColor(isDarkMode: isDarkMode)
             
