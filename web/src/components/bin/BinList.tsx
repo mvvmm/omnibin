@@ -43,7 +43,7 @@ export async function BinList({ items }: { items: BinItem[] }) {
 		return <p className="text-muted-foreground">No items yet.</p>;
 
 	return (
-		<ul className="space-y-4">
+		<ul className="space-y-3">
 			{items.map((item) => (
 				<BinListItem key={item.id} item={item} />
 			))}
