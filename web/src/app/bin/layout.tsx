@@ -43,7 +43,7 @@ export default async function Layout({
 			<div className="flex justify-between items-center p-4">
 				<Link href="/?stay=true" aria-label="Go to home">
 					<Image
-						src="/omnibin-logo6.png"
+						src="/omnibin-logo.webp"
 						alt="omnibin logo"
 						width={340}
 						height={100}

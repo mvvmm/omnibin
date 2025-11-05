@@ -48,7 +48,7 @@ export default async function Home({
 				>
 					<div className="flex items-center justify-center">
 						<Image
-							src="/omnibin-logo6.png"
+							src="/omnibin-logo.webp"
 							alt="omnibin logo"
 							width={680}
 							height={200}

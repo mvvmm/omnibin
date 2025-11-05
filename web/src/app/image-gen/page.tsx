@@ -66,7 +66,7 @@ export default function Page() {
 						{/* Logo */}
 						<div className="flex items-center justify-center">
 							<Image
-								src="/omnibin-logo6.png"
+								src="/omnibin-logo.webp"
 								alt="omnibin logo"
 								width={400}
 								height={120}
@@ -99,8 +99,8 @@ export default function Page() {
 						</div>
 					</div>
 
-					{/* Middle section - MacBook on top, iPhone and iPad below */}
-					<div className="flex flex-col items-center justify-center gap-6 flex-1 relative">
+					{/* Middle section - MacBook and iPhone side by side */}
+					<div className="flex items-center justify-center gap-8 flex-1 relative">
 						{/* MacBook */}
 						<div className="flex-shrink-0">
 							<Image
@@ -113,31 +113,16 @@ export default function Page() {
 							/>
 						</div>
 
-						{/* iPhone and iPad */}
-						<div className="flex items-start justify-center gap-8">
-							{/* iPhone */}
-							<div className="flex-shrink-0">
-								<Image
-									src="/popups/a/iphone.png"
-									alt="iPhone"
-									width={185}
-									height={370}
-									priority
-									className="h-auto w-auto drop-shadow-2xl"
-								/>
-							</div>
-
-							{/* iPad */}
-							<div className="flex-shrink-0">
-								<Image
-									src="/popups/a/ipad.png"
-									alt="iPad"
-									width={320}
-									height={420}
-									priority
-									className="h-auto w-auto drop-shadow-2xl"
-								/>
-							</div>
+						{/* iPhone */}
+						<div className="flex-shrink-0">
+							<Image
+								src="/popups/a/iphone.png"
+								alt="iPhone"
+								width={185}
+								height={370}
+								priority
+								className="h-auto w-auto drop-shadow-2xl"
+							/>
 						</div>
 					</div>
 				</Card>
@@ -194,7 +179,7 @@ export default function Page() {
 	// 					{/* Logo */}
 	// 					<div className="flex items-center justify-center">
 	// 						<Image
-	// 							src="/omnibin-logo6.png"
+	// 							src="/omnibin-logo.webp"
 	// 							alt="omnibin logo"
 	// 							width={400}
 	// 							height={120}
@@ -301,7 +286,7 @@ export default function Page() {
 	// 				{/* Logo */}
 	// 				<div className="mb-6 flex items-center justify-center">
 	// 					<Image
-	// 						src="/omnibin-logo6.png"
+	// 						src="/omnibin-logo.webp"
 	// 						alt="omnibin logo"
 	// 						width={500}
 	// 						height={150}
@@ -378,7 +363,7 @@ export default function Page() {
 	// 				{/* Logo */}
 	// 				<div className="mb-6 flex items-center justify-center">
 	// 					<Image
-	// 						src="/omnibin-logo6.png"
+	// 						src="/omnibin-logo.webp"
 	// 						alt="omnibin logo"
 	// 						width={600}
 	// 						height={180}
@@ -455,7 +440,7 @@ export default function Page() {
 	// 				{/* Logo */}
 	// 				<div className="mb-6 flex items-center justify-center">
 	// 					<Image
-	// 						src="/omnibin-logo6.png"
+	// 						src="/omnibin-logo.webp"
 	// 						alt="omnibin logo"
 	// 						width={500}
 	// 						height={150}
@@ -532,7 +517,7 @@ export default function Page() {
 	// 				{/* Logo */}
 	// 				<div className="mb-6 flex items-center justify-center">
 	// 					<Image
-	// 						src="/omnibin-logo6.png"
+	// 						src="/omnibin-logo.webp"
 	// 						alt="omnibin logo"
 	// 						width={500}
 	// 						height={150}
