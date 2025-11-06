@@ -116,41 +116,7 @@ struct BinItemSkeletonView: View {
             x: 0,
             y: 4
         )
-        .overlay(
-            // Simple shimmer overlay
-            ShimmerOverlay()
-                .blendMode(.overlay)
-        )
-    }
-    
-}
-
-// MARK: - Shimmer Overlay
-struct ShimmerOverlay: View {
-    @State private var phase: CGFloat = 0
-    
-    var body: some View {
-        GeometryReader { geometry in
-            LinearGradient(
-                gradient: Gradient(stops: [
-                    .init(color: .clear, location: 0),
-                    .init(color: .clear, location: 0.3),
-                    .init(color: Color.white.opacity(0.3), location: 0.5),
-                    .init(color: .clear, location: 0.7),
-                    .init(color: .clear, location: 1)
-                ]),
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .frame(width: geometry.size.width * 2)
-            .offset(x: -geometry.size.width + phase * geometry.size.width * 2)
-        }
-        .onAppear {
-            phase = 0
-            withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                phase = 1
-            }
-        }
+       
     }
 }
 
