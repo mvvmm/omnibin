@@ -580,14 +580,8 @@ export function BinListItem({ item }: { item: BinItem }) {
 																		{ogData.title ||
 																			new URL(ogData.url).hostname}
 																	</div>
-																	{ogData.description && (
-																		<div className="text-xs text-muted-foreground line-clamp-2">
-																			{ogData.description}
-																		</div>
-																	)}
 																	<div className="mt-1 text-xs text-muted-foreground truncate">
-																		{ogData.siteName ??
-																			new URL(ogData.url).hostname}
+																		{itemUrl}
 																	</div>
 																</div>
 															</>
@@ -611,14 +605,8 @@ export function BinListItem({ item }: { item: BinItem }) {
 															{ogData?.title ||
 																new URL(ogData?.url || "").hostname}
 														</div>
-														{ogData?.description && (
-															<div className="text-xs text-muted-foreground line-clamp-2">
-																{ogData?.description}
-															</div>
-														)}
 														<div className="mt-1 text-xs text-muted-foreground truncate">
-															{ogData?.siteName ??
-																new URL(ogData?.url || "").hostname}
+															{itemUrl}
 														</div>
 													</>
 												)}

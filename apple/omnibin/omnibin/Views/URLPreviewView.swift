@@ -78,15 +78,10 @@ struct URLPreviewView: View {
                             .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
                             .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                             .lineLimit(2)
-                        if let desc = og.description?.trimmingCharacters(in: .whitespacesAndNewlines), !desc.isEmpty {
-                            Text(desc)
-                                .font(isIPad ? .system(size: 18) : .subheadline)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                                .lineLimit(3)
-                        }
-                        Text((og.siteName?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? ""))
+                        Text(url.absoluteString)
                             .font(isIPad ? .system(size: 15) : .caption)
                             .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                            .lineLimit(1)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -158,12 +153,6 @@ struct URLPreviewView: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                                 .frame(width: isIPad ? 336 : 260, height: isIPad ? 20 : 18)
-                            
-                            // Description skeleton - slightly shorter than title
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                                .frame(width: isIPad ? 308 : 100, height: isIPad ? 16 : 14)
-                                .padding(.top, 6)
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
