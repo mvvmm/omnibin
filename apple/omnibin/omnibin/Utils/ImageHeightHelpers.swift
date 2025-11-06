@@ -1,9 +1,22 @@
 import UIKit
 
+// MARK: - Device Detection
+private var isIPad: Bool {
+    UIDevice.current.userInterfaceIdiom == .pad
+}
+
 // MARK: - Image Height Constants
-let minIdealImageHeight: CGFloat = 100
-let maxIdealImageHeight: CGFloat = 425
-let defaultImageHeight: CGFloat = 200
+var minIdealImageHeight: CGFloat {
+    isIPad ? 250 : 100
+}
+
+var maxIdealImageHeight: CGFloat {
+    isIPad ? 1000 : 425
+}
+
+var defaultImageHeight: CGFloat {
+    isIPad ? 500 : 200
+}
 
 // MARK: - Image Height Calculation
 func getIdealImageHeight(for image: UIImage, containerWidth: CGFloat? = nil) -> CGFloat {
