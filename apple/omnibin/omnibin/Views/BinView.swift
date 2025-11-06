@@ -54,21 +54,21 @@ struct BinView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            VStack(spacing: 0) {
-                // Header
-                BinHeaderView(
-                    onLogout: onLogout,
-                    onDeleteAccount: {
-                        showDeleteAccountAlert = true
-                    },
-                    isDarkMode: isDarkMode
-                )
-                .padding(.top, 20)
-                .padding(.bottom, 16)
-                .padding(.horizontal, min(24, geometry.size.width * 0.05))
-                
-                // Content
-                ScrollView {
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Header
+                    BinHeaderView(
+                        onLogout: onLogout,
+                        onDeleteAccount: {
+                            showDeleteAccountAlert = true
+                        },
+                        isDarkMode: isDarkMode
+                    )
+                    .padding(.top, 20)
+                    .padding(.bottom, 16)
+                    .padding(.horizontal, min(24, geometry.size.width * 0.05))
+                    
+                    // Content
                     VStack(spacing: 16) {
                         // Add new item form
                         BinFormView(
@@ -104,10 +104,10 @@ struct BinView: View {
                     .padding(.horizontal, min(24, geometry.size.width * 0.05))
                 }
             }
+            .refreshable {
+                await viewModel.refreshBinItems()
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .refreshable {
-            await viewModel.refreshBinItems()
         }
         .onAppear {
             viewModel.loadBinItems()
