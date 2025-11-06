@@ -130,7 +130,7 @@ struct ImagePreviewView: View {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 if let image = UIImage(data: data) {
                     await setDownloadedImage(image)
-                    let width = await getContainerWidth()
+                    let width = await MainActor.run { containerWidth }
                     let height = getIdealImageHeight(for: image, containerWidth: width)
                     await MainActor.run {
                         calculatedHeight = height
@@ -140,11 +140,6 @@ struct ImagePreviewView: View {
                 // Silently fail for context menu image download
             }
         }
-    }
-    
-    @MainActor
-    private func getContainerWidth() -> CGFloat? {
-        return containerWidth
     }
 
     // MARK: - ImagePreviewView MainActor helpers

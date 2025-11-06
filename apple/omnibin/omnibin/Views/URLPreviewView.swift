@@ -299,10 +299,10 @@ struct URLPreviewView: View {
             do {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 if let image = UIImage(data: data) {
-                    await setDownloadedImage(image)
-                    let width = await getContainerWidth()
-                    let height = getIdealImageHeight(for: image, containerWidth: width)
                     await MainActor.run {
+                        downloadedImage = image
+                        let width = containerWidth
+                        let height = getIdealImageHeight(for: image, containerWidth: width)
                         calculatedHeight = height
                     }
                 }
@@ -318,7 +318,7 @@ struct URLPreviewView: View {
     }
     
     @MainActor
-    private func setDownloadedImage(_ image: UIImage) async {
+    private func setDownloadedImage(_ image: UIImage) {
         downloadedImage = image
     }
     
