@@ -76,10 +76,6 @@ struct ImagePreviewView: View {
                             }
                         }
                     }
-                    .onAppear {
-                        // Download the image for context menu actions
-                        downloadImageForContextMenu(from: url)
-                    }
                 } else if hasError {
                     Rectangle()
                         .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
@@ -104,8 +100,28 @@ struct ImagePreviewView: View {
             }
         }
         .onAppear {
+            // Calculate height from database dimensions immediately
+            calculateHeightFromDimensions()
             loadImageURL()
         }
+    }
+    
+    private func calculateHeightFromDimensions() {
+        guard let fileItem = item.fileItem,
+              let imageWidth = fileItem.imageWidth,
+              let imageHeight = fileItem.imageHeight,
+              imageWidth > 0 else {
+            // No dimensions available, use default
+            return
+        }
+        
+        // Use screen width for calculation (containerWidth will be nil on first load)
+        let availableWidth = UIScreen.main.bounds.width - 32
+        let aspectRatio = CGFloat(imageHeight) / CGFloat(imageWidth)
+        let desiredHeight = availableWidth * aspectRatio
+        
+        // Clamp between min and max
+        calculatedHeight = min(max(desiredHeight, minIdealImageHeight), maxIdealImageHeight)
     }
     
     private func loadImageURL() {
@@ -116,29 +132,27 @@ struct ImagePreviewView: View {
         
         Task {
             do {
-                let url = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
-                await setImageURLLoaded(url)
+                let urlString = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
+                await setImageURLLoaded(urlString)
+                
+                // Download image in background for context menu
+                if let url = URL(string: urlString) {
+                    await downloadImageForContextMenu(from: url)
+                }
             } catch {
                 await setImageURLError()
             }
         }
     }
     
-    private func downloadImageForContextMenu(from url: URL) {
-        Task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                if let image = UIImage(data: data) {
-                    await setDownloadedImage(image)
-                    let width = await MainActor.run { containerWidth }
-                    let height = getIdealImageHeight(for: image, containerWidth: width)
-                    await MainActor.run {
-                        calculatedHeight = height
-                    }
-                }
-            } catch {
-                // Silently fail for context menu image download
+    private func downloadImageForContextMenu(from url: URL) async {
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let image = UIImage(data: data) {
+                await setDownloadedImage(image)
             }
+        } catch {
+            // Silently fail for context menu image download
         }
     }
 

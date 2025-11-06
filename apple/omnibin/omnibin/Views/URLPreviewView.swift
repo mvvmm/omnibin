@@ -49,10 +49,6 @@ struct URLPreviewView: View {
                         .frame(height: calculatedHeight)
                         .clipped()
                         .contentShape(Rectangle())
-                        .onAppear {
-                            // Download the image to calculate height
-                            downloadImageForCalculation(from: imageURL)
-                        }
                     }
                     // Title/description row. Only show favicon when there is no image and icon URL exists
                     HStack(alignment: .center, spacing: 10) {
@@ -281,9 +277,19 @@ struct URLPreviewView: View {
         do {
             if let data = try await BinAPI.shared.fetchOpenGraph(url: url, accessToken: token) {
                 await MainActor.run { 
-                    self.og = data  // Allow OG data to display
+                    self.og = data  // Set OG data
                     self.ogOut = data  // Allow ogOut to be set so metadata can show
+                    
+                    // Calculate height from OG dimensions if available
+                    self.calculateHeightFromOGDimensions(data)
+                    
                     self.isOGLoading = false  // Ensure loading state is cleared when OG data loads
+                }
+                
+                // Download image in background for display
+                let trimmedImage = data.image?.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let imageURLString = trimmedImage, !imageURLString.isEmpty, let imageURL = URL(string: imageURLString) {
+                    await downloadImageForDisplay(from: imageURL)
                 }
             }
         } catch {
@@ -294,32 +300,34 @@ struct URLPreviewView: View {
         }
     }
     
-    private func downloadImageForCalculation(from url: URL) {
-        Task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                if let image = UIImage(data: data) {
-                    await MainActor.run {
-                        downloadedImage = image
-                        let width = containerWidth
-                        let height = getIdealImageHeight(for: image, containerWidth: width)
-                        calculatedHeight = height
-                    }
-                }
-            } catch {
-                // Silently fail for image download
-            }
+    private func calculateHeightFromOGDimensions(_ ogData: OGData) {
+        guard let imageWidth = ogData.imageWidth,
+              let imageHeight = ogData.imageHeight,
+              imageWidth > 0 else {
+            // No dimensions available, use default
+            return
         }
+        
+        // Use screen width for calculation (containerWidth will be nil on first load)
+        let availableWidth = UIScreen.main.bounds.width - 32
+        let aspectRatio = CGFloat(imageHeight) / CGFloat(imageWidth)
+        let desiredHeight = availableWidth * aspectRatio
+        
+        // Clamp between min and max
+        calculatedHeight = min(max(desiredHeight, minIdealImageHeight), maxIdealImageHeight)
     }
     
-    @MainActor
-    private func getContainerWidth() -> CGFloat? {
-        return containerWidth
-    }
-    
-    @MainActor
-    private func setDownloadedImage(_ image: UIImage) {
-        downloadedImage = image
+    private func downloadImageForDisplay(from url: URL) async {
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let image = UIImage(data: data) {
+                await MainActor.run {
+                    downloadedImage = image
+                }
+            }
+        } catch {
+            // Silently fail for image download
+        }
     }
     
     // MARK: - Helper to find topmost view controller

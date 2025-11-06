@@ -2,7 +2,7 @@ import UIKit
 
 // MARK: - Image Height Constants
 let minIdealImageHeight: CGFloat = 100
-let maxIdealImageHeight: CGFloat = 1000
+let maxIdealImageHeight: CGFloat = 500
 let defaultImageHeight: CGFloat = 200
 
 // MARK: - Image Height Calculation
