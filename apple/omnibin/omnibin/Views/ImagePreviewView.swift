@@ -7,7 +7,6 @@ struct ImagePreviewView: View {
     let isDarkMode: Bool
     
     @State private var imageURL: String?
-    @State private var isLoading = true
     @State private var hasError = false
     @State private var downloadedImage: UIImage?
     
@@ -16,30 +15,16 @@ struct ImagePreviewView: View {
             Group {
                 if let imageURL = imageURL, let url = URL(string: imageURL) {
                     GeometryReader { geometry in
-                        ZStack {
-                            AsyncImage(url: url) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: geometry.size.width, height: isIPad ? 350 : 200)
-                                    .clipped()
-                                    .onAppear {
-                                        isLoading = false
-                                    }
-                            } placeholder: {
-                                RoundedRectangle(cornerRadius: 0)
-                                  .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                                  .frame(width: geometry.size.width)
-                                  .frame(height: isIPad ? 350 : 200)
-                            }
-                            
-                            // Show loading skeleton while image is loading
-                            if isLoading {
-                               RoundedRectangle(cornerRadius: 0)
-                                  .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                                  .frame(width: geometry.size.width)
-                                  .frame(height: isIPad ? 350 : 200)
-                            }
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: geometry.size.width, height: isIPad ? 350 : 200)
+                                .clipped()
+                        } placeholder: {
+                            RoundedRectangle(cornerRadius: 0)
+                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                .frame(width: geometry.size.width, height: isIPad ? 350 : 200)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -117,7 +102,6 @@ struct ImagePreviewView: View {
     private func loadImageURL() {
         guard let token = accessToken else {
             hasError = true
-            isLoading = false
             return
         }
         
@@ -148,13 +132,11 @@ struct ImagePreviewView: View {
     @MainActor
     private func setImageURLLoaded(_ url: String) async {
         imageURL = url
-        isLoading = false
     }
 
     @MainActor
     private func setImageURLError() async {
         hasError = true
-        isLoading = false
     }
 
     @MainActor
