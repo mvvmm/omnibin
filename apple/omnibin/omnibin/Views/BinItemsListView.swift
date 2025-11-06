@@ -83,13 +83,13 @@ struct BinItemSkeletonView: View {
                     .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                     .frame(width: isIPad ? 336 : 260, height: isIPad ? 20 : 18)
                 
-                // Description skeleton - slightly shorter than title
+                // site url skeleton - slightly shorter than title
                 RoundedRectangle(cornerRadius: 4)
                     .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                    .frame(width: isIPad ? 308 : 100, height: isIPad ? 16 : 14)
+                    .frame(width: isIPad ? 460 : 300, height: isIPad ? 16 : 14)
                     .padding(.top, 6)
                 
-                // Site name/metadata skeleton - much wider, with extra space above
+                // metadata skeleton - much wider, with extra space above
                 RoundedRectangle(cornerRadius: 4)
                     .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                     .frame(width: isIPad ? 280 : 120, height: isIPad ? 14 : 12)

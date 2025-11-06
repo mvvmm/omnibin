@@ -9,6 +9,8 @@ struct ImagePreviewView: View {
     @State private var imageURL: String?
     @State private var hasError = false
     @State private var downloadedImage: UIImage?
+    @State private var calculatedHeight: CGFloat = defaultImageHeight
+    @State private var containerWidth: CGFloat?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -19,16 +21,21 @@ struct ImagePreviewView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: geometry.size.width, height: isIPad ? 350 : 200)
+                                .frame(width: geometry.size.width, height: calculatedHeight)
                                 .clipped()
                         } placeholder: {
                             RoundedRectangle(cornerRadius: 0)
                                 .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                                .frame(width: geometry.size.width, height: isIPad ? 350 : 200)
+                                .frame(width: geometry.size.width, height: calculatedHeight)
+                        }
+                        .onAppear {
+                            if containerWidth == nil {
+                                containerWidth = geometry.size.width
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: isIPad ? 350 : 200)
+                    .frame(height: calculatedHeight)
                     .clipped()
                     .padding(.horizontal, 1) // Add 1px padding on sides to ensure image sits inside border
                     .contentShape(Rectangle())
@@ -77,7 +84,7 @@ struct ImagePreviewView: View {
                     Rectangle()
                         .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
                         .frame(maxWidth: .infinity)
-                        .frame(height: isIPad ? 350 : 200)
+                        .frame(height: calculatedHeight)
                         .overlay(
                             VStack {
                                 Image(systemName: "photo")
@@ -91,6 +98,8 @@ struct ImagePreviewView: View {
                 } else {
                     RoundedRectangle(cornerRadius: 0)
                         .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: calculatedHeight)
                 }
             }
         }
@@ -121,11 +130,21 @@ struct ImagePreviewView: View {
                 let (data, _) = try await URLSession.shared.data(from: url)
                 if let image = UIImage(data: data) {
                     await setDownloadedImage(image)
+                    let width = await getContainerWidth()
+                    let height = getIdealImageHeight(for: image, containerWidth: width)
+                    await MainActor.run {
+                        calculatedHeight = height
+                    }
                 }
             } catch {
                 // Silently fail for context menu image download
             }
         }
+    }
+    
+    @MainActor
+    private func getContainerWidth() -> CGFloat? {
+        return containerWidth
     }
 
     // MARK: - ImagePreviewView MainActor helpers

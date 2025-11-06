@@ -78,7 +78,6 @@ struct BinItemRow: View {
             if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
                 ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
                     .frame(maxWidth: .infinity)
-                    .frame(height: isIPad ? 350 : 200)
                     .contentShape(Rectangle()) // Define tappable area to match visual bounds
                     .padding(.top, 8) // mt-2 from web
                     .padding(.bottom, 16) // mb-4 from web

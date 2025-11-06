@@ -11,6 +11,9 @@ struct URLPreviewView: View {
 
     @State private var og: OGData?
     @State private var isLoading = false
+    @State private var calculatedHeight: CGFloat = defaultImageHeight
+    @State private var downloadedImage: UIImage?
+    @State private var containerWidth: CGFloat?
 
     var body: some View {
         Group {
@@ -28,19 +31,28 @@ struct URLPreviewView: View {
                                 image
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: geometry.size.width, height: isIPad ? 350 : 200)
+                                    .frame(width: geometry.size.width, height: calculatedHeight)
                                     .clipped()
                             } placeholder: {
                                 RoundedRectangle(cornerRadius: 0)
                                     .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
                                     .frame(width: geometry.size.width)
-                                    .frame(height: isIPad ? 350 : 200)
+                                    .frame(height: calculatedHeight)
+                            }
+                            .onAppear {
+                                if containerWidth == nil {
+                                    containerWidth = geometry.size.width
+                                }
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .frame(height: isIPad ? 350 : 200)
+                        .frame(height: calculatedHeight)
                         .clipped()
                         .contentShape(Rectangle())
+                        .onAppear {
+                            // Download the image to calculate height
+                            downloadImageForCalculation(from: imageURL)
+                        }
                     }
                     // Title/description row. Only show favicon when there is no image and icon URL exists
                     HStack(alignment: .center, spacing: 10) {
@@ -129,7 +141,7 @@ struct URLPreviewView: View {
                         RoundedRectangle(cornerRadius: 0)
                             .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
                             .frame(maxWidth: .infinity)
-                            .frame(height: isIPad ? 350 : 200)
+                            .frame(height: calculatedHeight)
                             .padding(.bottom, 0)
                         
                         // URL preview text section - matching BinItemsListView structure
@@ -138,6 +150,12 @@ struct URLPreviewView: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                                 .frame(width: isIPad ? 336 : 260, height: isIPad ? 20 : 18)
+
+                            // site url skeleton - slightly shorter than title
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
+                                .frame(width: isIPad ? 460 : 300, height: isIPad ? 16 : 14)
+                                .padding(.top, 6)
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
@@ -274,6 +292,34 @@ struct URLPreviewView: View {
                 self.isOGLoading = false  // Clear loading state even on error
             }
         }
+    }
+    
+    private func downloadImageForCalculation(from url: URL) {
+        Task {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                if let image = UIImage(data: data) {
+                    await setDownloadedImage(image)
+                    let width = await getContainerWidth()
+                    let height = getIdealImageHeight(for: image, containerWidth: width)
+                    await MainActor.run {
+                        calculatedHeight = height
+                    }
+                }
+            } catch {
+                // Silently fail for image download
+            }
+        }
+    }
+    
+    @MainActor
+    private func getContainerWidth() -> CGFloat? {
+        return containerWidth
+    }
+    
+    @MainActor
+    private func setDownloadedImage(_ image: UIImage) async {
+        downloadedImage = image
     }
     
     // MARK: - Helper to find topmost view controller
