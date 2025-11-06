@@ -24,29 +24,35 @@ struct URLPreviewView: View {
                 
                 VStack(alignment: .leading, spacing: 0) {
                     if let imageURL = imageURL {
-                        ZStack {
-                            AsyncImage(url: imageURL) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                                    .onAppear {
-                                        isImageLoading = false
-                                    }
-                            } placeholder: {
-                                 RoundedRectangle(cornerRadius: 0)
-                                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                                    .onAppear {
-                                        isImageLoading = true
-                                    }
-                            }
-                            
-                            // Show loading skeleton while image is loading
-                            if isImageLoading {
-                                 RoundedRectangle(cornerRadius: 0)
-                                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: isIPad ? 350 : 200)
-                                    .padding(.bottom, 0)
+                        GeometryReader { geometry in
+                            ZStack {
+                                AsyncImage(url: imageURL) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: geometry.size.width, height: isIPad ? 350 : 200)
+                                        .clipped()
+                                        .onAppear {
+                                            isImageLoading = false
+                                        }
+                                } placeholder: {
+                                     RoundedRectangle(cornerRadius: 0)
+                                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                        .frame(width: geometry.size.width)
+                                        .frame(height: isIPad ? 350 : 200)
+                                        .onAppear {
+                                            isImageLoading = true
+                                        }
+                                }
+                                
+                                // Show loading skeleton while image is loading
+                                if isImageLoading {
+                                     RoundedRectangle(cornerRadius: 0)
+                                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                        .frame(width: geometry.size.width)
+                                        .frame(height: isIPad ? 350 : 200)
+                                        .padding(.bottom, 0)
+                                }
                             }
                         }
                         .frame(maxWidth: .infinity)

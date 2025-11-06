@@ -15,26 +15,35 @@ struct ImagePreviewView: View {
         VStack(spacing: 0) {
             Group {
                 if let imageURL = imageURL, let url = URL(string: imageURL) {
-                    ZStack {
-                        AsyncImage(url: url) { image in
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .onAppear {
-                                    isLoading = false
-                                }
-                        } placeholder: {
-                            RoundedRectangle(cornerRadius: 0)
-                              .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                        }
-                        
-                        // Show loading skeleton while image is loading
-                        if isLoading {
-                           RoundedRectangle(cornerRadius: 0)
-                              .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                    GeometryReader { geometry in
+                        ZStack {
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: geometry.size.width, height: isIPad ? 350 : 200)
+                                    .clipped()
+                                    .onAppear {
+                                        isLoading = false
+                                    }
+                            } placeholder: {
+                                RoundedRectangle(cornerRadius: 0)
+                                  .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                  .frame(width: geometry.size.width)
+                                  .frame(height: isIPad ? 350 : 200)
+                            }
+                            
+                            // Show loading skeleton while image is loading
+                            if isLoading {
+                               RoundedRectangle(cornerRadius: 0)
+                                  .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                  .frame(width: geometry.size.width)
+                                  .frame(height: isIPad ? 350 : 200)
+                            }
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: isIPad ? 350 : 200)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: isIPad ? 350 : 200)
                     .clipped()
                     .padding(.horizontal, 1) // Add 1px padding on sides to ensure image sits inside border
                     .contentShape(Rectangle())
@@ -82,7 +91,8 @@ struct ImagePreviewView: View {
                 } else if hasError {
                     Rectangle()
                         .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
-                        .frame(maxWidth: .infinity, maxHeight: isIPad ? 350 : 200)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: isIPad ? 350 : 200)
                         .overlay(
                             VStack {
                                 Image(systemName: "photo")
