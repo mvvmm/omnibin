@@ -45,7 +45,7 @@ struct BinHeaderView: View {
                         UIApplication.shared.open(settingsUrl)
                     }
                 }) {
-                    Label("Always Allow Paste", systemImage: "doc.on.clipboard")
+                    Label("Always allow paste", systemImage: "doc.on.clipboard")
                 }
                 
                 Divider()
@@ -53,7 +53,7 @@ struct BinHeaderView: View {
                 Button(action: {
                     onDeleteAccount()
                 }) {
-                    Label("Delete Account", systemImage: "trash")
+                    Label("Delete account", systemImage: "trash")
                 }
                 .foregroundColor(.red)
                 
