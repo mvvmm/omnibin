@@ -21,7 +21,7 @@ export default function Page() {
 	return (
 		<div className="flex min-h-screen items-center justify-center p-4">
 			{/* 1200x900 promo image container */}
-			<div className="relative" style={{ width: "800px", height: "900px" }}>
+			<div className="relative" style={{ width: "800px", height: "400px" }}>
 				{/* Background with floating orbs and grid - same as layout */}
 				<div className="absolute inset-0 pointer-events-none">
 					{/* Blob 1 */}
@@ -89,33 +89,6 @@ export default function Page() {
 								width={120}
 								height={40}
 								priority
-							/>
-						</div>
-					</div>
-
-					{/* Middle section - MacBook and iPhone side by side */}
-					<div className="flex items-center justify-center gap-8 flex-1 relative">
-						{/* MacBook */}
-						<div className="flex-shrink-0">
-							<Image
-								src="/popups/a/macbook.png"
-								alt="MacBook"
-								width={400}
-								height={267}
-								priority
-								className="h-auto w-auto drop-shadow-2xl"
-							/>
-						</div>
-
-						{/* iPhone */}
-						<div className="flex-shrink-0">
-							<Image
-								src="/popups/a/iphone.png"
-								alt="iPhone"
-								width={185}
-								height={370}
-								priority
-								className="h-auto w-auto drop-shadow-2xl"
 							/>
 						</div>
 					</div>
