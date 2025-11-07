@@ -22,9 +22,13 @@ class BinItemService: ObservableObject {
         
         do {
             let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
+            guard let url = URL(string: downloadURL) else {
+                return (false, "Invalid download URL", nil)
+            }
+            
             if item.fileItem?.contentType.hasPrefix("image/") == true {
                 // For images, return the data for Photos saving
-                let (data, _) = try await URLSession.shared.data(from: URL(string: downloadURL)!)
+                let (data, _) = try await URLSession.shared.data(from: url)
                 if UIImage(data: data) != nil {
                     return (true, "Image ready for saving", (data, item.fileItem?.originalName ?? "image", .png))
                 } else {
@@ -32,7 +36,7 @@ class BinItemService: ObservableObject {
                 }
             } else {
                 // For non-images, return data for file export
-                let (tmp, _) = try await URLSession.shared.download(from: URL(string: downloadURL)!)
+                let (tmp, _) = try await URLSession.shared.download(from: url)
                 let data = try Data(contentsOf: tmp)
                 let name = item.fileItem?.originalName ?? "download"
                 let ext = (name as NSString).pathExtension
@@ -55,6 +59,60 @@ class BinItemService: ObservableObject {
         } catch {
             return (false, "Failed to delete item: \(error.localizedDescription)")
         }
+    }
+    
+    func prepareShareContent(item: BinItem, accessToken: String?) async -> (success: Bool, shareItems: [Any]?) {
+        if item.isText, let textItem = item.textItem {
+            // If the text is just a URL (with optional whitespace), share as URL object only
+            let trimmedContent = textItem.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let urlString = firstURL(in: textItem.content),
+               trimmedContent == urlString,
+               let url = URL(string: urlString) {
+                // Text is just a URL, share only the URL object
+                return (true, [url])
+            } else {
+                // Text contains other content, share as string
+                return (true, [textItem.content])
+            }
+        } else if item.isFile, let token = accessToken {
+            // Download file and prepare for sharing
+            do {
+                let downloadURL = try await BinAPI.shared.getFileDownloadURL(itemId: item.id, accessToken: token)
+                guard let url = URL(string: downloadURL) else {
+                    return (false, nil)
+                }
+                
+                let isImage = item.fileItem?.contentType.hasPrefix("image/") == true
+                if isImage {
+                    // Share image data
+                    let (data, _) = try await URLSession.shared.data(from: url)
+                    if let image = UIImage(data: data) {
+                        return (true, [image])
+                    } else {
+                        return (false, nil)
+                    }
+                } else {
+                    // Share file URL - download to temp location
+                    let (tmpURL, _) = try await URLSession.shared.download(from: url)
+                    let filename = item.fileItem?.originalName ?? "file"
+                    
+                    // Create a persistent temp location
+                    let tempDir = FileManager.default.temporaryDirectory
+                    let destinationURL = tempDir.appendingPathComponent(filename)
+                    
+                    // Remove existing file if present
+                    try? FileManager.default.removeItem(at: destinationURL)
+                    
+                    // Copy to persistent temp location
+                    try FileManager.default.copyItem(at: tmpURL, to: destinationURL)
+                    
+                    return (true, [destinationURL])
+                }
+            } catch {
+                return (false, nil)
+            }
+        }
+        return (false, nil)
     }
     
     private func copyFileToClipboard(item: BinItem, accessToken: String?) async -> (success: Bool, message: String) {
