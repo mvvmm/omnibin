@@ -14,6 +14,7 @@ struct URLPreviewView: View {
     @State private var calculatedHeight: CGFloat = defaultImageHeight
     @State private var downloadedImage: UIImage?
     @State private var containerWidth: CGFloat?
+    @State private var screenWidth: CGFloat = UIScreen.main.bounds.width
 
     var body: some View {
         Group {
@@ -150,7 +151,7 @@ struct URLPreviewView: View {
                             // site url skeleton - slightly shorter than title
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                                .frame(width: isIPad ? 460 : 300, height: isIPad ? 16 : 14)
+                                .frame(width: isIPad && !isTwoColumn ? 460 : 300, height: isIPad ? 16 : 14)
                                 .padding(.top, 6)
                         }
                         .padding(.horizontal, 16)
@@ -233,6 +234,15 @@ struct URLPreviewView: View {
             }
             Task { await loadOGIfNeeded() } 
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            // Update screen width and recalculate height when orientation changes
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                screenWidth = UIScreen.main.bounds.width
+                if let ogData = og {
+                    calculateHeightFromOGDimensions(ogData)
+                }
+            }
+        }
     }
 
     private func extractFirstURL(from text: String) -> String? {
@@ -301,20 +311,47 @@ struct URLPreviewView: View {
     }
     
     private func calculateHeightFromOGDimensions(_ ogData: OGData) {
-        guard let imageWidth = ogData.imageWidth,
-              let imageHeight = ogData.imageHeight,
-              imageWidth > 0 else {
-            // No dimensions available, use default
+        // Use provided dimensions or default OG image size (1200x630)
+        let imageWidth = ogData.imageWidth ?? 1200
+        let imageHeight = ogData.imageHeight ?? 630
+        
+        guard imageWidth > 0, imageHeight > 0 else {
             return
         }
         
-        // Use screen width for calculation (containerWidth will be nil on first load)
-        let availableWidth = UIScreen.main.bounds.width - 32
+        // Calculate available width accounting for two-column layout
+        let basePadding: CGFloat = 32 // Horizontal padding
+        
+        // Check if two-column layout based on current screen width
+        let shouldUseTwoColumn = isIPad && screenWidth >= 900
+        
+        let availableWidth: CGFloat
+        if shouldUseTwoColumn {
+            // In two-column mode: divide width by 2 and account for spacing between columns
+            let columnSpacing: CGFloat = 12
+            availableWidth = (screenWidth - basePadding - columnSpacing) / 2
+        } else {
+            // Single column mode
+            availableWidth = screenWidth - basePadding
+        }
+        
         let aspectRatio = CGFloat(imageHeight) / CGFloat(imageWidth)
         let desiredHeight = availableWidth * aspectRatio
         
-        // Clamp between min and max
-        calculatedHeight = min(max(desiredHeight, minIdealImageHeight), maxIdealImageHeight)
+        // Clamp to maximum height first
+        var finalHeight = min(desiredHeight, maxIdealImageHeight)
+        
+        // Only apply minimum height if it won't cause the image to exceed available width
+        // Calculate what width would be needed for the minimum height
+        let widthNeededForMinHeight = minIdealImageHeight / aspectRatio
+        
+        if finalHeight < minIdealImageHeight && widthNeededForMinHeight <= availableWidth {
+            // Safe to use minimum height - image won't be clipped horizontally
+            finalHeight = minIdealImageHeight
+        }
+        // Otherwise, use the calculated height to ensure image fits width properly
+        
+        calculatedHeight = finalHeight
     }
     
     private func downloadImageForDisplay(from url: URL) async {

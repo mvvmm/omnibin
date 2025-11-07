@@ -1,21 +1,12 @@
 import UIKit
 
-// MARK: - Device Detection
-private var isIPad: Bool {
-    UIDevice.current.userInterfaceIdiom == .pad
-}
-
 // MARK: - Image Height Constants
-var minIdealImageHeight: CGFloat {
-    isIPad ? 250 : 100
-}
-
+var minIdealImageHeight: CGFloat = 100
 var maxIdealImageHeight: CGFloat {
-    isIPad ? 1000 : 425
+    isIPad ? 800 : 400
 }
-
 var defaultImageHeight: CGFloat {
-    isIPad ? 500 : 200
+    isIPad ? 400 : 200
 }
 
 // MARK: - Image Height Calculation
@@ -23,21 +14,42 @@ func getIdealImageHeight(for image: UIImage, containerWidth: CGFloat? = nil) -> 
     let imageWidth = image.size.width
     let imageHeight = image.size.height
     
-    guard imageWidth > 0 else { return defaultImageHeight }
+    guard imageWidth > 0, imageHeight > 0 else { return defaultImageHeight }
     
     // Use provided container width, or fallback to screen width with more conservative padding
     let availableWidth: CGFloat
     if let containerWidth = containerWidth {
         availableWidth = containerWidth
     } else {
-        // Account for more padding: 2px border + potential margins
-        availableWidth = UIScreen.main.bounds.width - 32
+        let screenWidth = UIScreen.main.bounds.width
+        let basePadding: CGFloat = 32 // Horizontal padding
+        
+        if isTwoColumn {
+            // In two-column mode: divide width by 2 and account for spacing between columns
+            let columnSpacing: CGFloat = 12
+            availableWidth = (screenWidth - basePadding - columnSpacing) / 2
+        } else {
+            // Single column mode
+            availableWidth = screenWidth - basePadding
+        }
     }
     
     let aspectRatio = imageHeight / imageWidth
     let desiredHeight = availableWidth * aspectRatio
     
-    // Clamp between min and max
-    return min(max(desiredHeight, minIdealImageHeight), maxIdealImageHeight)
+    // Clamp to maximum height first
+    var finalHeight = min(desiredHeight, maxIdealImageHeight)
+    
+    // Only apply minimum height if it won't cause the image to exceed available width
+    // Calculate what width would be needed for the minimum height
+    let widthNeededForMinHeight = minIdealImageHeight / aspectRatio
+    
+    if finalHeight < minIdealImageHeight && widthNeededForMinHeight <= availableWidth {
+        // Safe to use minimum height - image won't be clipped horizontally
+        finalHeight = minIdealImageHeight
+    }
+    // Otherwise, use the calculated height to ensure image fits width properly
+    
+    return finalHeight
 }
 

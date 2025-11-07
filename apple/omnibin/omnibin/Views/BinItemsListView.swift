@@ -9,39 +9,94 @@ struct BinItemsListView: View {
     let onDeleteItem: (String) -> Void
     let onRestoreItem: (BinItem) -> Void
     
+    @State private var screenWidth: CGFloat = UIScreen.main.bounds.width
+    
     var body: some View {
-        if isLoading {
-            VStack(spacing: 12) {
-                ForEach(0..<3, id: \.self) { _ in
-                    BinItemSkeletonView(isDarkMode: isDarkMode)
+        Group {
+            if isLoading {
+                if isTwoColumn {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(spacing: 12) {
+                            ForEach(0..<2, id: \.self) { _ in
+                                BinItemSkeletonView(isDarkMode: isDarkMode, isTwoColumn: true)
+                                    .padding(.horizontal, 1)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        VStack(spacing: 12) {
+                            ForEach(0..<2, id: \.self) { _ in
+                                BinItemSkeletonView(isDarkMode: isDarkMode, isTwoColumn: true)
+                                    .padding(.horizontal, 1)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(0..<3, id: \.self) { _ in
+                            BinItemSkeletonView(isDarkMode: isDarkMode, isTwoColumn: false)
+                        }
+                    }
+                }
+            } else if binItems.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "tray")
+                        .font(.system(size: isIPad ? 72 : 48))
+                        .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                    
+                    Text("No items yet")
+                        .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
+                        .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                    
+                    Text("Paste text or files to get started")
+                        .font(isIPad ? .system(size: 18) : .subheadline)
+                        .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                }
+                .padding(.top, 60)
+            } else {
+                if isTwoColumn {
+                    HStack(alignment: .top, spacing: 12) {
+                        // First column - even indices
+                        VStack(spacing: 12) {
+                            ForEach(Array(binItems.enumerated().filter { $0.offset % 2 == 0 }), id: \.element.id) { _, item in
+                                BinItemRow(item: item, accessToken: accessToken, onDelete: {
+                                    onDeleteItem(item.id)
+                                }, onRestore: {
+                                    onRestoreItem(item)
+                                })
+                                .id(item.id)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        // Second column - odd indices
+                        VStack(spacing: 12) {
+                            ForEach(Array(binItems.enumerated().filter { $0.offset % 2 == 1 }), id: \.element.id) { _, item in
+                                BinItemRow(item: item, accessToken: accessToken, onDelete: {
+                                    onDeleteItem(item.id)
+                                }, onRestore: {
+                                    onRestoreItem(item)
+                                })
+                                .id(item.id)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(binItems, id: \.id) { item in
+                            BinItemRow(item: item, accessToken: accessToken, onDelete: {
+                                onDeleteItem(item.id)
+                            }, onRestore: {
+                                onRestoreItem(item)
+                            })
+                            .id(item.id)
+                        }
+                    }
                 }
             }
-        } else if binItems.isEmpty {
-            VStack(spacing: 12) {
-                Image(systemName: "tray")
-                    .font(.system(size: isIPad ? 72 : 48))
-                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                
-                Text("No items yet")
-                    .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
-                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                
-                Text("Paste text or files to get started")
-                    .font(isIPad ? .system(size: 18) : .subheadline)
-                    .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-            }
-            .padding(.top, 60)
-        } else {
-            VStack(spacing: 12) {
-                ForEach(binItems, id: \.id) { item in
-                    BinItemRow(item: item, accessToken: accessToken, onDelete: {
-                        onDeleteItem(item.id)
-                    }, onRestore: {
-                        onRestoreItem(item)
-                    })
-                    .id(item.id)
-                }
-            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            screenWidth = UIScreen.main.bounds.width
         }
     }
 }
@@ -49,6 +104,7 @@ struct BinItemsListView: View {
 // MARK: - Bin Item Skeleton View
 struct BinItemSkeletonView: View {
     let isDarkMode: Bool
+    let isTwoColumn: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -86,7 +142,7 @@ struct BinItemSkeletonView: View {
                 // site url skeleton - slightly shorter than title
                 RoundedRectangle(cornerRadius: 4)
                     .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                    .frame(width: isIPad ? 460 : 300, height: isIPad ? 16 : 14)
+                    .frame(width: isIPad && !isTwoColumn ? 460 : 300, height: isIPad ? 16 : 14)
                     .padding(.top, 6)
                 
                 // metadata skeleton - much wider, with extra space above

@@ -11,6 +11,7 @@ struct ImagePreviewView: View {
     @State private var downloadedImage: UIImage?
     @State private var calculatedHeight: CGFloat = defaultImageHeight
     @State private var containerWidth: CGFloat?
+    @State private var screenWidth: CGFloat = UIScreen.main.bounds.width
     
     var body: some View {
         VStack(spacing: 0) {
@@ -37,7 +38,6 @@ struct ImagePreviewView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: calculatedHeight)
                     .clipped()
-                    .padding(.horizontal, 1) // Add 1px padding on sides to ensure image sits inside border
                     .contentShape(Rectangle())
                     .contextMenu {
                         if let downloadedImage = downloadedImage {
@@ -104,24 +104,58 @@ struct ImagePreviewView: View {
             calculateHeightFromDimensions()
             loadImageURL()
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            // Update screen width and recalculate height when orientation changes
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                screenWidth = UIScreen.main.bounds.width
+                calculateHeightFromDimensions()
+            }
+        }
     }
     
     private func calculateHeightFromDimensions() {
         guard let fileItem = item.fileItem,
               let imageWidth = fileItem.imageWidth,
               let imageHeight = fileItem.imageHeight,
-              imageWidth > 0 else {
+              imageWidth > 0,
+              imageHeight > 0 else {
             // No dimensions available, use default
             return
         }
         
-        // Use screen width for calculation (containerWidth will be nil on first load)
-        let availableWidth = UIScreen.main.bounds.width - 32
+        // Calculate available width accounting for two-column layout
+        let basePadding: CGFloat = 32 // Horizontal padding
+        
+        // Check if two-column layout based on current screen width
+        let shouldUseTwoColumn = isIPad && screenWidth >= 900
+        
+        let availableWidth: CGFloat
+        if shouldUseTwoColumn {
+            // In two-column mode: divide width by 2 and account for spacing between columns
+            let columnSpacing: CGFloat = 12
+            availableWidth = (screenWidth - basePadding - columnSpacing) / 2
+        } else {
+            // Single column mode
+            availableWidth = screenWidth - basePadding
+        }
+        
         let aspectRatio = CGFloat(imageHeight) / CGFloat(imageWidth)
         let desiredHeight = availableWidth * aspectRatio
         
-        // Clamp between min and max
-        calculatedHeight = min(max(desiredHeight, minIdealImageHeight), maxIdealImageHeight)
+        // Clamp to maximum height first
+        var finalHeight = min(desiredHeight, maxIdealImageHeight)
+        
+        // Only apply minimum height if it won't cause the image to exceed available width
+        // Calculate what width would be needed for the minimum height
+        let widthNeededForMinHeight = minIdealImageHeight / aspectRatio
+        
+        if finalHeight < minIdealImageHeight && widthNeededForMinHeight <= availableWidth {
+            // Safe to use minimum height - image won't be clipped horizontally
+            finalHeight = minIdealImageHeight
+        }
+        // Otherwise, use the calculated height to ensure image fits width properly
+        
+        calculatedHeight = finalHeight
     }
     
     private func loadImageURL() {

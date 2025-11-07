@@ -47,7 +47,7 @@ struct BinItemRow: View {
                     if item.isText, let textItem = item.textItem, let _ = firstURL(in: textItem.content), isOGLoading && urlOG?.title == nil {
                         // Show skeleton when loading OG data for URL and OG title not yet loaded
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.25))
+                            .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                             .frame(width: isIPad ? 240 : 280, height: isIPad ? 24 : 20)
                     } else {
                         Text(itemTitle)
@@ -77,6 +77,7 @@ struct BinItemRow: View {
             // Image preview for image files (separate from tappable header) - full width, no padding
             if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
                 ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
+                    .padding(.horizontal, 1) // Inset from card border
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle()) // Define tappable area to match visual bounds
                     .padding(.top, 8) // mt-2 from web
@@ -86,6 +87,7 @@ struct BinItemRow: View {
             // URL preview for text items using web OG endpoint - full width, no padding
             if item.isText, let textItem = item.textItem {
                 URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG, isOGLoading: $isOGLoading)
+                    .padding(.horizontal, 1) // Inset from card border
                     .padding(.top, 8) // mt-2 from web
                     .padding(.bottom, (isOGLoading || urlOG?.image == nil) ? 16 : 0) // Keep consistent padding when loading
             }
