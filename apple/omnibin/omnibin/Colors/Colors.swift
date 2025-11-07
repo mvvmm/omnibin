@@ -4,9 +4,9 @@ struct AppColors {
     // MARK: - Background Colors
     struct Background {
         // Light mode - matching web colors
-        static let lightFrom = Color(red: 0.976, green: 0.969, blue: 0.949) // #f9f7f2
-        static let lightVia = Color(red: 0.957, green: 0.949, blue: 0.925)  // #f4f2ec
-        static let lightTo = Color(red: 0.910, green: 0.902, blue: 0.875)    // #e8e6df
+        static let lightFrom = Color(red: 0.831, green: 0.824, blue: 0.792) // #d4d2ca
+        static let lightVia = Color(red: 0.800, green: 0.788, blue: 0.757)  // #ccc9c1
+        static let lightTo = Color(red: 0.749, green: 0.741, blue: 0.706)    // #bfbdb4
         
         // Dark mode - matching web colors
         static let darkFrom = Color(red: 0.035, green: 0.035, blue: 0.043)  // #09090b

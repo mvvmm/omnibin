@@ -7,12 +7,12 @@
 	/* base light mode (overridden by dark media or explicit data-theme) */ /* zinc-50 */ /* neutral-900 */
 
 	/* gradient stops */
-	--bg-from: #f9f7f2; /* off-white */
-	--bg-via: #f4f2ec; /* off-white */
-	--bg-to: #e8e6df; /* off-white */
+	--bg-from: #d4d2ca; /* off-white */
+	--bg-via: #ccc9c1; /* off-white */
+	--bg-to: #bfbdb4; /* off-white */
 
 	/* glass surfaces and accents */
-	--card-bg: rgba(255, 255, 255, 0.4);
+	--card-bg: rgba(255, 255, 255, 0.55);
 	--card-bg-opaque: rgba(255, 255, 255, 1);
 	--grid-line: rgba(0, 0, 0, 0.06);
 	--border: oklch(0.922 0 0);
