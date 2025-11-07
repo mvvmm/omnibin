@@ -182,4 +182,45 @@ body {
 		background-color: var(--card-bg);
 		border-color: var(--border);
 	}
+
+	@keyframes fillUp {
+		0% {
+			clip-path: inset(100% 0% 0% 0%);
+		}
+		80% {
+			clip-path: inset(0% 0% 0% 0%);
+		}
+		100% {
+			clip-path: inset(0% 0% 0% 0%);
+		}
+	}
+
+	@keyframes growAndFill {
+		0% {
+			transform: scale(0.9);
+		}
+		100% {
+			transform: scale(1.1);
+		}
+	}
+
+	@keyframes fadeIn {
+		0% {
+			opacity: 0;
+		}
+		100% {
+			opacity: 1;
+		}
+	}
+
+	.animate-fill-up {
+		animation: fillUp 3s ease-in-out 0.5s forwards;
+	}
+
+	.animate-grow {
+		animation:
+			growAndFill 3s ease-out 0.5s forwards,
+			fadeIn 0.01s 0.5s forwards;
+		opacity: 0;
+	}
 }
