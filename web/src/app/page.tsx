@@ -45,7 +45,7 @@ export default async function Home({
 							alt="omnibin logo"
 							width={680}
 							height={170}
-							priority
+							priority={true}
 							loading="eager"
 							quality={50}
 							className="h-auto w-full max-w-[720px]"
