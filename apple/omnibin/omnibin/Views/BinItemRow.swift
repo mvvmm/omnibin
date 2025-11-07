@@ -191,9 +191,18 @@ struct BinItemRow: View {
                     .padding(.bottom, 16) // mb-4 from web
             }
 
-            // URL preview for text items using web OG endpoint - full width, no padding
+            // URL preview for text items - OG data now comes from API
             if item.isText, let textItem = item.textItem {
-                URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG, isOGLoading: $isOGLoading)
+                let ogData = convertTextItemToOGData(textItem)
+                URLPreviewView(
+                    text: textItem.content, 
+                    accessToken: accessToken, 
+                    isDarkMode: isDarkMode, 
+                    ogData: ogData,
+                    ogDataFetched: textItem.ogDataFetched ?? false,
+                    ogOut: $urlOG, 
+                    isOGLoading: $isOGLoading
+                )
                     .padding(.horizontal, 1) // Inset from card border
                     .padding(.top, 8) // mt-2 from web
                     .padding(.bottom, (isOGLoading || urlOG?.image == nil) ? 16 : 0) // Keep consistent padding when loading
@@ -397,5 +406,31 @@ struct BinItemRow: View {
                 }
             }
         }
+    }
+    
+    private func convertTextItemToOGData(_ textItem: TextItem) -> OGData? {
+        // If OG data hasn't been fetched yet, return nil
+        guard textItem.ogDataFetched == true else { return nil }
+        
+        // If all OG fields are nil, return nil (no OG data available)
+        if textItem.ogTitle == nil &&
+           textItem.ogDescription == nil &&
+           textItem.ogImage == nil &&
+           textItem.ogIcon == nil &&
+           textItem.ogSiteName == nil {
+            return nil
+        }
+        
+        // Convert textItem OG fields to OGData
+        return OGData(
+            url: firstURL(in: textItem.content),
+            title: textItem.ogTitle,
+            description: textItem.ogDescription,
+            image: textItem.ogImage,
+            imageWidth: textItem.ogImageWidth,
+            imageHeight: textItem.ogImageHeight,
+            icon: textItem.ogIcon,
+            siteName: textItem.ogSiteName
+        )
     }
 }

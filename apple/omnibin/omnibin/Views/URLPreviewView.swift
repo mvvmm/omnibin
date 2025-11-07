@@ -6,6 +6,8 @@ struct URLPreviewView: View {
     let text: String
     let accessToken: String?
     let isDarkMode: Bool
+    let ogData: OGData? // OG data from API
+    let ogDataFetched: Bool // Whether OG data has been fetched
     @Binding var ogOut: OGData?
     @Binding var isOGLoading: Bool
 
@@ -19,119 +21,11 @@ struct URLPreviewView: View {
     var body: some View {
         Group {
             if let urlString = extractFirstURL(from: text), let url = URL(string: urlString) {
-                // If we have OG, render image + text; otherwise render compact text card
-                if let og = og {
-                // Determine a valid image URL if provided
-                let trimmedImage = og.image?.trimmingCharacters(in: .whitespacesAndNewlines)
+                // Determine a valid image URL if OG data provided
+                let trimmedImage = og?.image?.trimmingCharacters(in: .whitespacesAndNewlines)
                 let imageURL = (trimmedImage?.isEmpty == false) ? URL(string: trimmedImage!) : nil
                 
-                VStack(alignment: .leading, spacing: 0) {
-                    if let imageURL = imageURL {
-                        GeometryReader { geometry in
-                            AsyncImage(url: imageURL) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: geometry.size.width, height: calculatedHeight)
-                                    .clipped()
-                            } placeholder: {
-                                RoundedRectangle(cornerRadius: 0)
-                                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                                    .frame(width: geometry.size.width)
-                                    .frame(height: calculatedHeight)
-                            }
-                            .onAppear {
-                                if containerWidth == nil {
-                                    containerWidth = geometry.size.width
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: calculatedHeight)
-                        .clipped()
-                        .contentShape(Rectangle())
-                    }
-                    // Title/description row. Only show favicon when there is no image and icon URL exists
-                    HStack(alignment: .center, spacing: 10) {
-                        if imageURL == nil, let iconURL = faviconURL(for: url, og: og) {
-                            AsyncImage(url: iconURL) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 20, height: 20)
-                                    .cornerRadius(4)
-                            } placeholder: {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                                    .frame(width: 20, height: 20)
-                            }
-                        }
-
-                        VStack(alignment: .leading, spacing: 6) {
-                        Text((og.title?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? url.absoluteString))
-                            .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
-                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                            .lineLimit(2)
-                        Text(url.absoluteString)
-                            .font(isIPad ? .system(size: 15) : .caption)
-                            .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                            .lineLimit(1)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, imageURL != nil ? 12 : 16)
-                    .padding(.bottom, 16)
-                }
-                .overlay(
-                    // Add top and bottom borders when there's no image
-                    Group {
-                        if imageURL == nil {
-                            VStack(spacing: 0) {
-                                Rectangle()
-                                    .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
-                                    .frame(height: 1)
-                                Spacer()
-                                Rectangle()
-                                    .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
-                                    .frame(height: 1)
-                            }
-                        }
-                    }
-                )
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    UIApplication.shared.open(url)
-                }
-                .contextMenu {
-                    Button(action: {
-                        UIPasteboard.general.string = url.absoluteString
-                    }) {
-                        Label("Copy URL", systemImage: "doc.on.doc")
-                    }
-                    
-                    Button(action: {
-                        UIApplication.shared.open(url)
-                    }) {
-                        Label("Open in Browser", systemImage: "safari")
-                    }
-                    
-                    Button(action: {
-                        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-                        if let topViewController = topMostViewController() {
-                            // Configure for iPad
-                            if let popover = activityVC.popoverPresentationController {
-                                popover.sourceView = topViewController.view
-                                popover.sourceRect = CGRect(x: topViewController.view.bounds.midX, y: topViewController.view.bounds.midY, width: 0, height: 0)
-                                popover.permittedArrowDirections = []
-                            }
-                            topViewController.present(activityVC, animated: true)
-                        }
-                    }) {
-                        Label("Share", systemImage: "square.and.arrow.up")
-                    }
-                }
-                } else if isLoading || isOGLoading {
+                if isLoading || isOGLoading {
                     // Skeleton loading state - matching BinItemsListView skeleton
                     VStack(alignment: .leading, spacing: 0) {
                         // Image skeleton
@@ -159,43 +53,85 @@ struct URLPreviewView: View {
                         .padding(.bottom, 0) // Match "has image" case - BinItemRow will add padding when urlOG?.image is nil
                     }
                 } else {
-                    // Compact fallback when no OG available
-                    HStack(alignment: .center, spacing: 10) {
-                        if let iconURL = faviconURL(for: url, og: nil) {
-                            AsyncImage(url: iconURL) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 20, height: 20)
-                                    .cornerRadius(4)
-                            } placeholder: {
-                                EmptyView()
+                    // Main content - works with or without OG data
+                    VStack(alignment: .leading, spacing: 0) {
+                        if let imageURL = imageURL {
+                            GeometryReader { geometry in
+                                AsyncImage(url: imageURL) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: geometry.size.width, height: calculatedHeight)
+                                        .clipped()
+                                } placeholder: {
+                                    RoundedRectangle(cornerRadius: 0)
+                                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                        .frame(width: geometry.size.width)
+                                        .frame(height: calculatedHeight)
+                                }
+                                .onAppear {
+                                    if containerWidth == nil {
+                                        containerWidth = geometry.size.width
+                                    }
+                                }
                             }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: calculatedHeight)
+                            .clipped()
+                            .contentShape(Rectangle())
                         }
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(url.host ?? url.absoluteString)
+                        // Title/description row. Only show favicon when there is no image and icon URL exists
+                        HStack(alignment: .center, spacing: 10) {
+                            if imageURL == nil, let iconURL = faviconURL(for: url, og: og) {
+                                AsyncImage(url: iconURL) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 20, height: 20)
+                                        .cornerRadius(4)
+                                } placeholder: {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                        .frame(width: 20, height: 20)
+                                }
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                            Text((og?.title?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? url.absoluteString))
                                 .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
                                 .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                                .lineLimit(1)
+                                .lineLimit(2)
                             Text(url.absoluteString)
                                 .font(isIPad ? .system(size: 15) : .caption)
                                 .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                                 .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .padding(.top, imageURL != nil ? 12 : 16)
+                        .padding(.bottom, 16)
                     }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-                            )
+                    .overlay(
+                        // Add top and bottom borders when there's no image
+                        Group {
+                            if imageURL == nil {
+                                VStack(spacing: 0) {
+                                    Rectangle()
+                                        .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
+                                        .frame(height: 1)
+                                    Spacer()
+                                    Rectangle()
+                                        .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
+                                        .frame(height: 1)
+                                }
+                            }
+                        }
                     )
-                    .contentShape(RoundedRectangle(cornerRadius: 8))
-                    .onTapGesture { UIApplication.shared.open(url) }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        UIApplication.shared.open(url)
+                    }
                     .contextMenu {
                         Button(action: {
                             UIPasteboard.general.string = url.absoluteString
@@ -228,11 +164,19 @@ struct URLPreviewView: View {
             }
         }
         .onAppear { 
-            // Set loading state immediately if URL is detected
-            if extractFirstURL(from: text) != nil {
-                isOGLoading = true
+            // Use provided OG data from API instead of fetching
+            if let providedOgData = ogData {
+                self.og = providedOgData
+                self.ogOut = providedOgData
+                self.isOGLoading = false
+                self.calculateHeightFromOGDimensions(providedOgData)
+            } else if ogDataFetched {
+                // OG data was fetched but no data available
+                self.isOGLoading = false
+            } else {
+                // OG data not yet fetched (shouldn't happen with new architecture)
+                self.isOGLoading = false
             }
-            Task { await loadOGIfNeeded() } 
         }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             // Update screen width and recalculate height when orientation changes
@@ -267,49 +211,6 @@ struct URLPreviewView: View {
         return "https://" + s
     }
 
-    private func loadOGIfNeeded() async {
-        guard let token = accessToken, !token.isEmpty else { return }
-        guard let url = extractFirstURL(from: text) else { return }
-        
-        // Set loading state immediately
-        await MainActor.run { 
-            self.isLoading = true
-            self.isOGLoading = true
-        }
-        
-        defer { 
-            Task { @MainActor in
-                self.isLoading = false
-                self.isOGLoading = false
-            }
-        }
-        
-        do {
-            if let data = try await BinAPI.shared.fetchOpenGraph(url: url, accessToken: token) {
-                await MainActor.run { 
-                    self.og = data  // Set OG data
-                    self.ogOut = data  // Allow ogOut to be set so metadata can show
-                    
-                    // Calculate height from OG dimensions if available
-                    self.calculateHeightFromOGDimensions(data)
-                    
-                    self.isOGLoading = false  // Ensure loading state is cleared when OG data loads
-                }
-                
-                // Download image in background for display
-                let trimmedImage = data.image?.trimmingCharacters(in: .whitespacesAndNewlines)
-                if let imageURLString = trimmedImage, !imageURLString.isEmpty, let imageURL = URL(string: imageURLString) {
-                    await downloadImageForDisplay(from: imageURL)
-                }
-            }
-        } catch {
-            // ignore; show nothing if OG fails
-            await MainActor.run {
-                self.isOGLoading = false  // Clear loading state even on error
-            }
-        }
-    }
-    
     private func calculateHeightFromOGDimensions(_ ogData: OGData) {
         // Use provided dimensions or default OG image size (1200x630)
         let imageWidth = ogData.imageWidth ?? 1200

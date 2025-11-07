@@ -48,6 +48,17 @@ model BinItem {
 model TextItem {
   id        String   @id @default(cuid())
   content   String
+  
+  // Open Graph data
+  ogDataFetched Boolean  @default(false)
+  ogTitle       String?
+  ogDescription String?
+  ogImage       String?
+  ogImageWidth  Int?
+  ogImageHeight Int?
+  ogIcon        String?
+  ogSiteName    String?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

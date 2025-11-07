@@ -12,6 +12,8 @@ import {
 } from "@/lib/s3";
 import { serializeForJson } from "@/lib/utils";
 import { verifyAccessToken } from "@/lib/verifyAccessToken";
+import { extractFirstUrl, isUrl } from "@/utils/isUrl";
+import type { OgData } from "@/types/og";
 
 export async function GET(req: Request) {
 	try {
@@ -19,6 +21,7 @@ export async function GET(req: Request) {
 			req.headers.get("authorization") ?? undefined,
 		);
 		const auth0Sub = payload.sub;
+		const authHeader = req.headers.get("authorization");
 
 		// Ensure user exists and fetch their bin items (clipboard entries)
 		const user = await prisma.user.upsert({
@@ -34,6 +37,84 @@ export async function GET(req: Request) {
 			take: 100,
 			include: { textItem: true, fileItem: true },
 		});
+
+		// Fetch OG data for URL items that haven't been fetched yet
+		const ogFetchPromises = items
+			.filter((item) => {
+				if (item.kind !== "TEXT" || !item.textItem) return false;
+				if (item.textItem.ogDataFetched) return false;
+				const url = extractFirstUrl(item.textItem.content);
+				return url && isUrl(url);
+			})
+			.map(async (item) => {
+				if (!item.textItem) return;
+				const url = extractFirstUrl(item.textItem.content);
+				if (!url) return;
+
+				try {
+					// Call the OG API endpoint internally
+					const ogEndpoint = new URL(
+						"/api/og",
+						process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
+					);
+					const ogRes = await fetch(ogEndpoint, {
+						method: "POST",
+						headers: {
+							Authorization: authHeader || "",
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ url }),
+					});
+
+					if (ogRes.ok) {
+						const ogResult = (await ogRes.json()) as { og?: OgData };
+						const og = ogResult.og;
+
+						// Update the text item with OG data
+						await prisma.textItem.update({
+							where: { id: item.textItem.id },
+							data: {
+								ogDataFetched: true,
+								ogTitle: og?.title ?? null,
+								ogDescription: og?.description ?? null,
+								ogImage: og?.image ?? null,
+								ogImageWidth: og?.imageWidth ?? null,
+								ogImageHeight: og?.imageHeight ?? null,
+								ogIcon: og?.icon ?? null,
+								ogSiteName: og?.siteName ?? null,
+							},
+						});
+
+						// Update the in-memory item so the response includes the OG data
+						item.textItem.ogDataFetched = true;
+						item.textItem.ogTitle = og?.title ?? null;
+						item.textItem.ogDescription = og?.description ?? null;
+						item.textItem.ogImage = og?.image ?? null;
+						item.textItem.ogImageWidth = og?.imageWidth ?? null;
+						item.textItem.ogImageHeight = og?.imageHeight ?? null;
+						item.textItem.ogIcon = og?.icon ?? null;
+						item.textItem.ogSiteName = og?.siteName ?? null;
+					} else {
+						// Mark as fetched even if it failed, so we don't keep retrying
+						await prisma.textItem.update({
+							where: { id: item.textItem.id },
+							data: { ogDataFetched: true },
+						});
+						item.textItem.ogDataFetched = true;
+					}
+				} catch (error) {
+					console.error("Error fetching OG data for URL:", url, error);
+					// Mark as fetched even on error, so we don't keep retrying
+					await prisma.textItem.update({
+						where: { id: item.textItem.id },
+						data: { ogDataFetched: true },
+					});
+					item.textItem.ogDataFetched = true;
+				}
+			});
+
+		// Wait for all OG fetches to complete
+		await Promise.all(ogFetchPromises);
 
 		return NextResponse.json(serializeForJson({ items }));
 	} catch (error) {

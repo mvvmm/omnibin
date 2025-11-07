@@ -10,10 +10,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { deleteBinItem } from "@/actions/deleteBinItem";
 import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
-import { getOpenGraphData } from "@/actions/getOpenGraphData";
 import type { BinItem } from "@/types/bin";
 import type { OgData } from "@/types/og";
 import { formatFileSize } from "@/utils/formatFileSize";
@@ -42,16 +41,40 @@ export function BinListItem({ item }: { item: BinItem }) {
 		return url && isUrl(url) ? url : null;
 	}, [item.kind, item.textItem?.content]);
 
-	// OG data state
-	const [ogData, setOgData] = useState<OgData | null>(null);
-	const [ogError, setOgError] = useState<boolean>(false);
-	const [ogLoading, setOgLoading] = useState<boolean>(!!itemUrl);
-	const hasFetchedOg = useRef<boolean>(false);
+	// Convert stored OG data to OgData format
+	const ogData = useMemo((): OgData | null => {
+		if (!item.textItem || !itemUrl) return null;
+		if (!item.textItem.ogDataFetched) return null;
+		
+		// If fetched but all fields are null, return null (no OG data available)
+		if (
+			!item.textItem.ogTitle &&
+			!item.textItem.ogDescription &&
+			!item.textItem.ogImage &&
+			!item.textItem.ogIcon &&
+			!item.textItem.ogSiteName
+		) {
+			return null;
+		}
+
+		return {
+			url: itemUrl,
+			title: item.textItem.ogTitle,
+			description: item.textItem.ogDescription,
+			image: item.textItem.ogImage,
+			imageWidth: item.textItem.ogImageWidth,
+			imageHeight: item.textItem.ogImageHeight,
+			icon: item.textItem.ogIcon,
+			siteName: item.textItem.ogSiteName,
+		};
+	}, [item.textItem, itemUrl]);
+
+	const ogLoading = itemUrl && !item.textItem?.ogDataFetched;
+	const ogError = itemUrl && item.textItem?.ogDataFetched && !ogData;
 
 	const [deleteIsTransitioning, startDeleteTransition] = useTransition();
 	const [downloadIsTransitioning, startDownloadTransition] = useTransition();
 	const [copyIsTransitioning, startCopyingTransition] = useTransition();
-	const [ogIsTransitioning, startOgTransition] = useTransition();
 
 	useEffect(() => {
 		if (copied) {
@@ -64,29 +87,6 @@ export function BinListItem({ item }: { item: BinItem }) {
 			setTimeout(() => setDownloaded((prev) => (prev ? null : prev)), 1200);
 		}
 	}, [downloaded]);
-
-	// Fetch OG data for text items with URLs
-	useEffect(() => {
-		if (itemUrl && !hasFetchedOg.current) {
-			hasFetchedOg.current = true;
-			setOgError(false);
-
-			startOgTransition(async () => {
-				try {
-					const result = await getOpenGraphData(itemUrl);
-					if (result.success) {
-						setOgData(result.og);
-					} else {
-						setOgError(true);
-					}
-				} catch (error) {
-					setOgError(true);
-				} finally {
-					setOgLoading(false);
-				}
-			});
-		}
-	}, [itemUrl]);
 
 	const handleDelete = async (id: string) => {
 		startDeleteTransition(async () => {
@@ -488,7 +488,7 @@ export function BinListItem({ item }: { item: BinItem }) {
 					<div className="min-w-0 flex-1 text-left">
 						{/* URL Open Graph Preview */}
 						{item.kind === "TEXT" &&
-							(ogData || ogLoading || ogIsTransitioning) && (
+							(ogData || ogLoading) && (
 								<div
 									className={`block mt-2 -mx-3 overflow-hidden ${
 										ogData && !ogData?.image ? "border-t border-b mb-4" : ""

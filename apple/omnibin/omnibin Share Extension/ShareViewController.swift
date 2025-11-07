@@ -648,20 +648,22 @@ class ShareViewController: UIViewController {
             previewTextView.isHidden = true
             urlPreviewContainer.isHidden = false
             
-            // Start fetching OpenGraph data
-            Task {
-                await fetchOpenGraphData(for: url)
-            }
+            // Show simple URL preview (OG data will be fetched by API after upload)
+            isOGLoading = false
+            urlPreviewImageView.isHidden = true
+            urlPreviewIconImageView.isHidden = true
+            urlPreviewDescriptionLabel.isHidden = true
+            urlPreviewSiteLabel.isHidden = true
             
-            // Show loading state
-            if isOGLoading {
-                urlPreviewTitleLabel.text = "Loading preview..."
-                urlPreviewTitleLabel.isHidden = false
-                urlPreviewDescriptionLabel.isHidden = true
-                urlPreviewSiteLabel.isHidden = true
-                urlPreviewImageView.isHidden = true
-                urlPreviewIconImageView.isHidden = true
-            } else if let ogData = ogData {
+            // Just show the URL
+            urlPreviewTitleLabel.text = url.absoluteString
+            urlPreviewTitleLabel.isHidden = false
+            titleLeadingConstraint?.isActive = false
+            titleLeadingConstraint = urlPreviewTitleLabel.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12)
+            titleLeadingConstraint?.isActive = true
+            
+            // Legacy code for if ogData somehow exists (shouldn't happen now)
+            if let ogData = ogData {
                 // Show OpenGraph data
                 let hasImage = ogData.image != nil
                 
@@ -839,69 +841,6 @@ class ShareViewController: UIViewController {
     private func addURLToBin(_ url: URL, completion: @escaping (Bool) -> Void) {
         // Add URL as text for now
         addTextToBin(url.absoluteString, completion: completion)
-    }
-    
-    private func fetchOpenGraphData(for url: URL) async {
-        guard let accessToken = getAccessToken() else { return }
-        
-        await MainActor.run {
-            isOGLoading = true
-        }
-        
-        do {
-            let ogData = try await fetchOpenGraph(url: url.absoluteString, accessToken: accessToken)
-            await MainActor.run {
-                self.ogData = ogData
-                self.isOGLoading = false
-            }
-            self.updatePreview()
-        } catch {
-            await MainActor.run {
-                self.isOGLoading = false
-            }
-            self.updatePreview()
-        }
-    }
-    
-    private func fetchOpenGraph(url: String, accessToken: String) async throws -> OGData {
-        guard let apiURL = URL(string: "https://www.omnib.in/api/og") else {
-            throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
-        }
-        
-        var request = URLRequest(url: apiURL)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let requestBody = ["url": url]
-        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NSError(domain: "ShareExtension", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
-        }
-        
-        guard (200...299).contains(httpResponse.statusCode) else {
-            let responseString = String(data: data, encoding: .utf8) ?? "No response body"
-            throw NSError(domain: "ShareExtension", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP error: \(httpResponse.statusCode) - \(responseString)"])
-        }
-        
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard let ogData = json?["og"] as? [String: Any] else {
-            throw NSError(domain: "ShareExtension", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid OG data"])
-        }
-        
-        return OGData(
-            url: ogData["url"] as? String,
-            title: ogData["title"] as? String,
-            description: ogData["description"] as? String,
-            image: ogData["image"] as? String,
-            imageWidth: ogData["imageWidth"] as? Int,
-            imageHeight: ogData["imageHeight"] as? Int,
-            icon: ogData["icon"] as? String,
-            siteName: ogData["siteName"] as? String
-        )
     }
     
     private func addImageToBin(_ image: UIImage, completion: @escaping (Bool) -> Void) {

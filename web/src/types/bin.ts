@@ -1,6 +1,14 @@
 export type TextItem = {
 	id: string;
 	content: string;
+	ogDataFetched?: boolean;
+	ogTitle?: string | null;
+	ogDescription?: string | null;
+	ogImage?: string | null;
+	ogImageWidth?: number | null;
+	ogImageHeight?: number | null;
+	ogIcon?: string | null;
+	ogSiteName?: string | null;
 };
 
 export type FileItem = {
