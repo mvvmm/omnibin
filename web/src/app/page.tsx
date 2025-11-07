@@ -44,7 +44,7 @@ export default async function Home({
 							src="/omnibin-logo.webp"
 							alt="omnibin logo"
 							width={680}
-							height={200}
+							height={170}
 							priority
 							loading="eager"
 							quality={50}
