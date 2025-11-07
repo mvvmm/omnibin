@@ -1,11 +1,13 @@
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 // MARK: - Bin Form View
 struct BinFormView: View {
     @Binding var isSubmitting: Bool
     @Binding var selectedPhoto: PhotosPickerItem?
     @Binding var showTextInputDialog: Bool
+    @Binding var showFileImporter: Bool
     @Binding var errorMessage: String?
     let binItemsCount: Int
     let binItemsLimit: Int
@@ -56,32 +58,23 @@ struct BinFormView: View {
             .frame(maxWidth: .infinity)
             .frame(height: isIPad ? 78 : 52)
             
-            // Text and Photos buttons row
-            HStack(spacing: 12) {
+            // Text, Photos, and Files buttons row
+            HStack(spacing: 0) {
                 // Add Text button
                 Button(action: { showTextInputDialog = true }) {
                     Image(systemName: "textformat")
                         .font(.system(size: isIPad ? 27 : 18, weight: .medium))
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-                                )
-                                .shadow(
-                                    color: AppColors.cardShadow(isDarkMode: isDarkMode),
-                                    radius: 4,
-                                    x: 0,
-                                    y: 2
-                                )
-                        )
                 }
                 .disabled(isSubmitting)
                 .frame(maxWidth: .infinity)
-                .frame(height: isIPad ? 78 : 52)
+                
+                // Vertical separator
+                Rectangle()
+                    .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
+                    .frame(width: 1)
+                    .padding(.vertical, 12)
                 
                 // Upload from Photos button
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
@@ -89,25 +82,41 @@ struct BinFormView: View {
                         .font(.system(size: isIPad ? 27 : 18, weight: .medium))
                         .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-                                )
-                                .shadow(
-                                    color: AppColors.cardShadow(isDarkMode: isDarkMode),
-                                    radius: 4,
-                                    x: 0,
-                                    y: 2
-                                )
-                        )
                 }
                 .disabled(isSubmitting)
                 .frame(maxWidth: .infinity)
-                .frame(height: isIPad ? 78 : 52)
+                
+                // Vertical separator
+                Rectangle()
+                    .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
+                    .frame(width: 1)
+                    .padding(.vertical, 12)
+                
+                // Upload from Files button
+                Button(action: { showFileImporter = true }) {
+                    Image(systemName: "folder")
+                        .font(.system(size: isIPad ? 27 : 18, weight: .medium))
+                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .disabled(isSubmitting)
+                .frame(maxWidth: .infinity)
             }
+            .frame(height: isIPad ? 78 : 52)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+                    )
+                    .shadow(
+                        color: AppColors.cardShadow(isDarkMode: isDarkMode),
+                        radius: 4,
+                        x: 0,
+                        y: 2
+                    )
+            )
             
             VStack(alignment: .trailing, spacing: 2) {
                 Text("Items: \(min(binItemsCount, binItemsLimit)) / \(binItemsLimit)")

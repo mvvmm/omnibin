@@ -12,6 +12,7 @@ class BinViewModel: ObservableObject {
     @Published var isSubmitting = false
     @Published var selectedPhoto: PhotosPickerItem?
     @Published var showTextInputDialog = false
+    @Published var showFileImporter = false
     @Published var textInput = ""
     
     let accessToken: String?
@@ -258,6 +259,69 @@ class BinViewModel: ObservableObject {
         // Restore item to UI
         binItems.insert(item, at: 0)
         deletedItems.removeAll { $0.id == item.id }
+    }
+    
+    func loadFile(from url: URL) async {
+        guard let token = accessToken else { return }
+        
+        isSubmitting = true
+        errorMessage = nil
+        
+        do {
+            // Start accessing the security-scoped resource
+            guard url.startAccessingSecurityScopedResource() else {
+                await MainActor.run {
+                    self.errorMessage = "Failed to access file"
+                    self.isSubmitting = false
+                }
+                return
+            }
+            
+            defer {
+                url.stopAccessingSecurityScopedResource()
+            }
+            
+            let fileData = try Data(contentsOf: url)
+            let filename = url.lastPathComponent
+            
+            // Detect content type
+            let contentType = detectContentType(from: fileData, url: url)
+            
+            // Check if it's an image to get dimensions
+            if let image = UIImage(data: fileData) {
+                let item = try await BinAPI.shared.addFileItem(
+                    fileData: fileData,
+                    originalName: filename,
+                    contentType: contentType,
+                    imageWidth: Int(image.size.width),
+                    imageHeight: Int(image.size.height),
+                    accessToken: token
+                )
+                await MainActor.run {
+                    self.binItems.insert(item, at: 0)
+                    self.isSubmitting = false
+                }
+            } else {
+                let item = try await BinAPI.shared.addFileItem(
+                    fileData: fileData,
+                    originalName: filename,
+                    contentType: contentType,
+                    accessToken: token
+                )
+                await MainActor.run {
+                    self.binItems.insert(item, at: 0)
+                    self.isSubmitting = false
+                }
+            }
+            
+            // Refresh items to get accurate state after adding
+            await refreshBinItems()
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Failed to load file: \(error.localizedDescription)"
+                self.isSubmitting = false
+            }
+        }
     }
     
     

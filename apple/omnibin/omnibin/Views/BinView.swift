@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 // MARK: - Bin View
 struct BinView: View {
@@ -75,6 +76,7 @@ struct BinView: View {
                             isSubmitting: $viewModel.isSubmitting,
                             selectedPhoto: $viewModel.selectedPhoto,
                             showTextInputDialog: $viewModel.showTextInputDialog,
+                            showFileImporter: $viewModel.showFileImporter,
                             errorMessage: $viewModel.errorMessage,
                             binItemsCount: viewModel.binItems.count,
                             binItemsLimit: viewModel.binItemsLimit,
@@ -165,6 +167,22 @@ struct BinView: View {
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+        }
+        .fileImporter(
+            isPresented: $viewModel.showFileImporter,
+            allowedContentTypes: [.item],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                if let url = urls.first {
+                    Task {
+                        await viewModel.loadFile(from: url)
+                    }
+                }
+            case .failure(let error):
+                viewModel.errorMessage = "Failed to import file: \(error.localizedDescription)"
+            }
         }
     }
 }
