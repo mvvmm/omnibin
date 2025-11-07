@@ -74,33 +74,7 @@ struct BinItemRow: View {
                 }
             }
             
-            // Image preview for image files (separate from tappable header) - full width, no padding
-            if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
-                    .padding(.horizontal, 1) // Inset from card border
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle()) // Define tappable area to match visual bounds
-                    .padding(.top, 8) // mt-2 from web
-                    .padding(.bottom, 16) // mb-4 from web
-            }
-
-            // URL preview for text items using web OG endpoint - full width, no padding
-            if item.isText, let textItem = item.textItem {
-                URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG, isOGLoading: $isOGLoading)
-                    .padding(.horizontal, 1) // Inset from card border
-                    .padding(.top, 8) // mt-2 from web
-                    .padding(.bottom, (isOGLoading || urlOG?.image == nil) ? 16 : 0) // Keep consistent padding when loading
-            }
-            
-            // Metadata section - displayed below image/preview like web
-            Text(itemSubtitle)
-                .font(isIPad ? .system(size: 17) : .caption)
-                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                .padding(.horizontal, 16)
-                .padding(.top, 4) // mt-1 from web
-                .padding(.bottom, 0)
-            
-            // Action buttons section (only visible when expanded)
+            // Action buttons section (only visible when expanded) - moved above images
             if isExpanded {
                 HStack(spacing: 12) {
                     // Copy button
@@ -202,9 +176,36 @@ struct BinItemRow: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 16) // Add top spacing to buttons
+                .padding(.top, 4) // Balanced spacing above and below buttons
+                .padding(.bottom, 16) // Add bottom spacing to separate from images/content below
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
+            
+            // Image preview for image files (separate from tappable header) - full width, no padding
+            if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
+                ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
+                    .padding(.horizontal, 1) // Inset from card border
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle()) // Define tappable area to match visual bounds
+                    .padding(.top, 8) // mt-2 from web
+                    .padding(.bottom, 16) // mb-4 from web
+            }
+
+            // URL preview for text items using web OG endpoint - full width, no padding
+            if item.isText, let textItem = item.textItem {
+                URLPreviewView(text: textItem.content, accessToken: accessToken, isDarkMode: isDarkMode, ogOut: $urlOG, isOGLoading: $isOGLoading)
+                    .padding(.horizontal, 1) // Inset from card border
+                    .padding(.top, 8) // mt-2 from web
+                    .padding(.bottom, (isOGLoading || urlOG?.image == nil) ? 16 : 0) // Keep consistent padding when loading
+            }
+            
+            // Metadata section - displayed below image/preview like web
+            Text(itemSubtitle)
+                .font(isIPad ? .system(size: 17) : .caption)
+                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
+                .padding(.horizontal, 16)
+                .padding(.top, 4) // mt-1 from web
+                .padding(.bottom, 0)
             
         }
         .padding(.bottom, 16) // Add bottom spacing to entire card
