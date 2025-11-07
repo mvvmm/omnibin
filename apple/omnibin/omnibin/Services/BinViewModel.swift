@@ -132,29 +132,55 @@ class BinViewModel: ObservableObject {
         
         Task {
             do {
-                let pasteboard = UIPasteboard.general
+                let content = try await PasteboardService.shared.loadFromPasteboard()
                 
-                if let string = pasteboard.string, !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    let item = try await BinAPI.shared.addTextItem(content: string, accessToken: token)
+                switch content {
+                case .text(let text):
+                    let item = try await BinAPI.shared.addTextItem(content: text, accessToken: token)
                     await MainActor.run {
                         self.binItems.insert(item, at: 0)
                         self.isSubmitting = false
-                        // Call success callback after item is added
                         onSuccess?()
                     }
-                    // Refresh items to get accurate state after adding (in case oldest was deleted)
                     await refreshBinItems()
-                } else if let image = pasteboard.image {
+                    
+                case .image(let image):
                     await addImageToBin(image: image, token: token, onSuccess: onSuccess)
-                } else {
-                    await MainActor.run {
-                        self.errorMessage = "No text or image found in clipboard"
-                        self.isSubmitting = false
+                    
+                case .file(let fileContent):
+                    // Check if file is actually an image
+                    if let image = UIImage(data: fileContent.data) {
+                        let item = try await BinAPI.shared.addFileItem(
+                            fileData: fileContent.data,
+                            originalName: fileContent.filename,
+                            contentType: fileContent.contentType,
+                            imageWidth: Int(image.size.width),
+                            imageHeight: Int(image.size.height),
+                            accessToken: token
+                        )
+                        await MainActor.run {
+                            self.binItems.insert(item, at: 0)
+                            self.isSubmitting = false
+                            onSuccess?()
+                        }
+                    } else {
+                        let item = try await BinAPI.shared.addFileItem(
+                            fileData: fileContent.data,
+                            originalName: fileContent.filename,
+                            contentType: fileContent.contentType,
+                            accessToken: token
+                        )
+                        await MainActor.run {
+                            self.binItems.insert(item, at: 0)
+                            self.isSubmitting = false
+                            onSuccess?()
+                        }
                     }
+                    await refreshBinItems()
                 }
             } catch {
                 await MainActor.run {
-                    self.errorMessage = "Failed to paste: \(error.localizedDescription)"
+                    self.errorMessage = error.localizedDescription
                     self.isSubmitting = false
                 }
             }
