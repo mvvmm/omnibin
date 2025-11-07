@@ -77,7 +77,7 @@ class PasteboardService {
         let commonTypes: [UTType] = [
             .pdf, .png, .jpeg, .gif, .heic, .heif,
             .mpeg4Movie, .quickTimeMovie,
-            .zip, .plainText
+            .zip
         ]
         
         for utType in commonTypes {
