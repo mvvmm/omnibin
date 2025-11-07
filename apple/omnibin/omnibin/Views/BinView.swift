@@ -115,6 +115,9 @@ struct BinView: View {
             viewModel.loadBinItems()
         }
         .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
+            // Clear any stale error messages immediately when app becomes active
+            viewModel.clearError()
+            // Then refresh items
             Task {
                 await viewModel.refreshBinItems()
             }

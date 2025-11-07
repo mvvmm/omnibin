@@ -23,6 +23,11 @@ class BinViewModel: ObservableObject {
         self.accessToken = accessToken
     }
     
+    // Clear any existing error messages
+    func clearError() {
+        errorMessage = nil
+    }
+    
     // MARK: - Public Methods
     
     func loadBinItems() {
