@@ -12,8 +12,8 @@ import {
 } from "@/lib/s3";
 import { serializeForJson } from "@/lib/utils";
 import { verifyAccessToken } from "@/lib/verifyAccessToken";
-import { extractFirstUrl, isUrl } from "@/utils/isUrl";
 import type { OgData } from "@/types/og";
+import { extractFirstUrl, isUrl } from "@/utils/isUrl";
 
 export async function GET(req: Request) {
 	try {
@@ -55,7 +55,8 @@ export async function GET(req: Request) {
 					// Call the OG API endpoint internally
 					const ogEndpoint = new URL(
 						"/api/og",
-						process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
+						process.env.NEXT_PUBLIC_BASE_URL ||
+							`http://localhost:${process.env.PORT || 3000}`,
 					);
 					const ogRes = await fetch(ogEndpoint, {
 						method: "POST",
@@ -138,6 +139,7 @@ export async function POST(req: Request) {
 			req.headers.get("authorization") ?? undefined,
 		);
 		const auth0Sub = payload.sub;
+		const authHeader = req.headers.get("authorization");
 
 		const body = (await req.json().catch(() => undefined)) as
 			| {
@@ -263,7 +265,49 @@ export async function POST(req: Request) {
 			);
 		}
 
-		const text = await prisma.textItem.create({ data: { content } });
+		// Check if content contains a URL and fetch OG data
+		let ogData: OgData | null = null;
+		const url = extractFirstUrl(content);
+		if (url && isUrl(url)) {
+			try {
+				const ogEndpoint = new URL(
+					"/api/og",
+					process.env.NEXT_PUBLIC_BASE_URL ||
+						`http://localhost:${process.env.PORT || 3000}`,
+				);
+				const ogRes = await fetch(ogEndpoint, {
+					method: "POST",
+					headers: {
+						Authorization: authHeader || "",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ url }),
+				});
+
+				if (ogRes.ok) {
+					const ogResult = (await ogRes.json()) as { og?: OgData };
+					ogData = ogResult.og ?? null;
+				}
+			} catch (error) {
+				console.error("Error fetching OG data on upload:", error);
+				// Continue without OG data
+			}
+		}
+
+		// Create text item with OG data if available
+		const text = await prisma.textItem.create({
+			data: {
+				content,
+				ogDataFetched: url && isUrl(url) ? true : false,
+				ogTitle: ogData?.title ?? null,
+				ogDescription: ogData?.description ?? null,
+				ogImage: ogData?.image ?? null,
+				ogImageWidth: ogData?.imageWidth ?? null,
+				ogImageHeight: ogData?.imageHeight ?? null,
+				ogIcon: ogData?.icon ?? null,
+				ogSiteName: ogData?.siteName ?? null,
+			},
+		});
 		const item = await prisma.binItem.create({
 			data: {
 				userId: user.id,
