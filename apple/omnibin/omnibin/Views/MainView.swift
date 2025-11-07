@@ -22,7 +22,10 @@ struct MainView: View {
                 
                 // Use a reference size based on screen width (similar to rem-based sizing on web)
                 // Scale down for mobile - slightly larger for better visibility
-                let scaleFactor = max(screenWidth / 375.0, 0.8) * 0.55 // Increased scale for slightly larger blobs
+                // Using square root scaling to dampen growth on larger screens (iPad)
+                // This keeps iPhone sizes similar while reducing iPad blob sizes
+                let baseScale = screenWidth / 375.0
+                let scaleFactor = max(sqrt(baseScale), 0.8) * 0.55
                 let baseRem: CGFloat = 16.0
                 
                 // Blob sizes - scaled down for mobile
