@@ -80,7 +80,7 @@ export default function Page() {
 						{/* App Store badge */}
 						<div className="flex items-center justify-center gap-3 py-4">
 							<span className="btn-omnibin !px-4 !py-2 !rounded-md">
-								www.omnib.in
+								omnib.in
 							</span>
 							or
 							<Image

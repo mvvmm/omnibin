@@ -395,7 +395,7 @@ class ShareViewController: UIViewController {
     }
     
     private func fetchBinItemCount(accessToken: String) async throws -> Int {
-        guard let url = URL(string: "https://www.omnib.in/api/bin") else {
+        guard let url = URL(string: "https://omnib.in/api/bin") else {
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
         }
         var request = URLRequest(url: url)
@@ -864,7 +864,7 @@ class ShareViewController: UIViewController {
     }
     
     private func fetchOpenGraph(url: String, accessToken: String) async throws -> OGData {
-        guard let apiURL = URL(string: "https://www.omnib.in/api/og") else {
+        guard let apiURL = URL(string: "https://omnib.in/api/og") else {
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
         }
         
@@ -1180,7 +1180,7 @@ class ShareViewController: UIViewController {
     }
     
     private func addTextItemToAPI(content: String, accessToken: String) async throws -> BinItem {
-        guard let url = URL(string: "https://www.omnib.in/api/bin") else {
+        guard let url = URL(string: "https://omnib.in/api/bin") else {
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
         }
         
@@ -1241,7 +1241,7 @@ class ShareViewController: UIViewController {
     }
     
     private func addFileItemToAPI(fileData: Data, originalName: String, contentType: String, imageWidth: Int?, imageHeight: Int?, accessToken: String) async throws -> BinItem {
-        guard let url = URL(string: "https://www.omnib.in/api/bin") else {
+        guard let url = URL(string: "https://omnib.in/api/bin") else {
             throw NSError(domain: "ShareExtension", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
         }
         

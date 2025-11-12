@@ -17,7 +17,7 @@ struct BinHeaderView: View {
             
             Menu {
                 Button(action: {
-                    if let url = URL(string: "https://www.omnib.in") {
+                    if let url = URL(string: "https://omnib.in") {
                         UIApplication.shared.open(url)
                     }
                 }) {
@@ -25,7 +25,7 @@ struct BinHeaderView: View {
                 }
                 
                 Button(action: {
-                    if let url = URL(string: "https://www.omnib.in/support") {
+                    if let url = URL(string: "https://omnib.in/support") {
                         UIApplication.shared.open(url)
                     }
                 }) {
@@ -33,7 +33,7 @@ struct BinHeaderView: View {
                 }
                 
                 Button(action: {
-                    if let url = URL(string: "https://www.omnib.in/privacy-policy") {
+                    if let url = URL(string: "https://omnib.in/privacy-policy") {
                         UIApplication.shared.open(url)
                     }
                 }) {

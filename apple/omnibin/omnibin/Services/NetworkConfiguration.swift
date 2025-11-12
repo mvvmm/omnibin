@@ -23,7 +23,7 @@ class NetworkConfiguration {
         }
         #endif
         // 4) Fallback to production
-        return "https://www.omnib.in"
+        return "https://omnib.in"
     }
     
     let binEndpoint = "/api/bin"

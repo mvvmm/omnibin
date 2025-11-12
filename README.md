@@ -10,7 +10,7 @@ Seamless cross-platform clipboard synchronization. Move text, images, and files 
 
 ### Web
 
-[www.omnib.in](https://www.omnib.in/)
+[omnib.in](https://omnib.in/)
 
 ### iOS
 
@@ -49,11 +49,11 @@ Seamless cross-platform clipboard synchronization. Move text, images, and files 
 - **Authentication**: Secure Auth0 integration with industry-standard protocols
 - **Data encryption**: All data encrypted in transit and at rest
 - **File storage**: Secure AWS S3 storage with proper access controls
-- **Privacy**: User data is handled according to the [privacy policy](https://www.omnib.in/privacy-policy)
+- **Privacy**: User data is handled according to the [privacy policy](https://omnib.in/privacy-policy)
 - **Session management**: Secure session handling with automatic expiration
 
 ## License & Legal
 
 - **License**: [LICENSE](LICENSE)
-- **Privacy Policy**: [Link](https://www.omnib.in/privacy-policy)
-- **Support**: [Link](https://www.omnib.in/support)
+- **Privacy Policy**: [Link](https://omnib.in/privacy-policy)
+- **Support**: [Link](https://omnib.in/support)
