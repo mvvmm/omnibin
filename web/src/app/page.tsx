@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 	description:
 		"Seamless cross-platform clipboard. Move text, images, and files between devices with ease. One click copy and paste across all your devices.",
 	alternates: {
-		canonical: "https://omnib.in/",
+		canonical: "https://www.omnib.in/",
 	},
 };
 
