@@ -11,6 +11,9 @@ export const metadata: Metadata = {
 	title: "Privacy Policy",
 	description:
 		"Privacy Policy for omnibin - cross-platform copy/paste. Learn how we collect, use, and protect your data when using our clipboard sync service.",
+	alternates: {
+		canonical: `${process.env.NEXT_PUBLIC_BASE_URL || "https://omnib.in"}/privacy-policy`,
+	},
 };
 
 const SUPPORT_EMAIL = "support@omnib.in";

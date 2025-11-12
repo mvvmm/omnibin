@@ -13,6 +13,9 @@ export const metadata: Metadata = {
 	title: "Support",
 	description:
 		"Get help with omnibin. Report bugs, request features, or contact support for assistance with your cross-platform clipboard.",
+	alternates: {
+		canonical: `${process.env.NEXT_PUBLIC_BASE_URL || "https://omnib.in"}/support`,
+	},
 };
 
 const BUG_GITHUB_URL =

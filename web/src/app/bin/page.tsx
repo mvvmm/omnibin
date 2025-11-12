@@ -9,6 +9,9 @@ export const metadata: Metadata = {
 	title: "Your Bin",
 	description:
 		"Access your shared clipboard items. View, manage, and sync your text, images, and files across all devices.",
+	alternates: {
+		canonical: `${process.env.NEXT_PUBLIC_BASE_URL || "https://omnib.in"}/bin`,
+	},
 };
 
 export default async function Page() {
