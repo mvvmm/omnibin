@@ -29,7 +29,23 @@ struct BinHeaderView: View {
                         UIApplication.shared.open(url)
                     }
                 }) {
-                    Label("Get support", systemImage: "questionmark.circle")
+                    Label("Support", systemImage: "questionmark.circle")
+                }
+                
+                Button(action: {
+                    if let url = URL(string: "https://omnib.in/support") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Label("Request a feature", systemImage: "lightbulb")
+                }
+                
+                Button(action: {
+                    if let url = URL(string: "https://omnib.in/support") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Label("Submit a bug", systemImage: "ant")
                 }
                 
                 Button(action: {
