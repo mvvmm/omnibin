@@ -63,10 +63,9 @@ export default function AboutPage() {
 							<p className="text-sm" style={{ color: "var(--muted-80)" }}>
 								Most software that offers self-sharing treats it as a secondary
 								feature, which means it's often inefficient and clunky. I wanted
-								to build something different—a tool where sharing content with
-								yourself is the primary focus. Every feature in omnibin is
-								designed around making this experience as seamless and efficient
-								as possible.
+								to build a tool where sharing content with yourself is the
+								primary focus. Every feature in omnibin is designed around
+								making this experience as seamless and efficient as possible.
 							</p>
 						</section>
 
