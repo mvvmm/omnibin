@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { uploadPastedFile as uploadPastedFileAction } from "@/actions/uploadPastedFile";
+import { initFileUpload } from "@/actions/initFileUpload";
 import { uploadText as uploadTextAction } from "@/actions/uploadText";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,7 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
 	async function uploadPastedFile(file: File) {
 		setError(null);
 
+		// For images only: Extract image dimensions on client
 		let imageWidth: number | undefined;
 		let imageHeight: number | undefined;
 		if (file.type.startsWith("image/")) {
@@ -32,16 +33,32 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
 			});
 		}
 
-		const fd = new FormData();
-		fd.append("file", file);
-		if (imageWidth !== undefined) fd.append("imageWidth", String(imageWidth));
-		if (imageHeight !== undefined)
-			fd.append("imageHeight", String(imageHeight));
-
 		startTransition(async () => {
-			const result = await uploadPastedFileAction(fd);
-			if (!result.success) {
-				setError(result.error || "Upload failed");
+			// Step 1: Get presigned URL from Server Action (metadata only, no file data)
+			const initResult = await initFileUpload({
+				originalName: file.name || "pasted-file",
+				contentType: file.type || "application/octet-stream",
+				size: file.size,
+				imageWidth,
+				imageHeight,
+			});
+
+			if (!initResult.success) {
+				setError(initResult.error || "Failed to init upload");
+				return;
+			}
+
+			// Step 2: Upload file directly to S3
+			const putRes = await fetch(initResult.uploadUrl, {
+				method: "PUT",
+				headers: {
+					"Content-Type": file.type || "application/octet-stream",
+				},
+				body: file,
+			});
+
+			if (!putRes.ok) {
+				setError(`Failed to upload to storage (${putRes.status})`);
 				return;
 			}
 		});
