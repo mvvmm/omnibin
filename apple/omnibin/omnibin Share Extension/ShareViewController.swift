@@ -946,7 +946,10 @@ class ShareViewController: UIViewController {
         }
         
         // Check if image data is too large
-        let maxSize = 10 * 1024 * 1024 // 10MB
+        // IMPORTANT: This value must be kept in sync with:
+        // - Web: web/src/constants/constants.ts (MAX_FILE_SIZE)
+        // - Backend validation in the API is the source of truth
+        let maxSize = 50 * 1024 * 1024 // 50MB
         if imageData.count > maxSize {
             Task { @MainActor in
                 self.statusLabel.text = "Image too large"
