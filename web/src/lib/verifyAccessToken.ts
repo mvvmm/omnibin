@@ -12,38 +12,38 @@ const jwks = createRemoteJWKSet(new URL(`${issuer}.well-known/jwks.json`));
 export type VerifiedToken = JWTPayload & { sub: string };
 
 export async function verifyAccessToken(
-	authorizationHeader?: string,
+  authorizationHeader?: string
 ): Promise<VerifiedToken> {
-	const token = extractBearer(authorizationHeader);
+  const token = extractBearer(authorizationHeader);
 
-	if (!token) {
-		throw createHttpError(401, "Missing or invalid Authorization header");
-	}
+  if (!token) {
+    throw createHttpError(401, "Missing or invalid Authorization header");
+  }
 
-	try {
-		const { payload } = await jwtVerify(token, jwks, {
-			issuer,
-			audience,
-		});
+  try {
+    const { payload } = await jwtVerify(token, jwks, {
+      issuer,
+      audience,
+    });
 
-		if (!payload.sub) throw createHttpError(401, "Token missing subject (sub)");
-		return payload as VerifiedToken;
-	} catch (error) {
-		console.error("Token verification failed:", error);
-		throw error;
-	}
+    if (!payload.sub) throw createHttpError(401, "Token missing subject (sub)");
+    return payload as VerifiedToken;
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    throw error;
+  }
 }
 
 function extractBearer(header?: string): string | undefined {
-	if (!header) return undefined;
-	const [scheme, token] = header.split(" ");
-	if (scheme?.toLowerCase() !== "bearer" || !token) return undefined;
-	return token;
+  if (!header) return undefined;
+  const [scheme, token] = header.split(" ");
+  if (scheme?.toLowerCase() !== "bearer" || !token) return undefined;
+  return token;
 }
 
 type HttpError = Error & { statusCode: number };
 function createHttpError(statusCode: number, message: string): HttpError {
-	const err = new Error(message) as HttpError;
-	err.statusCode = statusCode;
-	return err;
+  const err = new Error(message) as HttpError;
+  err.statusCode = statusCode;
+  return err;
 }

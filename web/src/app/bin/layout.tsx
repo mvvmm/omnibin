@@ -7,45 +7,45 @@ import { auth0, getAccessTokenOrReauth } from "@/lib/auth0";
 import { OMNIBIN_API_ROUTES, OMNIBIN_ROUTES } from "@/routes";
 
 export default async function Layout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	const session = await auth0.getSession();
+  const session = await auth0.getSession();
 
-	if (!session) {
-		redirect(OMNIBIN_ROUTES.LOGIN);
-	}
+  if (!session) {
+    redirect(OMNIBIN_ROUTES.LOGIN);
+  }
 
-	// Fetch or create user and check popup status
-	const accessToken = await getAccessTokenOrReauth();
-	const endpoint = new URL(
-		OMNIBIN_API_ROUTES.USER,
-		process.env.NEXT_PUBLIC_BASE_URL,
-	);
-	const response = await fetch(endpoint, {
-		headers: {
-			Authorization: `Bearer ${accessToken}`,
-		},
-		cache: "no-store",
-	});
+  // Fetch or create user and check popup status
+  const accessToken = await getAccessTokenOrReauth();
+  const endpoint = new URL(
+    OMNIBIN_API_ROUTES.USER,
+    process.env.NEXT_PUBLIC_BASE_URL
+  );
+  const response = await fetch(endpoint, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    cache: "no-store",
+  });
 
-	if (!response.ok) {
-		console.error("Failed to fetch user:", await response.text());
-		redirect(OMNIBIN_ROUTES.LOGIN);
-	}
+  if (!response.ok) {
+    console.error("Failed to fetch user:", await response.text());
+    redirect(OMNIBIN_ROUTES.LOGIN);
+  }
 
-	const { user } = await response.json();
-	const shouldShowPopupA = ALWAYS_SHOW_POPUP_A || !user.ignoreWebPopupA;
+  const { user } = await response.json();
+  const shouldShowPopupA = ALWAYS_SHOW_POPUP_A || !user.ignoreWebPopupA;
 
-	return (
-		<>
-			<div className="flex justify-between items-center p-4">
-				<HomeLogo />
-				<ContextMenu loggedIn={!!session} />
-			</div>
-			{children}
-			{shouldShowPopupA && <PopupA />}
-		</>
-	);
+  return (
+    <>
+      <div className="flex justify-between items-center p-4">
+        <HomeLogo />
+        <ContextMenu loggedIn={!!session} />
+      </div>
+      {children}
+      {shouldShowPopupA && <PopupA />}
+    </>
+  );
 }
