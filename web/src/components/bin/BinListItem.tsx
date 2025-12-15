@@ -1,5 +1,12 @@
 "use client";
 
+import { deleteBinItem } from "@/actions/deleteBinItem";
+import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
+import type { BinItem } from "@/types/bin";
+import type { OgData } from "@/types/og";
+import { formatFileSize } from "@/utils/formatFileSize";
+import { isCopyableFile } from "@/utils/isCopyableFile";
+import { extractFirstUrl, isUrl } from "@/utils/isUrl";
 import {
   Check,
   Copy,
@@ -10,14 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { deleteBinItem } from "@/actions/deleteBinItem";
-import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
-import type { BinItem } from "@/types/bin";
-import type { OgData } from "@/types/og";
-import { formatFileSize } from "@/utils/formatFileSize";
-import { isCopyableFile } from "@/utils/isCopyableFile";
-import { extractFirstUrl, isUrl } from "@/utils/isUrl";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
@@ -31,6 +31,22 @@ export function BinListItem({ item }: { item: BinItem }) {
   const [downloaded, setDownloaded] = useState<boolean | null>(null);
   const [imageLoading, setImageLoading] = useState<boolean>(true);
   const [imageError, setImageError] = useState<boolean>(false);
+  const [isAboveFold, setIsAboveFold] = useState<boolean>(false);
+
+  // Ref callback to check if element is above fold synchronously when mounted
+  const checkAboveFoldSync = (element: HTMLDivElement | null) => {
+    if (!element) return;
+
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    // Consider it above fold if it's within the viewport or 200px above it
+    if (rect.top < viewportHeight + 200) {
+      setIsAboveFold(true);
+    }
+  };
+
+  const ogImageRef = useRef<HTMLDivElement>(null);
+  const fileImageRef = useRef<HTMLDivElement>(null);
 
   // Extract and validate URL once
   const itemUrl = useMemo(() => {
@@ -87,6 +103,41 @@ export function BinListItem({ item }: { item: BinItem }) {
       setTimeout(() => setDownloaded((prev) => (prev ? null : prev)), 1200);
     }
   }, [downloaded]);
+
+  // Detect if images are above the fold using Intersection Observer
+  const hasFileImagePreview = item.kind === "FILE" && !!item.fileItem?.preview;
+  const ogImageUrl = ogData?.image ?? null;
+  useEffect(() => {
+    const refs = [ogImageRef.current, fileImageRef.current].filter(
+      Boolean
+    ) as HTMLElement[];
+
+    if (refs.length === 0) return;
+
+    // Use Intersection Observer for accurate detection
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0) {
+            setIsAboveFold(true);
+            // Once we detect it's above fold, we can disconnect
+            observer.disconnect();
+          }
+        });
+      },
+      {
+        // Check immediately if element is in viewport
+        rootMargin: "200px", // Consider 200px above viewport as "above fold"
+        threshold: 0,
+      }
+    );
+
+    refs.forEach((ref) => observer.observe(ref));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [ogImageUrl, hasFileImagePreview]);
 
   const handleDelete = async (id: string) => {
     startDeleteTransition(async () => {
@@ -293,7 +344,6 @@ export function BinListItem({ item }: { item: BinItem }) {
 
   return (
     <li key={item.id}>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: I do what I want */}
       <Card
         className="w-full p-3 text-foreground hover:scale-[101%] hover:cursor-pointer transition-transform !gap-0 glass"
         onClick={() => {
@@ -538,6 +588,10 @@ export function BinListItem({ item }: { item: BinItem }) {
                       {/* When rendering the OG image container: */}
                       {ogData?.image ? (
                         <div
+                          ref={(el) => {
+                            ogImageRef.current = el;
+                            checkAboveFoldSync(el);
+                          }}
                           className="relative w-full overflow-hidden bg-muted/20"
                           style={{ aspectRatio: aspect }}
                         >
@@ -548,6 +602,7 @@ export function BinListItem({ item }: { item: BinItem }) {
                             className="object-cover"
                             unoptimized
                             referrerPolicy="no-referrer"
+                            loading={isAboveFold ? "eager" : "lazy"}
                           />
                         </div>
                       ) : (
@@ -619,7 +674,13 @@ export function BinListItem({ item }: { item: BinItem }) {
               item.fileItem.contentType.startsWith("image/") && (
                 <div className="mb-4 mt-2 -mx-3">
                   {item.fileItem.preview && (
-                    <div className="h-[300px] w-full overflow-hidden bg-muted/30 relative">
+                    <div
+                      ref={(el) => {
+                        fileImageRef.current = el;
+                        checkAboveFoldSync(el);
+                      }}
+                      className="h-[300px] w-full overflow-hidden bg-muted/30 relative"
+                    >
                       {imageLoading && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -651,6 +712,7 @@ export function BinListItem({ item }: { item: BinItem }) {
                         height={item.fileItem.imageHeight ?? 240}
                         className={`h-full w-full object-cover ${imageLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-200`}
                         quality={50}
+                        loading={isAboveFold ? "eager" : "lazy"}
                         onLoad={() => setImageLoading(false)}
                         onError={() => {
                           setImageLoading(false);
