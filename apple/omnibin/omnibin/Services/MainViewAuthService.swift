@@ -31,15 +31,20 @@ class MainViewAuthService: ObservableObject {
                                 case .success(let renewedCredentials):
                                     self.user = User(from: renewedCredentials.idToken)
                                     self.accessToken = renewedCredentials.accessToken
-                                    
+
                                     // Update access token in shared Keychain
                                     SecureStorageManager.shared.setAccessToken(renewedCredentials.accessToken)
-                                    
+
+                                    // Update refresh token in shared Keychain
+                                    if let refreshToken = renewedCredentials.refreshToken {
+                                        SecureStorageManager.shared.setRefreshToken(refreshToken)
+                                    }
+
                                     // Also store in UserDefaults for debugging
                                     if let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin") {
                                         sharedDefaults.set(renewedCredentials.accessToken, forKey: "access_token")
                                     }
-                                    
+
                                     self.isLoading = false
                                 case .failure(_):
                                     self.isLoading = false
@@ -68,15 +73,20 @@ class MainViewAuthService: ObservableObject {
                         _ = self.credentialsManager.store(credentials: credentials)
                         self.user = User(from: credentials.idToken)
                         self.accessToken = credentials.accessToken
-                        
+
                         // Store access token in shared Keychain for Share Extension
                         SecureStorageManager.shared.setAccessToken(credentials.accessToken)
-                        
+
+                        // Store refresh token in shared Keychain for Share Extension
+                        if let refreshToken = credentials.refreshToken {
+                            SecureStorageManager.shared.setRefreshToken(refreshToken)
+                        }
+
                         // Also store in UserDefaults for debugging
                         if let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin") {
                             sharedDefaults.set(credentials.accessToken, forKey: "access_token")
                         }
-                        
+
                         self.isLoading = false
                     case .failure(_):
                         self.isLoading = false
@@ -88,9 +98,10 @@ class MainViewAuthService: ObservableObject {
     func logout() {
         // Clear stored credentials
         _ = credentialsManager.clear()
-        
+
         // Clear shared Keychain
         SecureStorageManager.shared.deleteAccessToken()
+        SecureStorageManager.shared.deleteRefreshToken()
         SecureStorageManager.shared.clearUserInfo()
         
         Auth0
@@ -113,16 +124,17 @@ class MainViewAuthService: ObservableObject {
     func clearSessionLocally() {
         // Clear stored credentials
         _ = credentialsManager.clear()
-        
+
         // Clear shared Keychain
         SecureStorageManager.shared.deleteAccessToken()
+        SecureStorageManager.shared.deleteRefreshToken()
         SecureStorageManager.shared.clearUserInfo()
-        
+
         // Clear UserDefaults
         if let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin") {
             sharedDefaults.removeObject(forKey: "access_token")
         }
-        
+
         // Clear local state without triggering Auth0 logout
         self.user = nil
         self.accessToken = nil

@@ -366,8 +366,8 @@ class ShareViewController: UIViewController {
     }
     
     private func checkAndShowBinLimitWarning() async {
-        guard let accessToken = getAccessToken() else { return }
         do {
+            let accessToken = try await getAccessToken()
             let count = try await fetchBinItemCount(accessToken: accessToken)
             if count >= binItemsLimit {
                 let message = "Oldest item will be deleted on next add."
@@ -814,19 +814,11 @@ class ShareViewController: UIViewController {
     }
     
     private func addTextToBin(_ text: String, completion: @escaping (Bool) -> Void) {
-        // Get access token from shared container
-        guard let accessToken = getAccessToken() else {
-            Task { @MainActor in
-                self.statusLabel.text = "Not logged in"
-                self.activityIndicator.stopAnimating()
-            }
-            completion(false)
-            return
-        }
-        
         // Make API call to add text item
         Task {
             do {
+                // Get access token (may refresh if expired)
+                let accessToken = try await getAccessToken()
                 let _ = try await addTextItemToAPI(content: text, accessToken: accessToken)
                 await callCompletion(true, completion: completion)
             } catch {
@@ -842,7 +834,7 @@ class ShareViewController: UIViewController {
     }
     
     private func fetchOpenGraphData(for url: URL) async {
-        guard let accessToken = getAccessToken() else { return }
+        guard let accessToken = try? await getAccessToken() else { return }
         
         await MainActor.run {
             isOGLoading = true
@@ -905,16 +897,6 @@ class ShareViewController: UIViewController {
     }
     
     private func addImageToBin(_ image: UIImage, completion: @escaping (Bool) -> Void) {
-        // Get access token from shared container
-        guard let accessToken = getAccessToken() else {
-            Task { @MainActor in
-                self.statusLabel.text = "Not logged in"
-                self.activityIndicator.stopAnimating()
-            }
-            completion(false)
-            return
-        }
-        
         let usePNG: Bool = {
             guard let alphaInfo = image.cgImage?.alphaInfo else { return false }
             switch alphaInfo {
@@ -970,6 +952,8 @@ class ShareViewController: UIViewController {
         // Make API call to add file item
         Task {
             do {
+                // Get access token (may refresh if expired)
+                let accessToken = try await getAccessToken()
                 let _ = try await addFileItemToAPI(
                     fileData: imageData,
                     originalName: filename,
@@ -987,16 +971,6 @@ class ShareViewController: UIViewController {
     }
     
     private func addImageFromURL(_ url: URL, completion: @escaping (Bool) -> Void) {
-        // Get access token from shared container
-        guard getAccessToken() != nil else {
-            DispatchQueue.main.async {
-                self.statusLabel.text = "Not logged in"
-                self.activityIndicator.stopAnimating()
-            }
-            completion(false)
-            return
-        }
-        
         // Check if it's a local file URL (from Photos app)
         if url.isFileURL {
             loadLocalImage(from: url, completion: completion)
@@ -1006,18 +980,11 @@ class ShareViewController: UIViewController {
     }
 
     private func addGenericFileFromURL(_ url: URL, completion: @escaping (Bool) -> Void) {
-        // Upload arbitrary file contents using security-scoped URL
-        guard let accessToken = getAccessToken() else {
-            DispatchQueue.main.async {
-                self.statusLabel.text = "Not logged in"
-                self.activityIndicator.stopAnimating()
-            }
-            completion(false)
-            return
-        }
-
         Task {
             do {
+                // Get access token (may refresh if expired)
+                let accessToken = try await getAccessToken()
+
                 var data: Data?
                 var contentType = "application/octet-stream"
                 let originalName = url.lastPathComponent
@@ -1170,16 +1137,54 @@ class ShareViewController: UIViewController {
     }
     // MARK: - API Integration
     
-    private func getAccessToken() -> String? {
+    private func getAccessToken() async throws -> String {
         // Try keychain first
-        let token = SecureStorageManager.shared.getAccessToken()
-        if let token = token {
-            return token
+        var token = SecureStorageManager.shared.getAccessToken()
+
+        // Fallback to UserDefaults if not in keychain
+        if token == nil {
+            let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin")
+            token = sharedDefaults?.string(forKey: "access_token")
         }
-        
-        // Fallback to UserDefaults
-        let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin")
-        return sharedDefaults?.string(forKey: "access_token")
+
+        guard let accessToken = token else {
+            throw NSError(
+                domain: "ShareExtension",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "No access token found. Please log in to the main app."]
+            )
+        }
+
+        // Check if token is expired
+        if JWTHelper.isTokenExpired(accessToken) {
+            // Token is expired, try to refresh it
+            guard let refreshToken = SecureStorageManager.shared.getRefreshToken() else {
+                throw NSError(
+                    domain: "ShareExtension",
+                    code: -2,
+                    userInfo: [NSLocalizedDescriptionKey: "Token expired. Please log in to the main app."]
+                )
+            }
+
+            // Refresh the token
+            let tokenResponse = try await TokenRefreshService.refreshAccessToken(using: refreshToken)
+
+            // Store the new tokens
+            SecureStorageManager.shared.setAccessToken(tokenResponse.accessToken)
+
+            if let newRefreshToken = tokenResponse.refreshToken {
+                SecureStorageManager.shared.setRefreshToken(newRefreshToken)
+            }
+
+            // Also update UserDefaults
+            if let sharedDefaults = UserDefaults(suiteName: "group.in.omnib.omnibin") {
+                sharedDefaults.set(tokenResponse.accessToken, forKey: "access_token")
+            }
+
+            return tokenResponse.accessToken
+        }
+
+        return accessToken
     }
     
     private func addTextItemToAPI(content: String, accessToken: String) async throws -> BinItem {
