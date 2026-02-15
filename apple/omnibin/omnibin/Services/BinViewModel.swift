@@ -95,10 +95,18 @@ class BinViewModel: ObservableObject {
             if error is CancellationError {
                 return
             }
-            
-            // Also check for URLSession cancellation errors
-            if let urlError = error as? URLError, urlError.code == .cancelled {
-                return
+
+            // Also check for URLSession cancellation and network lost errors
+            if let urlError = error as? URLError {
+                // Ignore cancelled requests
+                if urlError.code == .cancelled {
+                    return
+                }
+                // Ignore "network connection was lost" errors that occur when app wakes from sleep
+                // The network isn't ready yet, and showing this error is confusing to users
+                if urlError.code == .networkConnectionLost {
+                    return
+                }
             }
             
             await MainActor.run {

@@ -117,8 +117,10 @@ struct BinView: View {
         .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
             // Clear any stale error messages immediately when app becomes active
             viewModel.clearError()
-            // Then refresh items
+            // Then refresh items with a small delay to let network stabilize after wake
             Task {
+                // 100ms delay to give network time to become ready after device wake
+                try? await Task.sleep(for: .milliseconds(100))
                 await viewModel.refreshBinItems()
             }
         }
