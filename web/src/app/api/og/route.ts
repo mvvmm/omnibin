@@ -335,9 +335,11 @@ export async function POST(req: Request) {
       og.icon = iconCandidates[0];
     }
 
-    // Absolutize image/icon URLs
-    og.image = og.image ? absolutizeUrl(og.image, safeUrl) : null;
-    og.icon = og.icon ? absolutizeUrl(og.icon, safeUrl) : null;
+    // Absolutize image/icon URLs and upgrade http to https
+    // Many sites (e.g. Shopify) serve og:image with http:// but support https.
+    // iOS App Transport Security blocks plain http, causing AsyncImage to fail silently.
+    og.image = og.image ? absolutizeUrl(og.image, safeUrl)?.replace(/^http:\/\//, "https://") ?? null : null;
+    og.icon = og.icon ? absolutizeUrl(og.icon, safeUrl)?.replace(/^http:\/\//, "https://") ?? null : null;
 
     return NextResponse.json({ og });
   } catch (error) {

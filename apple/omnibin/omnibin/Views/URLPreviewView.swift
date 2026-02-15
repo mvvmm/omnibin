@@ -22,8 +22,12 @@ struct URLPreviewView: View {
         Group {
             if let urlString = extractFirstURL(from: text), let url = URL(string: urlString) {
                 // Determine a valid image URL if OG data provided
+                // Upgrade http to https — iOS ATS blocks plain http, causing AsyncImage to silently fail
                 let trimmedImage = og?.image?.trimmingCharacters(in: .whitespacesAndNewlines)
-                let imageURL = (trimmedImage?.isEmpty == false) ? URL(string: trimmedImage!) : nil
+                let httpsImage = trimmedImage?.hasPrefix("http://") == true
+                    ? "https://" + trimmedImage!.dropFirst("http://".count)
+                    : trimmedImage
+                let imageURL = (httpsImage?.isEmpty == false) ? URL(string: httpsImage!) : nil
                 
                 if isLoading || isOGLoading {
                     // Skeleton loading state - matching BinItemsListView skeleton
