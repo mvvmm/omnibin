@@ -12,6 +12,7 @@ export default defineConfig(({ isPreview }) => {
       compatibilityFlags: ["nodejs_compat", "global_fetch_strictly_public"],
       entrypoint,
       workersDev: true,
+      domains: isPreview ? [] : ["omnib.in", "www.omnib.in"],
       env: {
         ASSETS: bindings.assets(),
         DATABASE_URL: secret(),
