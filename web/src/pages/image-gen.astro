@@ -1,0 +1,10 @@
+---
+import Base from "@/layouts/Base.astro";
+import PageApp from "@/components/PageApp";
+const session = await Astro.locals.getSession();
+if (!import.meta.env.DEV) return new Response("Not found", { status: 404 });
+---
+
+<Base title="Test - OG Image Generator"
+  ><PageApp page="image-gen" loggedIn={!!session} client:load /></Base
+>

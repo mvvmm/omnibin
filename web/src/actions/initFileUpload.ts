@@ -1,7 +1,5 @@
-"use server";
-
 import { MAX_FILE_SIZE } from "@/constants/constants";
-import { getAccessTokenOrReauth } from "@/lib/auth0";
+import { apiFetch } from "@/lib/api-client";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 import type { InitFileUploadResult } from "@/types/upload";
 
@@ -20,16 +18,11 @@ export async function initFileUpload(metadata: {
   }
 
   try {
-    const token = await getAccessTokenOrReauth();
-    const initUrl = new URL(
-      OMNIBIN_API_ROUTES.BIN,
-      process.env.NEXT_PUBLIC_BASE_URL
-    );
-    const initRes = await fetch(initUrl, {
+    const initUrl = OMNIBIN_API_ROUTES.BIN;
+    const initRes = await apiFetch(initUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ file: metadata }),
     });

@@ -1,0 +1,9 @@
+---
+import Base from "@/layouts/Base.astro";
+import PageApp from "@/components/PageApp";
+const session = await Astro.locals.getSession();
+---
+
+<Base title="omnibin • About"
+  ><PageApp page="about" loggedIn={!!session} client:load /></Base
+>

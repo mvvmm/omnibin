@@ -57,6 +57,7 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
         body: file,
       });
 
+      if (putRes.ok) window.dispatchEvent(new Event("bin:refresh"));
       if (!putRes.ok) {
         setError(`Failed to upload to storage (${putRes.status})`);
         return;
@@ -73,6 +74,7 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
         return;
       }
       setContent("");
+      window.dispatchEvent(new Event("bin:refresh"));
     });
   }
 

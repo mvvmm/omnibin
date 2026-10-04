@@ -1,20 +1,12 @@
-"use server";
-
-import { getAccessTokenOrReauth } from "@/lib/auth0";
+import { apiFetch } from "@/lib/api-client";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 
 export async function deleteAccount() {
-  const token = await getAccessTokenOrReauth();
-
   try {
-    const url = new URL(
-      OMNIBIN_API_ROUTES.ACCOUNT_DELETE,
-      process.env.NEXT_PUBLIC_BASE_URL
-    );
+    const url = OMNIBIN_API_ROUTES.ACCOUNT_DELETE;
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!res.ok) {
@@ -22,7 +14,7 @@ export async function deleteAccount() {
       throw new Error(data.error || `Failed to delete account (${res.status})`);
     }
 
-    const result = await res.json();
+    const result = (await res.json()) as { message: string };
     return { success: true, message: result.message };
   } catch (err) {
     const error = err as Error;

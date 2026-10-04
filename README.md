@@ -31,18 +31,23 @@ Seamless cross-platform clipboard synchronization. Move text, images, and files 
 ## Architecture & Tech Stack
 
 ### Web Application
-- **Frontend**: Next.js 15, React 19, TypeScript
+
+- **Frontend**: Astro 7.4 beta, React 19, TypeScript
 - **Styling**: Shadcn, Tailwind CSS
 
+See [web development and deployment](web/README.md) for setup and migration details.
+
 ### Mobile Applications
+
 - **iOS**: Native Swift app with share extension
 - **Features**: Native clipboard integration, share extension for easy content sharing
 
 ### Backend
+
 - **Authentication**: Auth0 integration
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: Supabase PostgreSQL with Prisma ORM
 - **Storage**: AWS S3 for file storage
-- **Deployment**: Vercel
+- **Deployment**: Cloudflare Workers with Workers Builds and Previews
 
 ## Security & Privacy
 

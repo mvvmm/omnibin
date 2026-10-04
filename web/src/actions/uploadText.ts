@@ -1,12 +1,8 @@
-"use server";
-
 import { MAX_CHAR_LIMIT } from "@/constants/constants";
-import { getAccessTokenOrReauth } from "@/lib/auth0";
+import { apiFetch } from "@/lib/api-client";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 
 export async function uploadText(text: string) {
-  const token = await getAccessTokenOrReauth();
-
   const trimmed = text.trim();
   if (!trimmed) {
     return { success: false, error: "Paste was empty" } as const;
@@ -19,15 +15,11 @@ export async function uploadText(text: string) {
   }
 
   try {
-    const url = new URL(
-      OMNIBIN_API_ROUTES.BIN,
-      process.env.NEXT_PUBLIC_BASE_URL
-    );
-    const res = await fetch(url, {
+    const url = OMNIBIN_API_ROUTES.BIN;
+    const res = await apiFetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ content: trimmed }),
     });

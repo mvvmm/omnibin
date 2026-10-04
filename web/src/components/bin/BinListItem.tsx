@@ -15,8 +15,8 @@ import {
   Loader2,
   Trash2,
 } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Image from "@/components/image";
+
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -24,8 +24,6 @@ import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export function BinListItem({ item }: { item: BinItem }) {
-  const router = useRouter();
-
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean | null>(null);
   const [downloaded, setDownloaded] = useState<boolean | null>(null);
@@ -146,7 +144,7 @@ export function BinListItem({ item }: { item: BinItem }) {
         const { success, error } = await deleteBinItem(id);
 
         if (success) {
-          router.refresh();
+          window.dispatchEvent(new Event("bin:refresh"));
         } else {
           setError(error || "Failed to delete");
         }
