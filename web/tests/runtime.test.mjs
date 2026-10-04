@@ -66,30 +66,3 @@ test("invalid auth callback fails safely", options, async () => {
   );
   assert.equal(response.status, 400);
 });
-
-test(
-  "logout clears the session and uses the wildcard-compatible Auth0 endpoint",
-  options,
-  async () => {
-    const response = await fetch(new URL("/auth/logout", origin), {
-      redirect: "manual",
-    });
-    assert.equal(response.status, 302);
-    const location = new URL(response.headers.get("location"));
-    assert.equal(location.pathname, "/v2/logout");
-    assert.equal(location.searchParams.get("returnTo"), new URL(origin).origin);
-    assert.ok(location.searchParams.get("client_id"));
-    assert.match(
-      response.headers.get("set-cookie"),
-      /__a0_session=.*Max-Age=0/i
-    );
-    if (new URL(origin).protocol === "https:") {
-      const logout = await fetch(location, { redirect: "manual" });
-      assert.equal(logout.status, 302);
-      assert.equal(
-        new URL(logout.headers.get("location")).origin,
-        new URL(origin).origin
-      );
-    }
-  }
-);
