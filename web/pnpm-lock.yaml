@@ -8,11 +8,6 @@ overrides:
   '@types/react': 19.2.7
   '@types/react-dom': 19.2.3
 
-patchedDependencies:
-  cf@1.0.0-beta.12:
-    hash: d2635e337d575873b9c3d5ba55f3f8ec09247b5b103d147399dfa6bb64869725
-    path: patches/cf@1.0.0-beta.12.patch
-
 importers:
 
   .:
@@ -128,7 +123,7 @@ importers:
         version: 7.4.0-beta.1(@types/node@22.20.5)(@vercel/functions@2.2.13(@aws-sdk/credential-provider-web-identity@3.932.0))(jiti@2.7.0)(yaml@2.9.1)
       cf:
         specifier: 1.0.0-beta.12
-        version: 1.0.0-beta.12(patch_hash=d2635e337d575873b9c3d5ba55f3f8ec09247b5b103d147399dfa6bb64869725)(@types/node@22.20.5)
+        version: 1.0.0-beta.12(@types/node@22.20.5)
       dotenv:
         specifier: ^17.2.1
         version: 17.2.3
@@ -6024,7 +6019,7 @@ snapshots:
 
   ccount@2.0.1: {}
 
-  cf@1.0.0-beta.12(patch_hash=d2635e337d575873b9c3d5ba55f3f8ec09247b5b103d147399dfa6bb64869725)(@types/node@22.20.5):
+  cf@1.0.0-beta.12(@types/node@22.20.5):
     dependencies:
       '@cloudflare/build-output-utils': 0.8.5
       '@cloudflare/codemods': 0.4.0
