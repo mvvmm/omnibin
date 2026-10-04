@@ -1,20 +1,12 @@
-"use server";
-
-import { getAccessTokenOrReauth } from "@/lib/auth0";
+import { apiFetch } from "@/lib/api-client";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 
 export async function dismissPopupA() {
-  const token = await getAccessTokenOrReauth();
-
   try {
-    const url = new URL(
-      OMNIBIN_API_ROUTES.DISMISS_WEB_POPUP_A,
-      process.env.NEXT_PUBLIC_BASE_URL
-    );
+    const url = OMNIBIN_API_ROUTES.DISMISS_WEB_POPUP_A;
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!res.ok) {

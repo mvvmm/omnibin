@@ -1,22 +1,15 @@
-"use server";
-
-import { getAccessTokenOrReauth } from "@/lib/auth0";
+import { apiFetch } from "@/lib/api-client";
 import { OMNIBIN_API_ROUTES } from "@/routes";
 import type { OgData } from "@/types/og";
 
 export async function getOpenGraphData(url: string) {
-  const token = await getAccessTokenOrReauth();
   const isTwitch = url.includes("twitch.tv");
 
   try {
-    const endpoint = new URL(
-      OMNIBIN_API_ROUTES.OG,
-      process.env.NEXT_PUBLIC_BASE_URL
-    );
-    const res = await fetch(endpoint, {
+    const endpoint = OMNIBIN_API_ROUTES.OG;
+    const res = await apiFetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
         "content-type": "application/json",
       },
       // TODO: Fix this?

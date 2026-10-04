@@ -1,49 +1,24 @@
-import type { JWTPayload } from "jose";
 import { createRemoteJWKSet, jwtVerify } from "jose";
-
-const issuer = process.env.AUTH0_DOMAIN;
-const audience = process.env.AUTH0_AUDIENCE;
-
-if (!issuer) throw new Error("Missing AUTH0_ISSUER_BASE_URL env var");
-if (!audience) throw new Error("Missing AUTH0_AUDIENCE env var");
-
-const jwks = createRemoteJWKSet(new URL(`${issuer}.well-known/jwks.json`));
-
-export type VerifiedToken = JWTPayload & { sub: string };
-
-export async function verifyAccessToken(
-  authorizationHeader?: string
-): Promise<VerifiedToken> {
-  const token = extractBearer(authorizationHeader);
-
-  if (!token) {
-    throw createHttpError(401, "Missing or invalid Authorization header");
-  }
-
+import { env } from "cloudflare:workers";
+import { httpError } from "./auth0";
+export async function verifyAccessToken(header?: string) {
+  const match = header?.match(/^Bearer ([^ ]+)$/i);
+  if (!match) throw httpError(401, "Missing or invalid Authorization header");
+  const issuer =
+    new URL(
+      env.AUTH0_DOMAIN.startsWith("http")
+        ? env.AUTH0_DOMAIN
+        : `https://${env.AUTH0_DOMAIN}`
+    ).origin + "/";
   try {
-    const { payload } = await jwtVerify(token, jwks, {
-      issuer,
-      audience,
-    });
-
-    if (!payload.sub) throw createHttpError(401, "Token missing subject (sub)");
-    return payload as VerifiedToken;
-  } catch (error) {
-    console.error("Token verification failed:", error);
-    throw error;
+    const { payload } = await jwtVerify(
+      match[1],
+      createRemoteJWKSet(new URL(".well-known/jwks.json", issuer)),
+      { issuer, audience: env.AUTH0_AUDIENCE, algorithms: ["RS256"] }
+    );
+    if (!payload.sub) throw new Error("Missing subject");
+    return { ...payload, sub: payload.sub };
+  } catch {
+    throw httpError(401, "Invalid access token");
   }
-}
-
-function extractBearer(header?: string): string | undefined {
-  if (!header) return undefined;
-  const [scheme, token] = header.split(" ");
-  if (scheme?.toLowerCase() !== "bearer" || !token) return undefined;
-  return token;
-}
-
-type HttpError = Error & { statusCode: number };
-function createHttpError(statusCode: number, message: string): HttpError {
-  const err = new Error(message) as HttpError;
-  err.statusCode = statusCode;
-  return err;
 }

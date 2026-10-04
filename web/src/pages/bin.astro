@@ -1,0 +1,7 @@
+---
+import Base from "@/layouts/Base.astro";
+import BinApp from "@/components/BinApp";
+if (!(await Astro.locals.getSession())) return Astro.redirect("/auth/login");
+---
+
+<Base title="omnibin • Your Bin" privatePage><BinApp client:load /></Base>

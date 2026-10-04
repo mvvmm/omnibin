@@ -1,44 +1,67 @@
-import { Auth0Client } from "@auth0/nextjs-auth0/server";
-import { redirect } from "next/navigation";
-import { OMNIBIN_ROUTES } from "@/routes";
+import {
+  CookieTransactionStore,
+  ServerClient,
+  StatelessStateStore,
+} from "@auth0/auth0-server-js";
+import type { APIContext } from "astro";
+import { env } from "cloudflare:workers";
+import { cookieHandler } from "./auth0-cookies";
+import { verifyAccessToken } from "./verifyAccessToken";
 
-// Initialize the Auth0 client
-export const auth0 = new Auth0Client({
-  signInReturnToPath: "/bin",
-  authorizationParameters: {
-    audience: process.env.AUTH0_AUDIENCE,
-    scope: process.env.AUTH0_SCOPE,
-  },
-  session: {
-    rolling: true,
-    inactivityDuration: Number(process.env.AUTH0_SESSION_INACTIVITY_DURATION),
-    absoluteDuration: Number(process.env.AUTH0_SESSION_ABSOLUTE_DURATION),
-  },
-});
-
-export async function getAccessTokenOrReauth(): Promise<string> {
-  try {
-    const { token } = await auth0.getAccessToken();
-    return token;
-  } catch (_error) {
-    redirect(OMNIBIN_ROUTES.LOGIN);
-  }
+export function createAuth0(context: APIContext) {
+  const secret = env.AUTH0_SECRET;
+  return new ServerClient<APIContext>({
+    domain: new URL(
+      env.AUTH0_DOMAIN.startsWith("http")
+        ? env.AUTH0_DOMAIN
+        : `https://${env.AUTH0_DOMAIN}`
+    ).hostname,
+    clientId: env.AUTH0_CLIENT_ID,
+    clientSecret: env.AUTH0_CLIENT_SECRET,
+    authorizationParams: {
+      redirect_uri: new URL("/auth/callback", context.url.origin).href,
+      audience: env.AUTH0_AUDIENCE,
+      scope: env.AUTH0_SCOPE || "openid profile email offline_access",
+    },
+    transactionStore: new CookieTransactionStore({ secret }, cookieHandler),
+    stateStore: new StatelessStateStore(
+      {
+        secret,
+        rolling: true,
+        inactivityDuration:
+          Number(env.AUTH0_SESSION_INACTIVITY_DURATION) || 86400,
+        absoluteDuration: Number(env.AUTH0_SESSION_ABSOLUTE_DURATION) || 259200,
+        cookie: {
+          sameSite: "lax",
+          secure: context.url.protocol === "https:",
+          path: "/",
+        },
+      },
+      cookieHandler
+    ),
+  });
 }
-
-// Helper function to check if session is close to expiring
-export async function isSessionNearExpiry(): Promise<boolean> {
+export function httpError(statusCode: number, message: string) {
+  return Object.assign(new Error(message), { statusCode });
+}
+export async function authenticateRequest(
+  request: Request,
+  locals: App.Locals
+) {
+  // An explicit bearer header is authoritative, including when a browser session exists.
+  const authorization = request.headers.get("authorization");
+  if (authorization) return verifyAccessToken(authorization);
+  if (
+    !["GET", "HEAD", "OPTIONS"].includes(request.method) &&
+    request.headers.get("origin") !== new URL(request.url).origin
+  )
+    throw httpError(403, "Invalid request origin");
+  const session = await locals.getSession();
+  if (!session?.user?.sub) throw httpError(401, "Authentication required");
   try {
-    const session = await auth0.getSession();
-    if (!session) return true;
-
-    // Check if session expires within 7 days
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-
-    return session.expiresAt && typeof session.expiresAt === "string"
-      ? new Date(session.expiresAt) < sevenDaysFromNow
-      : true;
+    await locals.auth0.getAccessToken({}, locals.authContext);
   } catch {
-    return true;
+    throw httpError(401, "Please log in again");
   }
+  return { sub: session.user.sub };
 }

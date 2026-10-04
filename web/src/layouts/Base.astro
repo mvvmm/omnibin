@@ -1,0 +1,64 @@
+---
+import "@/styles/globals.css";
+import "@fontsource-variable/comfortaa";
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
+const {
+  title = "omnibin",
+  description = "Seamless cross-platform clipboard. Move text, images, and files between devices with ease. Copy. Paste. Anywhere.",
+  privatePage = false,
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, "https://omnib.in");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" /><meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+    <title>{title}</title><meta name="description" content={description} /><link
+      rel="canonical"
+      href={canonical}
+    />
+    <meta name="format-detection" content="telephone=no,email=no,address=no" />
+    <link rel="icon" href="/favicon.ico" /><link
+      rel="apple-touch-icon"
+      href="/apple-icon.png"
+    />
+    <meta property="og:type" content="website" /><meta
+      property="og:site_name"
+      content="omnibin"
+    /><meta property="og:title" content={title} /><meta
+      property="og:description"
+      content={description}
+    /><meta property="og:url" content={canonical} /><meta
+      property="og:image"
+      content="https://omnib.in/opengraph-image.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" /><meta
+      name="twitter:image"
+      content="https://omnib.in/twitter-image.png"
+    />
+    {
+      (privatePage || Astro.url.hostname !== "omnib.in") && (
+        <meta name="robots" content="noindex,nofollow" />
+      )
+    }
+    <script is:inline>
+      try {
+        const theme = localStorage.getItem("theme");
+        document.documentElement.classList.toggle(
+          "dark",
+          theme === "dark" ||
+            ((!theme || theme === "system") &&
+              matchMedia("(prefers-color-scheme: dark)").matches)
+        );
+      } catch {}
+    </script>
+  </head><body
+    class="antialiased"
+    style="background-image:linear-gradient(to bottom right,var(--bg-from),var(--bg-via),var(--bg-to))"
+    ><slot /></body>
+</html>

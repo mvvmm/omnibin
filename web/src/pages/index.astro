@@ -1,0 +1,11 @@
+---
+import Base from "@/layouts/Base.astro";
+import PageApp from "@/components/PageApp";
+const session = await Astro.locals.getSession();
+if (session && !Astro.url.searchParams.has("stay"))
+  return Astro.redirect("/bin");
+---
+
+<Base title="omnibin • Copy. Paste. Anywhere."
+  ><PageApp page="home" loggedIn={!!session} client:load /></Base
+>

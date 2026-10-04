@@ -1,8 +1,8 @@
 "use client";
 
 import { XIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import Image from "@/components/image";
+import Link from "@/components/link";
 import { useState } from "react";
 import { dismissPopupA } from "@/actions/dismissPopupA";
 
