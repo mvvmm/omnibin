@@ -46,4 +46,3 @@ next-env.d.ts
 /.cloudflare/
 /.open-next/
 /worker-configuration.d.ts
-!.env.example

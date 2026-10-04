@@ -6,8 +6,7 @@ Use Node 22.18 or later and pnpm 10.22. Run commands from `web/`:
 
 ```sh
 pnpm install --frozen-lockfile
-cp .env.example .env
-# Fill in .env with your local service configuration.
+# Create .env with the service secrets declared in cloudflare.config.ts.
 pnpm run types
 pnpm run dev
 ```
@@ -36,7 +35,7 @@ Prisma uses `engineType = "client"` and the PostgreSQL adapter. Each request cre
 
 S3 credentials must be supplied as Worker secrets. Vercel's AWS OIDC role provider is removed. Use a dedicated AWS principal with the existing bucket's required object permissions. The existing local AWS credentials were used to bootstrap this Worker. Presigned uploads still go directly from the browser to S3.
 
-All names in `.env.example` except `DIRECT_DATABASE_URL` are declared as runtime secrets. For the first deployment, cf requires a secrets file:
+Runtime secrets are declared in `cloudflare.config.ts`. For the first deployment, cf requires a secrets file:
 
 ```sh
 pnpm exec cf deploy --secrets-file /path/to/secrets.json
@@ -56,7 +55,7 @@ The Cloudflare account is connected to `mvvmm/omnibin`. Production watches `main
 | Preview deploy command    | `pnpm run deploy:preview`                       |
 | Included paths            | `web/**`                                        |
 
-The deploy scripts build the application, so the Builds build command performs validation first. Builds uses the existing Cloudflare deployment token reference. Preview Base secrets are configured separately from production and copied into new previews. The migration preview was also populated explicitly. Previews currently use the existing Supabase database and S3 bucket; changing Preview Base secrets does not update existing previews.
+The deploy scripts build the application, so the Builds build command performs validation first. Builds uses the existing Cloudflare deployment token reference. Preview Base secrets are configured separately from production and copied into new previews. The migration preview was also populated explicitly. A pinned pnpm patch for `cf` adds `inherit` references for declared secret bindings when creating Preview deployments, so redeployments retain those secrets. Remove the patch once cf supports this directly. Previews currently use the existing Supabase database and S3 bucket; changing Preview Base secrets does not update existing previews.
 
 `cf` beta.12 does not write its Preview result to the output file Workers Builds reads. `scripts/cf-previews-deploy.ts` runs cf, prints its result, then appends a Preview entry containing `worker_name` and `timestamp` to `WRANGLER_OUTPUT_FILE_PATH` or `WRANGLER_OUTPUT_FILE_DIRECTORY`. These are Cloudflare's output protocol variables; they do not invoke Wrangler. Remove the wrapper after [cloudflare/cf#185](https://github.com/cloudflare/cf/issues/185) is fixed and verified.
 
@@ -65,6 +64,6 @@ The deploy scripts build the application, so the Builds build command performs v
 - Worker: https://omnibin.root-mvm.workers.dev
 - Migration preview: https://feat-astro-cloudflare-omnibin.root-mvm.workers.dev
 
-Auth0 must allow the stable origin's `/auth/callback` URL and logout origin. Preview callback URLs can use `https://*-omnibin.root-mvm.workers.dev/auth/callback`, with `https://*-omnibin.root-mvm.workers.dev` for preview logout URLs. S3's upload CORS rules must allow the origins too. The stable Worker Auth0 URLs were added during migration. S3 allows both URLs above; future preview origins need corresponding allowlist entries.
+Auth0 must allow the stable origin's `/auth/callback` URL and logout origin. Preview callback URLs can use `https://*-omnibin.root-mvm.workers.dev/auth/callback`, with `https://*-omnibin.root-mvm.workers.dev` for preview logout URLs. S3's upload CORS rules must allow the origins too. The stable Worker Auth0 URLs and preview wildcards were added during migration. S3 allows both URLs above; future preview origins need corresponding allowlist entries.
 
 `omnib.in` remains on Vercel. No custom domain or DNS change is included. After review, the domain cutover will be performed separately by the owner. Existing web sessions will require login again because the Auth0 session implementation changed. Signed S3 images use standard browser images rather than Next's image optimization endpoint.

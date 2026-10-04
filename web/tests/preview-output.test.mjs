@@ -18,7 +18,10 @@ test("preview output is discoverable by Workers Builds", () => {
       "omnibin",
       { WRANGLER_OUTPUT_FILE_DIRECTORY: dir }
     );
-    assert.match(file, /wrangler-output-.*\.json$/);
+    assert.match(
+      file,
+      /wrangler-output-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_\d{3}-[a-f0-9]{6}\.json$/
+    );
     const entry = JSON.parse(readFileSync(file, "utf8"));
     assert.deepEqual(entry.preview_urls, result.preview_urls);
     assert.equal(entry.worker_name, "omnibin");

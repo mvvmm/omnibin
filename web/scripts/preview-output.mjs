@@ -14,7 +14,7 @@ export function writePreviewOutput(
     (environment.WRANGLER_OUTPUT_FILE_DIRECTORY &&
       resolve(
         environment.WRANGLER_OUTPUT_FILE_DIRECTORY,
-        `wrangler-output-${Date.now()}-${randomBytes(3).toString("hex")}.json`
+        `wrangler-output-${new Date().toISOString().replaceAll(":", "-").replace(".", "_").replace("T", "_").replace("Z", "")}-${randomBytes(3).toString("hex")}.json`
       ));
   if (!file) return;
   const clean = stdout.replace(/\x1b\[[0-9;]*m/g, "");

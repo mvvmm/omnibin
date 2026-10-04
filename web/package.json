@@ -86,7 +86,10 @@
       "sharp",
       "esbuild",
       "workerd"
-    ]
+    ],
+    "patchedDependencies": {
+      "cf@1.0.0-beta.12": "patches/cf@1.0.0-beta.12.patch"
+    }
   },
   "type": "module",
   "engines": {
