@@ -20,7 +20,7 @@
     "db:down": "docker compose down",
     "check": "astro check",
     "deploy": "cf deploy",
-    "deploy:preview": "node scripts/cf-previews-deploy.ts",
+    "deploy:preview": "cf previews deploy",
     "types": "cf workers types",
     "test": "node --test tests/*.test.mjs"
   },
@@ -63,7 +63,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "astro": "7.4.0-beta.1",
-    "cf": "1.0.0-beta.12",
+    "cf": "1.0.0-beta.18",
     "dotenv": "^17.2.1",
     "dotenv-cli": "^10.0.0",
     "prettier": "^3.7.4",
