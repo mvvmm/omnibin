@@ -26,7 +26,7 @@ Seamless cross-platform clipboard synchronization. Move text, images, and files 
 - **Image previews** - Automatic previews for files and url's
 - **Share extensions** - Native ios sharing integration
 - **Secure authentication** - Powered by Auth0
-- **Cloud storage** - Reliable AWS S3 backend
+- **Cloud storage** - Cloudflare R2 backend
 
 ## Architecture & Tech Stack
 
@@ -45,15 +45,15 @@ See [web development and deployment](web/README.md) for setup and migration deta
 ### Backend
 
 - **Authentication**: Auth0 integration
-- **Database**: Supabase PostgreSQL with Prisma ORM
-- **Storage**: AWS S3 for file storage
+- **Database**: Cloudflare D1 with Prisma ORM
+- **Storage**: Cloudflare R2 for file storage
 - **Deployment**: Cloudflare Workers with Workers Builds and Previews
 
 ## Security & Privacy
 
 - **Authentication**: Secure Auth0 integration with industry-standard protocols
 - **Data encryption**: All data encrypted in transit and at rest
-- **File storage**: Secure AWS S3 storage with proper access controls
+- **File storage**: Private Cloudflare R2 storage, served only through short-lived signed URLs
 - **Privacy**: User data is handled according to the [privacy policy](https://omnib.in/privacy-policy)
 - **Session management**: Secure session handling with automatic expiration
 

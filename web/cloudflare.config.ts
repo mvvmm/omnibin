@@ -33,11 +33,6 @@ export default defineConfig(({ isPreview, mode }) => {
           dev: { remote: mode === "remote" },
         }),
         FILE_TOKEN_SECRET: bindings.secret(),
-        DATABASE_URL: bindings.secret(),
-        AWS_REGION: bindings.secret(),
-        S3_BUCKET: bindings.secret(),
-        AWS_ACCESS_KEY_ID: bindings.secret(),
-        AWS_SECRET_ACCESS_KEY: bindings.secret(),
       },
       observability: {
         enabled: true,

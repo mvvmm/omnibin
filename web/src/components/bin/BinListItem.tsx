@@ -280,7 +280,7 @@ export function BinListItem({ item }: { item: BinItem }) {
     });
   };
 
-  // Fetch helper: try preview URL first, fallback to a fresh presigned URL
+  // Fetch helper: try preview URL first, fallback to a fresh signed URL
   const fetchFileResponse = async (
     id: string,
     existingUrl?: string
@@ -291,7 +291,7 @@ export function BinListItem({ item }: { item: BinItem }) {
         const r = await fetch(existingUrl);
         if (r.ok) res = r;
       } catch {
-        // ignore and fallback to fresh presigned URL
+        // ignore and fallback to fresh signed URL
       }
     }
     if (!res || !res.ok) {
