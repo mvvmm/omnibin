@@ -1295,7 +1295,7 @@ class ShareViewController: UIViewController {
             throw NSError(domain: "ShareExtension", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid upload URL"])
         }
         
-        // Step 2: Upload file to S3
+        // Step 2: Upload file to storage
         var uploadRequest = URLRequest(url: uploadURL)
         uploadRequest.httpMethod = "PUT"
         uploadRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")

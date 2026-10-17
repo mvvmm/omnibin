@@ -34,7 +34,7 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
     }
 
     startTransition(async () => {
-      // Step 1: Get presigned URL from Server Action (metadata only, no file data)
+      // Step 1: Get a signed upload URL (metadata only, no file data)
       const initResult = await initFileUpload({
         originalName: file.name || "pasted-file",
         contentType: file.type || "application/octet-stream",

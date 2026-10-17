@@ -73,10 +73,7 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
                 "Your Auth0 account was deleted, but some data may remain in our database. Please contact support@omnib.in for assistance.",
               duration: Infinity,
             });
-          } else if (
-            errorMessage.includes("S3") ||
-            errorMessage.includes("storage")
-          ) {
+          } else if (errorMessage.includes("storage")) {
             toast.error("Partial deletion completed", {
               description:
                 "Your account and bin items were deleted, but some files may remain in storage. Please contact support@omnib.in for assistance.",

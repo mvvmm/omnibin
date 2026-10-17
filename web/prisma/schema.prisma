@@ -15,7 +15,6 @@ enum BinItemKind {
 }
 
 enum StorageProvider {
-  S3
   R2
 }
 

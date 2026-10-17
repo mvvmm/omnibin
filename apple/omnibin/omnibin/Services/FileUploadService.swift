@@ -77,8 +77,8 @@ class FileUploadService {
             throw BinAPIError.invalidResponse
         }
         
-        // Step 2: Upload file to S3
-        try await uploadFileToS3(fileData: fileData, contentType: contentType, uploadURL: uploadURL)
+        // Step 2: Upload file to storage
+        try await uploadFileToStorage(fileData: fileData, contentType: contentType, uploadURL: uploadURL)
         
         // Step 3: Parse and return the BinItem
         guard let itemData = responseData?["item"] as? [String: Any] else {
@@ -89,7 +89,7 @@ class FileUploadService {
         return try JSONDecoder().decode(BinItem.self, from: itemJSON)
     }
     
-    private func uploadFileToS3(fileData: Data, contentType: String, uploadURL: URL) async throws {
+    private func uploadFileToStorage(fileData: Data, contentType: String, uploadURL: URL) async throws {
         var uploadRequest = URLRequest(url: uploadURL)
         uploadRequest.httpMethod = "PUT"
         uploadRequest.setValue(contentType, forHTTPHeaderField: "Content-Type")

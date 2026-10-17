@@ -246,7 +246,7 @@ export default function PrivacyPolicy() {
                 style={{ color: "var(--muted-80)" }}
               >
                 <li>Authentication (Auth0)</li>
-                <li>Cloud storage (AWS S3)</li>
+                <li>Cloud storage (Cloudflare)</li>
                 <li>Link preview generation</li>
               </ul>
               <p className="text-sm mt-2" style={{ color: "var(--muted-80)" }}>

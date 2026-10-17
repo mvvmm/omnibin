@@ -46,8 +46,6 @@ To change the schema, edit `prisma/schema.prisma`, save `pnpm run -s db:diff` ou
 
 Files are stored in the R2 bucket `omnibin-private` through the `FILES` binding; production and previews share it, as they share the database. `POST /api/bin` and `GET /api/bin/:id` return `/api/files/<token>` URLs on the request origin. Tokens are HMAC-signed with `FILE_TOKEN_SECRET` and bind the object key, content type, size (uploads), and expiry: 60 seconds for uploads and one hour for downloads. The route streams uploads into R2 and serves downloads with range and ETag support. It authenticates only by token, so it is exempt from the cross-origin form check in `src/middleware.ts`, which otherwise mirrors Astro's `checkOrigin`.
 
-The `DATABASE_URL`, `AWS_*`, and `S3_BUCKET` secrets remain declared, unused, so a revert still deploys; remove them when Supabase and S3 are retired.
-
 Runtime secrets are declared in `cloudflare.config.ts`. For the first deployment, cf requires a secrets file:
 
 ```sh
