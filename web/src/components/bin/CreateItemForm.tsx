@@ -48,7 +48,7 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
         return;
       }
 
-      // Step 2: Upload file directly to S3
+      // Step 2: Upload file to storage
       const putRes = await fetch(initResult.uploadUrl, {
         method: "PUT",
         headers: {

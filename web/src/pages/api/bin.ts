@@ -6,10 +6,10 @@ import {
 } from "@/constants/constants";
 
 import {
-  createPresignedPutUrl,
+  createUploadUrl,
   deleteObjectByKey,
   getBucketName,
-} from "@/lib/s3";
+} from "@/lib/storage";
 import { serializeForJson } from "@/lib/utils";
 import { authenticateRequest } from "@/lib/auth0";
 import type { OgData } from "@/types/og";
@@ -180,7 +180,7 @@ export async function POST({ request: req, locals }: APIContext) {
         const fileItemId = oldestItem.fileItemId ?? undefined;
         const fileKey = oldestItem.fileItem?.key ?? undefined;
 
-        // Delete file from S3 storage first (non-DB side effect)
+        // Delete file from storage first (non-DB side effect)
         if (fileKey) {
           await deleteObjectByKey(fileKey);
         }
@@ -219,13 +219,15 @@ export async function POST({ request: req, locals }: APIContext) {
         );
       }
       const objectKey = `${user.id}/${crypto.randomUUID()}`;
-      const uploadUrl = await createPresignedPutUrl({
+      const uploadUrl = await createUploadUrl({
+        origin: new URL(req.url).origin,
         key: objectKey,
         contentType: body.file.contentType,
+        size: body.file.size,
       });
       const file = await prisma.fileItem.create({
         data: {
-          provider: "S3",
+          provider: "R2",
           bucket: getBucketName(),
           key: objectKey,
           originalName: body.file.originalName,

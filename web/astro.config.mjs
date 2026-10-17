@@ -7,6 +7,8 @@ export default defineConfig({
   output: "server",
   adapter: cloudflare({ imageService: "passthrough" }),
   session: false,
+  // Replaced by the equivalent check in src/middleware.ts, which exempts token-authenticated /api/files/ uploads.
+  security: { checkOrigin: false },
   vite: { plugins: [tailwindcss()] },
   integrations: [react()],
   server: { port: 3000 },
