@@ -4,9 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
+  provider = "sqlite"
+  // Required by Prisma 6 but unused: queries go through the D1 adapter.
+  url      = "file:./unused.db"
 }
 
 enum BinItemKind {
@@ -16,6 +16,7 @@ enum BinItemKind {
 
 enum StorageProvider {
   S3
+  R2
 }
 
 model User {
@@ -69,7 +70,7 @@ model TextItem {
 
 model FileItem {
   id            String           @id @default(cuid())
-  provider      StorageProvider  @default(S3)
+  provider      StorageProvider  @default(R2)
   bucket        String
   key           String
   originalName  String

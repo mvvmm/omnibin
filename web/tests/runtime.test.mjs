@@ -66,3 +66,53 @@ test("invalid auth callback fails safely", options, async () => {
   );
   assert.equal(response.status, 400);
 });
+test("file routes reject invalid tokens", options, async () => {
+  const forged = `${Buffer.from(
+    JSON.stringify({
+      op: "get",
+      key: "user/file",
+      contentType: "text/plain",
+      exp: 9999999999,
+    })
+  ).toString("base64url")}.invalid`;
+  for (const token of ["missing", forged]) {
+    const get = await fetch(new URL(`/api/files/${token}`, origin));
+    assert.equal(get.status, 403, token);
+    assert.equal(get.headers.get("cache-control"), "private, no-store");
+    const put = await fetch(new URL(`/api/files/${token}`, origin), {
+      method: "PUT",
+      headers: { "Content-Type": "text/plain" },
+      body: "x",
+    });
+    assert.equal(put.status, 403, token);
+  }
+});
+test(
+  "cross-site form submissions are rejected outside file routes",
+  options,
+  async () => {
+    for (const contentType of [
+      "text/plain",
+      "application/x-www-form-urlencoded",
+      "multipart/form-data; boundary=x",
+    ]) {
+      const response = await fetch(new URL("/api/bin", origin), {
+        method: "POST",
+        headers: {
+          Origin: "https://untrusted.example",
+          "Content-Type": contentType,
+        },
+        body: "x",
+      });
+      assert.equal(response.status, 403, contentType);
+      assert.match(await response.text(), /Cross-site POST form submissions/);
+    }
+    const upload = await fetch(new URL("/api/files/invalid", origin), {
+      method: "PUT",
+      headers: { "Content-Type": "text/plain" },
+      body: "x",
+    });
+    assert.equal(upload.status, 403);
+    assert.match(await upload.text(), /Invalid or expired upload URL/);
+  }
+);

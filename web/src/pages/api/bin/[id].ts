@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 
-import { createPresignedGetUrl, deleteObjectByKey } from "@/lib/s3";
+import { createDownloadUrl, deleteObjectByKey } from "@/lib/storage";
 import { authenticateRequest } from "@/lib/auth0";
 
 export async function DELETE({ request: req, params, locals }: APIContext) {
@@ -87,7 +87,11 @@ export async function GET({ request: req, params, locals }: APIContext) {
       return Response.json({ error: "Not a file item" }, { status: 400 });
     }
 
-    const url = await createPresignedGetUrl({ key: item.fileItem.key });
+    const url = await createDownloadUrl({
+      origin: new URL(req.url).origin,
+      key: item.fileItem.key,
+      contentType: item.fileItem.contentType,
+    });
     return Response.json({ url });
   } catch (error) {
     const typed = error as Error & { statusCode?: number };

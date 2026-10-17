@@ -1,10 +1,10 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaD1 } from "@prisma/adapter-d1";
 import { env } from "cloudflare:workers";
-// A pool belongs to one request; middleware closes it after the response is rendered.
+
 export function createPrisma() {
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: env.DATABASE_URL, max: 1 }),
+    adapter: new PrismaD1(env.DB),
     log: ["error"],
   });
 }

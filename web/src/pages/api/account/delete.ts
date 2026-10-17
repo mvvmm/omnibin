@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { ManagementClient } from "auth0";
 import type { APIContext } from "astro";
 
-import { deleteObjectByKey } from "@/lib/s3";
+import { deleteObjectsByKeys } from "@/lib/storage";
 import { authenticateRequest } from "@/lib/auth0";
 
 export async function DELETE({ request: req, locals }: APIContext) {
@@ -43,27 +43,21 @@ export async function DELETE({ request: req, locals }: APIContext) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get all user's bin items with their file items for S3 cleanup
+    // Get all user's bin items with their file items for storage cleanup
     const userBinItems = await prisma.binItem.findMany({
       where: { userId: user.id },
       include: { fileItem: true },
     });
 
-    // Delete all files from S3 storage
     const fileKeys = userBinItems
       .map((item) => item.fileItem?.key)
       .filter((key): key is string => Boolean(key));
 
-    // Delete files from S3 in parallel
     if (fileKeys.length > 0) {
-      await Promise.all(
-        fileKeys.map((key) =>
-          deleteObjectByKey(key).catch((error) => {
-            console.error(`❌ Failed to delete S3 object ${key}:`, error);
-            // Continue with deletion even if S3 cleanup fails
-          })
-        )
-      );
+      await deleteObjectsByKeys(fileKeys).catch((error) => {
+        console.error("❌ Failed to delete stored files:", error);
+        // Continue with deletion even if storage cleanup fails
+      });
     }
 
     // Delete all user data from database

@@ -1,7 +1,7 @@
 import { bindings, defineConfig } from "cf/config";
 import * as entrypoint from "@astrojs/cloudflare/entrypoints/server" with { type: "cf-worker" };
 
-export default defineConfig(({ isPreview }) => {
+export default defineConfig(({ isPreview, mode }) => {
   return {
     worker: {
       name: "omnibin",
@@ -12,7 +12,11 @@ export default defineConfig(({ isPreview }) => {
       domains: isPreview ? [] : ["omnib.in", "www.omnib.in"],
       env: {
         ASSETS: bindings.assets(),
-        DATABASE_URL: bindings.secret(),
+        DB: bindings.d1({
+          id: "d5b1817c-069b-46c7-843c-226f107681f0",
+          name: "omnibin",
+          dev: { remote: mode === "remote" },
+        }),
         AUTH0_DOMAIN: bindings.secret(),
         AUTH0_CLIENT_ID: bindings.secret(),
         AUTH0_CLIENT_SECRET: bindings.secret(),
@@ -24,6 +28,12 @@ export default defineConfig(({ isPreview }) => {
         AUTH0_MANAGEMENT_DOMAIN: bindings.secret(),
         AUTH0_MANAGEMENT_CLIENT_ID: bindings.secret(),
         AUTH0_MANAGEMENT_CLIENT_SECRET: bindings.secret(),
+        FILES: bindings.r2({
+          name: "omnibin-private",
+          dev: { remote: mode === "remote" },
+        }),
+        FILE_TOKEN_SECRET: bindings.secret(),
+        DATABASE_URL: bindings.secret(),
         AWS_REGION: bindings.secret(),
         S3_BUCKET: bindings.secret(),
         AWS_ACCESS_KEY_ID: bindings.secret(),
