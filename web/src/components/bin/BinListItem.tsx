@@ -30,6 +30,7 @@ export function BinListItem({ item }: { item: BinItem }) {
   const [imageLoading, setImageLoading] = useState<boolean>(true);
   const [imageError, setImageError] = useState<boolean>(false);
   const [isAboveFold, setIsAboveFold] = useState<boolean>(false);
+  const [deleted, setDeleted] = useState<boolean>(false);
 
   // Ref callback to check if element is above fold synchronously when mounted
   const checkAboveFoldSync = (element: HTMLDivElement | null) => {
@@ -144,6 +145,7 @@ export function BinListItem({ item }: { item: BinItem }) {
         const { success, error } = await deleteBinItem(id);
 
         if (success) {
+          setDeleted(true);
           window.dispatchEvent(new Event("bin:refresh"));
         } else {
           setError(error || "Failed to delete");
@@ -320,7 +322,7 @@ export function BinListItem({ item }: { item: BinItem }) {
     return "16 / 9";
   })();
 
-  if (deleteIsTransitioning) {
+  if (deleteIsTransitioning || deleted) {
     return null;
   }
 
