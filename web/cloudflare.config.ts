@@ -2,9 +2,6 @@ import { bindings, defineConfig } from "cf/config";
 import * as entrypoint from "@astrojs/cloudflare/entrypoints/server" with { type: "cf-worker" };
 
 export default defineConfig(({ isPreview }) => {
-  // Preview uploads must explicitly retain secrets already stored on the Preview.
-  const secret = () =>
-    isPreview ? { type: "unsafe:inherit" as const } : bindings.secret();
   return {
     worker: {
       name: "omnibin",
@@ -15,22 +12,22 @@ export default defineConfig(({ isPreview }) => {
       domains: isPreview ? [] : ["omnib.in", "www.omnib.in"],
       env: {
         ASSETS: bindings.assets(),
-        DATABASE_URL: secret(),
-        AUTH0_DOMAIN: secret(),
-        AUTH0_CLIENT_ID: secret(),
-        AUTH0_CLIENT_SECRET: secret(),
-        AUTH0_SECRET: secret(),
-        AUTH0_AUDIENCE: secret(),
-        AUTH0_SCOPE: secret(),
-        AUTH0_SESSION_INACTIVITY_DURATION: secret(),
-        AUTH0_SESSION_ABSOLUTE_DURATION: secret(),
-        AUTH0_MANAGEMENT_DOMAIN: secret(),
-        AUTH0_MANAGEMENT_CLIENT_ID: secret(),
-        AUTH0_MANAGEMENT_CLIENT_SECRET: secret(),
-        AWS_REGION: secret(),
-        S3_BUCKET: secret(),
-        AWS_ACCESS_KEY_ID: secret(),
-        AWS_SECRET_ACCESS_KEY: secret(),
+        DATABASE_URL: bindings.secret(),
+        AUTH0_DOMAIN: bindings.secret(),
+        AUTH0_CLIENT_ID: bindings.secret(),
+        AUTH0_CLIENT_SECRET: bindings.secret(),
+        AUTH0_SECRET: bindings.secret(),
+        AUTH0_AUDIENCE: bindings.secret(),
+        AUTH0_SCOPE: bindings.secret(),
+        AUTH0_SESSION_INACTIVITY_DURATION: bindings.secret(),
+        AUTH0_SESSION_ABSOLUTE_DURATION: bindings.secret(),
+        AUTH0_MANAGEMENT_DOMAIN: bindings.secret(),
+        AUTH0_MANAGEMENT_CLIENT_ID: bindings.secret(),
+        AUTH0_MANAGEMENT_CLIENT_SECRET: bindings.secret(),
+        AWS_REGION: bindings.secret(),
+        S3_BUCKET: bindings.secret(),
+        AWS_ACCESS_KEY_ID: bindings.secret(),
+        AWS_SECRET_ACCESS_KEY: bindings.secret(),
       },
       observability: {
         enabled: true,

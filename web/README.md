@@ -21,7 +21,7 @@ pnpm run deploy
 pnpm run deploy:preview
 ```
 
-`cf deploy` and `cf previews deploy` build before uploading. `pnpm test` runs cookie-adapter and preview-output tests. To include HTTP tests against a running local Worker or a deployment:
+`cf deploy` and `cf previews deploy` build before uploading. `pnpm test` runs cookie-adapter tests. To include HTTP tests against a running local Worker or a deployment:
 
 ```sh
 TEST_ORIGIN=http://localhost:3000 pnpm test
@@ -55,9 +55,9 @@ The Cloudflare account is connected to `mvvmm/omnibin`. Production watches `main
 | Preview deploy command    | `pnpm run deploy:preview`                       |
 | Included paths            | `web/**`                                        |
 
-The deploy scripts build the application, so the Builds build command performs validation first. Builds uses the existing Cloudflare deployment token reference. Preview Base secrets are configured separately from production and copied into new previews. The migration preview was also populated explicitly. For Preview builds, `cloudflare.config.ts` uses cf’s supported `unsafe:inherit` binding escape hatch to retain secrets from the previous deployment. Production and local development use `bindings.secret()`. No CLI patch is required. Previews currently use the existing Supabase database and S3 bucket; changing Preview Base secrets does not update existing previews.
+The deploy scripts build the application, so the Builds build command performs validation first. Builds uses the existing Cloudflare deployment token reference. Preview Base secrets are configured separately from production and copied into new previews. The migration preview was also populated explicitly. `cloudflare.config.ts` declares secrets with `bindings.secret()` for all builds. cf preserves secrets from the previous Preview deployment automatically; new Previews receive Preview Base secrets. No CLI patch or explicit `unsafe:inherit` bindings are required. Previews currently use the existing Supabase database and S3 bucket; changing Preview Base secrets does not update existing previews.
 
-`cf` beta.12 does not write its Preview result to the output file Workers Builds reads. `scripts/cf-previews-deploy.ts` runs cf, prints its result, then appends a Preview entry containing `worker_name` and `timestamp` to `WRANGLER_OUTPUT_FILE_PATH` or `WRANGLER_OUTPUT_FILE_DIRECTORY`. These are Cloudflare's output protocol variables; they do not invoke Wrangler. Remove the wrapper after [cloudflare/cf#185](https://github.com/cloudflare/cf/issues/185) is fixed and verified.
+`pnpm run deploy:preview` runs `cf previews deploy` directly. `cf` beta.18 writes the Preview result, including `worker_name` and `timestamp`, to the Workers Builds output file itself ([cloudflare/cf#185](https://github.com/cloudflare/cf/issues/185)). No output wrapper is needed.
 
 ## Review URLs and domain cutover
 
