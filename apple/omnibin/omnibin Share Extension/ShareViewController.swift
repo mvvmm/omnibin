@@ -48,6 +48,7 @@ class ShareViewController: UIViewController {
     private var isOGLoading = false
     private var titleLeadingConstraint: NSLayoutConstraint?
     private var urlPreviewImageHeightConstraint: NSLayoutConstraint?
+    private var drawerTopConstraint: NSLayoutConstraint?
     
     private enum SharedContent {
         case text(String)
@@ -60,6 +61,10 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        updateDrawerForPresentation()
+        registerForTraitChanges([UITraitHorizontalSizeClass.self]) { (self: Self, _: UITraitCollection) in
+            self.updateDrawerForPresentation()
+        }
         loadSharedContentForPreview()
         Task { await self.checkAndShowBinLimitWarning() }
     }
@@ -264,7 +269,6 @@ class ShareViewController: UIViewController {
             drawerContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             drawerContainer.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             drawerContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            drawerContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
 
             // Header
             headerContainer.topAnchor.constraint(equalTo: drawerContainer.topAnchor),
@@ -1129,6 +1133,18 @@ class ShareViewController: UIViewController {
         self.addImageToBin(image, completion: completion)
     }
     
+    // In regular width (iPad, open iPhone Duo) the system already shows the extension as a rounded
+    // card, so the drawer fills it from the top instead of insetting below a gap.
+    private func updateDrawerForPresentation() {
+        let isCard = traitCollection.horizontalSizeClass == .regular
+        drawerTopConstraint?.isActive = false
+        drawerTopConstraint = isCard
+            ? drawerContainer.topAnchor.constraint(equalTo: view.topAnchor)
+            : drawerContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
+        drawerTopConstraint?.isActive = true
+        drawerContainer.layer.cornerRadius = isCard ? 0 : 16
+    }
+
     private func setURLPreviewImageVisible(_ visible: Bool) {
         urlPreviewImageView.isHidden = !visible
         urlPreviewImageHeightConstraint?.constant = visible ? 200 : 0
