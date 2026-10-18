@@ -271,15 +271,15 @@ class ShareViewController: UIViewController {
             headerContainer.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor),
             headerContainer.heightAnchor.constraint(equalToConstant: 56),
 
-            closeButton.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 12),
+            closeButton.leadingAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 12),
             closeButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
             closeButton.widthAnchor.constraint(equalToConstant: 36),
             closeButton.heightAnchor.constraint(equalToConstant: 36),
 
-            addButton.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -12),
+            addButton.trailingAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -12),
             addButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
 
-            titleStack.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor),
+            titleStack.centerXAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.centerXAnchor),
             titleStack.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
 
             logoImageView.widthAnchor.constraint(equalToConstant: 20),
@@ -287,8 +287,8 @@ class ShareViewController: UIViewController {
 
             // Preview container
             previewContainer.topAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: 12),
-            previewContainer.leadingAnchor.constraint(equalTo: drawerContainer.leadingAnchor, constant: 16),
-            previewContainer.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+            previewContainer.leadingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            previewContainer.trailingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             previewContainer.bottomAnchor.constraint(equalTo: countLabel.topAnchor, constant: -8),
 
             // Image preview constraints (height wraps content; avoid extra space)
@@ -340,23 +340,23 @@ class ShareViewController: UIViewController {
             urlPreviewSiteLabel.bottomAnchor.constraint(equalTo: urlPreviewContainer.bottomAnchor, constant: -12),
 
             // Count below preview (right aligned)
-            countLabel.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.leadingAnchor, constant: 16),
-            countLabel.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+            countLabel.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            countLabel.trailingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
 
             // Warning right below count
             warningLabel.topAnchor.constraint(equalTo: countLabel.bottomAnchor, constant: 6),
-            warningLabel.leadingAnchor.constraint(equalTo: drawerContainer.leadingAnchor, constant: 16),
-            warningLabel.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+            warningLabel.leadingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            warningLabel.trailingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
 
             // Activity + status stack now below warning
             statusStack.topAnchor.constraint(equalTo: warningLabel.bottomAnchor, constant: 6),
-            statusStack.centerXAnchor.constraint(equalTo: drawerContainer.centerXAnchor),
-            statusStack.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.leadingAnchor, constant: 16),
-            statusStack.trailingAnchor.constraint(lessThanOrEqualTo: drawerContainer.trailingAnchor, constant: -16),
+            statusStack.centerXAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.centerXAnchor),
+            statusStack.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            statusStack.trailingAnchor.constraint(lessThanOrEqualTo: drawerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
 
             // Bottom logo fills remaining space
             bottomLogoImageView.topAnchor.constraint(equalTo: statusStack.bottomAnchor, constant: 8),
-            bottomLogoImageView.centerXAnchor.constraint(equalTo: drawerContainer.centerXAnchor),
+            bottomLogoImageView.centerXAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.centerXAnchor),
             bottomLogoImageView.widthAnchor.constraint(lessThanOrEqualToConstant: 160),
             bottomLogoImageView.heightAnchor.constraint(equalToConstant: 64),
             bottomLogoImageView.bottomAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.bottomAnchor, constant: -24)
