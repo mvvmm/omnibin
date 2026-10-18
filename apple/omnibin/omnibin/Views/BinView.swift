@@ -54,7 +54,10 @@ struct BinView: View {
     }
     
     var body: some View {
-        GeometryReader { _ in
+        GeometryReader { geometry in
+            // With no status bar above the content (iPhone Duo's outer display, phones in
+            // landscape), the header sits in a rounded screen corner, so inset it to clear the curve.
+            let headerInCorner = geometry.safeAreaInsets.top < 20
             ScrollView {
                 VStack(spacing: 0) {
                     // Header
@@ -65,10 +68,10 @@ struct BinView: View {
                         },
                         isDarkMode: isDarkMode
                     )
-                    .padding(.top, 4)
+                    .padding(.top, headerInCorner ? 14 : 4)
                     .padding(.bottom, 12)
-                    .padding(.leading, 16)
-                    .padding(.trailing, 6)
+                    .padding(.leading, headerInCorner ? 30 : 16)
+                    .padding(.trailing, headerInCorner ? 20 : 6)
                     
                     // Content
                     VStack(spacing: 16) {
