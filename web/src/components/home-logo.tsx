@@ -1,23 +1,22 @@
 import Image from "@/components/image";
 import Link from "@/components/link";
 
-interface HomeLogoProps {
-  className?: string;
-}
-
-export function HomeLogo({ className }: HomeLogoProps) {
+export function HomeLogo() {
   return (
-    <Link href="/?stay=true" aria-label="Go to home">
-      <div className="glass rounded-lg px-3 py-2 transition-transform duration-300 hover:scale-[1.02]">
-        <Image
-          src="/omnibin-logo.webp"
-          alt="omnibin logo"
-          width={340}
-          height={100}
-          className={className ?? "h-8 w-auto"}
-          priority
-        />
-      </div>
+    <Link
+      href="/?stay=true"
+      aria-label="Go to home"
+      className="flex items-center gap-2 rounded-md text-[15px] font-semibold tracking-[-0.01em] text-foreground"
+    >
+      <Image
+        src="/icon.png"
+        alt=""
+        width={26}
+        height={26}
+        className="size-[26px]"
+        priority
+      />
+      omnibin
     </Link>
   );
 }

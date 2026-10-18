@@ -105,15 +105,16 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="p-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-11 text-muted-foreground hover:text-foreground"
+            aria-label="Settings"
+          >
             <SettingsIcon className="size-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          className="w-56"
-          align="start"
-          collisionPadding={12}
-        >
+        <DropdownMenuContent className="w-56" align="end" collisionPadding={12}>
           <DropdownMenuItem
             className="cursor-pointer"
             onClick={() => {
@@ -144,14 +145,14 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
                 Log out
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="cursor-pointer text-red-400 focus:text-red-400"
+                className="cursor-pointer text-destructive focus:text-destructive"
                 onClick={handleDeleteAccount}
                 disabled={isPending}
               >
                 {isPending ? (
                   <Loader2 className="size-3 animate-spin" />
                 ) : (
-                  <Trash2Icon className="size-3 text-red-400 focus:text-red-400" />
+                  <Trash2Icon className="size-3 text-destructive" />
                 )}
                 Delete Account
               </DropdownMenuItem>
@@ -164,8 +165,8 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-400">
-              <Trash2Icon className="size-5 text-red-400" />
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2Icon className="size-5" />
               Delete Account
             </DialogTitle>
             <DialogDescription>
@@ -192,7 +193,6 @@ export function ContextMenu({ loggedIn }: { loggedIn: boolean }) {
               variant="destructive"
               onClick={confirmDeleteAccount}
               disabled={isPending}
-              className="bg-red-400 hover:bg-red-500"
             >
               {isPending ? (
                 <>
