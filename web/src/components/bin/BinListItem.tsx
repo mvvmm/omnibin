@@ -4,7 +4,6 @@ import { deleteBinItem } from "@/actions/deleteBinItem";
 import { getFileItemDownloadUrl } from "@/actions/getFileItemDownloadUrl";
 import type { BinItem } from "@/types/bin";
 import type { OgData } from "@/types/og";
-import { formatFileSize } from "@/utils/formatFileSize";
 import { isCopyableFile } from "@/utils/isCopyableFile";
 import { extractFirstUrl, isUrl } from "@/utils/isUrl";
 import {
@@ -12,6 +11,7 @@ import {
   Copy,
   Download,
   ExternalLink,
+  FileIcon,
   Loader2,
   Trash2,
 } from "lucide-react";
@@ -19,7 +19,6 @@ import Image from "@/components/image";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "../ui/button";
-import { Card } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
@@ -85,7 +84,6 @@ export function BinListItem({ item }: { item: BinItem }) {
   }, [item.textItem, itemUrl]);
 
   const ogLoading = itemUrl && !item.textItem?.ogDataFetched;
-  const ogError = itemUrl && item.textItem?.ogDataFetched && !ogData;
 
   const [deleteIsTransitioning, startDeleteTransition] = useTransition();
   const [downloadIsTransitioning, startDownloadTransition] = useTransition();
@@ -326,85 +324,164 @@ export function BinListItem({ item }: { item: BinItem }) {
     return null;
   }
 
-  const renderTitle = () => {
+  const handleActivate = () => {
     if (item.kind === "TEXT" && item.textItem) {
-      if (ogLoading) {
-        return <Skeleton className="h-5 w-3/4" />;
-      }
-      if (ogData) {
-        return ogData.title || new URL(ogData.url).hostname;
-      }
-      return item.textItem.content;
+      handleCopyText(item.textItem.content);
     }
     if (item.kind === "FILE" && item.fileItem) {
-      return item.fileItem.originalName;
+      if (isCopyableFile(item.fileItem.contentType)) {
+        handleCopyFile(
+          item.id,
+          item.fileItem.contentType,
+          item.fileItem.preview ?? undefined
+        );
+      } else {
+        handleDownloadFile(
+          item.id,
+          item.fileItem.originalName,
+          item.fileItem.preview ?? undefined
+        );
+      }
     }
-    return "";
+  };
+
+  const iconButtonClassName =
+    "size-10 text-muted-foreground hover:text-foreground";
+  const isImageFile =
+    item.kind === "FILE" && !!item.fileItem?.contentType.startsWith("image/");
+  const showLinkPreview = item.kind === "TEXT" && (ogData || ogLoading);
+
+  const renderMedia = () => {
+    if (ogLoading) {
+      return (
+        <Skeleton
+          className="w-full rounded-none"
+          style={{ aspectRatio: "16 / 9" }}
+        />
+      );
+    }
+    if (item.kind === "TEXT" && ogData?.image) {
+      return (
+        <div
+          ref={(el) => {
+            ogImageRef.current = el;
+            checkAboveFoldSync(el);
+          }}
+          className="relative w-full overflow-hidden bg-media"
+          style={{ aspectRatio: aspect }}
+        >
+          <Image
+            src={ogData.image}
+            alt={ogData.title ?? "link preview"}
+            fill
+            className="object-cover"
+            unoptimized
+            referrerPolicy="no-referrer"
+            loading={isAboveFold ? "eager" : "lazy"}
+          />
+        </div>
+      );
+    }
+    if (isImageFile && item.fileItem?.preview) {
+      return (
+        <div
+          ref={(el) => {
+            fileImageRef.current = el;
+            checkAboveFoldSync(el);
+          }}
+          className="relative aspect-video w-full overflow-hidden bg-media"
+        >
+          {imageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          {imageError && (
+            <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+              Preview unavailable
+            </div>
+          )}
+          <Image
+            src={item.fileItem.preview}
+            alt={item.fileItem.originalName}
+            width={item.fileItem.imageWidth ?? 320}
+            height={item.fileItem.imageHeight ?? 240}
+            className={`h-full w-full object-cover ${imageLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-200`}
+            quality={50}
+            loading={isAboveFold ? "eager" : "lazy"}
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageLoading(false);
+              setImageError(true);
+            }}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const renderBody = () => {
+    if (showLinkPreview) {
+      if (ogLoading) {
+        return (
+          <div className="space-y-2 py-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        );
+      }
+      if (ogData) {
+        const hostname = new URL(ogData.url).hostname;
+        return (
+          <div className="flex min-w-0 flex-col gap-0.5 py-1.5">
+            <span className="truncate">{ogData.title || hostname}</span>
+            <span className="truncate text-[13px] text-muted-foreground">
+              {hostname}
+            </span>
+          </div>
+        );
+      }
+    }
+    if (item.kind === "TEXT" && item.textItem) {
+      return (
+        <div className="line-clamp-5 py-2.5 leading-normal break-words whitespace-pre-wrap">
+          {item.textItem.content}
+        </div>
+      );
+    }
+    if (item.kind === "FILE" && item.fileItem && !isImageFile) {
+      return (
+        <div className="flex min-w-0 items-center gap-3 py-2.5">
+          <FileIcon className="size-[18px] shrink-0 text-muted-foreground" />
+          <span className="truncate">{item.fileItem.originalName}</span>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
     <li key={item.id}>
-      <Card
-        className="w-full p-3 text-foreground hover:scale-[101%] hover:cursor-pointer transition-transform !gap-0 glass"
-        onClick={() => {
-          if (item.kind === "TEXT" && item.textItem) {
-            handleCopyText(item.textItem.content);
-          }
-          if (item.kind === "FILE" && item.fileItem) {
-            if (isCopyableFile(item.fileItem.contentType)) {
-              handleCopyFile(
-                item.id,
-                item.fileItem.contentType,
-                item.fileItem.preview ?? undefined
-              );
-            } else {
-              handleDownloadFile(
-                item.id,
-                item.fileItem?.originalName,
-                item.fileItem?.preview ?? undefined
-              );
-            }
-          }
-        }}
+      <div
+        className="w-full cursor-pointer overflow-hidden rounded-lg border bg-card text-card-foreground transition-colors hover:border-input"
+        onClick={handleActivate}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            if (item.kind === "TEXT" && item.textItem) {
-              handleCopyText(item.textItem.content);
-            }
-            if (item.kind === "FILE" && item.fileItem) {
-              if (isCopyableFile(item.fileItem.contentType)) {
-                handleCopyFile(
-                  item.id,
-                  item.fileItem.contentType,
-                  item.fileItem.preview ?? undefined
-                );
-              } else {
-                handleDownloadFile(
-                  item.id,
-                  item.fileItem?.originalName,
-                  item.fileItem?.preview ?? undefined
-                );
-              }
-            }
-          }
+          if (e.key === "Enter" || e.key === " ") handleActivate();
         }}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div
-            className={`font-medium text-foreground flex-1 min-w-0 ${
-              item.kind === "TEXT" ? "line-clamp-5" : "truncate"
-            }`}
-          >
-            {renderTitle()}
-          </div>
-          <div className="flex items-center gap-1.5">
+        <div
+          className={`flex gap-2 py-1.5 pr-1.5 pl-4 ${item.kind === "TEXT" && !showLinkPreview ? "items-start" : "items-center"}`}
+        >
+          <div className="min-w-0 flex-1">{renderBody()}</div>
+          <div className="flex shrink-0 items-center">
             {/* Copy Text Button */}
             {item.kind === "TEXT" && item.textItem && (
               <>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  className={iconButtonClassName}
                   aria-label="Copy to clipboard"
                   title="Copy"
                   disabled={copyIsTransitioning}
@@ -413,17 +490,13 @@ export function BinListItem({ item }: { item: BinItem }) {
                     item.textItem && handleCopyText(item.textItem.content);
                   }}
                 >
-                  {copied ? (
-                    <Check className="h-4 w-4 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
+                  {copied ? <Check className="text-primary-ink" /> : <Copy />}
                 </Button>
                 {itemUrl && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    className={iconButtonClassName}
                     aria-label="Open link in new tab"
                     title="Open in new tab"
                     onClick={(e) => {
@@ -431,7 +504,7 @@ export function BinListItem({ item }: { item: BinItem }) {
                       window.open(itemUrl, "_blank", "noopener,noreferrer");
                     }}
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink />
                   </Button>
                 )}
               </>
@@ -441,52 +514,50 @@ export function BinListItem({ item }: { item: BinItem }) {
             {item.kind === "FILE" &&
               item.fileItem &&
               isCopyableFile(item.fileItem.contentType) && (
-                <div className="relative">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={`${
-                          item.fileItem.contentType.startsWith("image/") &&
-                          !item.fileItem.contentType.includes("png")
-                            ? "text-amber-600 hover:bg-amber-500/10 hover:text-amber-500 dark:hover:text-amber-700"
-                            : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-                        }`}
-                        aria-label="Copy file to clipboard"
-                        title="Copy file"
-                        disabled={
-                          item.fileItem.contentType.startsWith("image/") &&
-                          !item.fileItem?.preview
-                        }
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopyFile(
-                            item.id,
-                            item?.fileItem?.contentType,
-                            item?.fileItem?.preview ?? undefined
-                          );
-                        }}
-                      >
-                        {copyIsTransitioning ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : copied ? (
-                          <Check className="h-4 w-4 text-emerald-600" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    {item.fileItem.contentType.startsWith("image/") &&
-                      !item.fileItem.contentType.includes("png") && (
-                        <TooltipContent side="top" className="max-w-[300px]">
-                          Image will be converted to .png on copy due to browser
-                          limitations. This can cause much larger file sizes,
-                          amongst other issues. Consider using download instead.
-                        </TooltipContent>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={
+                        item.fileItem.contentType.startsWith("image/") &&
+                        !item.fileItem.contentType.includes("png")
+                          ? "size-10 text-primary-ink hover:text-primary-ink"
+                          : iconButtonClassName
+                      }
+                      aria-label="Copy file to clipboard"
+                      title="Copy file"
+                      disabled={
+                        item.fileItem.contentType.startsWith("image/") &&
+                        !item.fileItem?.preview
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyFile(
+                          item.id,
+                          item?.fileItem?.contentType,
+                          item?.fileItem?.preview ?? undefined
+                        );
+                      }}
+                    >
+                      {copyIsTransitioning ? (
+                        <Loader2 className="animate-spin" />
+                      ) : copied ? (
+                        <Check className="text-primary-ink" />
+                      ) : (
+                        <Copy />
                       )}
-                  </Tooltip>
-                </div>
+                    </Button>
+                  </TooltipTrigger>
+                  {item.fileItem.contentType.startsWith("image/") &&
+                    !item.fileItem.contentType.includes("png") && (
+                      <TooltipContent side="top" className="max-w-[300px]">
+                        Image will be converted to .png on copy due to browser
+                        limitations. This can cause much larger file sizes,
+                        amongst other issues. Consider using download instead.
+                      </TooltipContent>
+                    )}
+                </Tooltip>
               )}
 
             {/* Download File Button */}
@@ -494,7 +565,7 @@ export function BinListItem({ item }: { item: BinItem }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+                className={iconButtonClassName}
                 aria-label="Download file"
                 title="Download"
                 disabled={downloadIsTransitioning}
@@ -508,11 +579,11 @@ export function BinListItem({ item }: { item: BinItem }) {
                 }}
               >
                 {downloadIsTransitioning ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="animate-spin" />
                 ) : downloaded ? (
-                  <Check className="h-4 w-4 text-emerald-600" />
+                  <Check className="text-primary-ink" />
                 ) : (
-                  <Download className="h-4 w-4" />
+                  <Download />
                 )}
               </Button>
             )}
@@ -521,7 +592,7 @@ export function BinListItem({ item }: { item: BinItem }) {
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
+              className="size-10 text-muted-foreground hover:text-destructive"
               aria-label="Delete item"
               title="Delete"
               onClick={(e) => {
@@ -529,221 +600,17 @@ export function BinListItem({ item }: { item: BinItem }) {
                 handleDelete(item.id);
               }}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 />
             </Button>
           </div>
         </div>
 
-        <div className="flex items-start justify-start gap-3">
-          <div className="min-w-0 flex-1 text-left">
-            {/* URL Open Graph Preview */}
-            {item.kind === "TEXT" && (ogData || ogLoading) && (
-              <div
-                className={`block mt-2 -mx-3 overflow-hidden ${
-                  ogData && !ogData?.image ? "border-t border-b mb-4" : ""
-                }`}
-                style={{
-                  borderColor:
-                    ogData && !ogData?.image ? "var(--border)" : undefined,
-                }}
-              >
-                <div className="relative w-full overflow-hidden">
-                  {/* Loading state */}
-                  {ogLoading && (
-                    <div
-                      className="relative w-full overflow-hidden bg-muted/20"
-                      style={{ aspectRatio: "16 / 9" }}
-                    >
-                      <Skeleton className="h-full w-full rounded-none dark:hidden" />
-                    </div>
-                  )}
+        {renderMedia()}
 
-                  {/* Error state */}
-                  {ogError && !ogLoading && (
-                    <div className="p-3 flex items-center gap-3">
-                      <div className="w-5 h-5 text-muted-foreground">
-                        <svg
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <title>Warning icon</title>
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Preview unavailable
-                      </div>
-                    </div>
-                  )}
-
-                  {/* OG data content */}
-                  {ogData && !ogLoading && !ogError && (
-                    <>
-                      {/* When rendering the OG image container: */}
-                      {ogData?.image ? (
-                        <div
-                          ref={(el) => {
-                            ogImageRef.current = el;
-                            checkAboveFoldSync(el);
-                          }}
-                          className="relative w-full overflow-hidden bg-muted/20"
-                          style={{ aspectRatio: aspect }}
-                        >
-                          <Image
-                            src={ogData.image}
-                            alt={ogData.title ?? "link preview"}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                            referrerPolicy="no-referrer"
-                            loading={isAboveFold ? "eager" : "lazy"}
-                          />
-                        </div>
-                      ) : (
-                        <div className="p-3 flex items-center gap-3">
-                          {ogLoading ? (
-                            <>
-                              <Skeleton className="w-5 h-5 rounded" />
-                              <div className="min-w-0 flex-1">
-                                <Skeleton className="h-4 w-3/4 mb-2" />
-                                <Skeleton className="h-3 w-full mb-1" />
-                                <Skeleton className="h-3 w-1/2" />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              {ogData.icon && (
-                                <Image
-                                  src={ogData.icon}
-                                  alt="site icon"
-                                  width={20}
-                                  height={20}
-                                  className="rounded"
-                                  unoptimized
-                                  referrerPolicy="no-referrer"
-                                />
-                              )}
-                              <div className="min-w-0">
-                                <div className="text-sm font-medium truncate">
-                                  {ogData.title || new URL(ogData.url).hostname}
-                                </div>
-                                <div className="mt-1 text-xs text-muted-foreground truncate">
-                                  {itemUrl}
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Details block (title/desc/site) - show when loading or when there's an image */}
-                  {(ogLoading || ogData?.image) && (
-                    <div className="p-3">
-                      {ogLoading ? (
-                        <>
-                          <Skeleton className="h-4 w-3/4 mb-2" />
-                          <Skeleton className="h-3 w-[150px]" />
-                        </>
-                      ) : (
-                        <>
-                          <div className="text-sm font-medium truncate">
-                            {ogData?.title ||
-                              new URL(ogData?.url || "").hostname}
-                          </div>
-                          <div className="mt-1 text-xs text-muted-foreground truncate">
-                            {itemUrl}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {item.kind === "FILE" &&
-              item.fileItem &&
-              item.fileItem.contentType.startsWith("image/") && (
-                <div className="mb-4 mt-2 -mx-3">
-                  {item.fileItem.preview && (
-                    <div
-                      ref={(el) => {
-                        fileImageRef.current = el;
-                        checkAboveFoldSync(el);
-                      }}
-                      className="h-[300px] w-full overflow-hidden bg-muted/30 relative"
-                    >
-                      {imageLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        </div>
-                      )}
-                      {imageError && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-                          <svg
-                            className="h-6 w-6 mb-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <title>Image preview unavailable</title>
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                          <span className="text-xs">Preview unavailable</span>
-                        </div>
-                      )}
-                      <Image
-                        src={item.fileItem.preview}
-                        alt={item.fileItem.originalName}
-                        width={item.fileItem.imageWidth ?? 320}
-                        height={item.fileItem.imageHeight ?? 240}
-                        className={`h-full w-full object-cover ${imageLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-200`}
-                        quality={50}
-                        loading={isAboveFold ? "eager" : "lazy"}
-                        onLoad={() => setImageLoading(false)}
-                        onError={() => {
-                          setImageLoading(false);
-                          setImageError(true);
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            <div className="mt-1 text-xs text-muted-foreground">
-              <span>{new Date(item.createdAt).toLocaleString()}</span>
-              {item.kind === "FILE" && item.fileItem && (
-                <>
-                  {" · "}
-                  <span>{item.fileItem.contentType}</span>
-                  {" · "}
-                  <span>{formatFileSize(item.fileItem.size)}</span>
-                </>
-              )}
-              {item.kind === "TEXT" && item.textItem && (
-                <>
-                  {" · "}
-                  <span>{item.textItem.content.length} chars</span>
-                </>
-              )}
-            </div>
-            {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
-          </div>
-        </div>
-      </Card>
+        {error && (
+          <div className="px-4 py-2.5 text-xs text-destructive">{error}</div>
+        )}
+      </div>
     </li>
   );
 }

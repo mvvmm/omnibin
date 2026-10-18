@@ -8,7 +8,7 @@ export default function Page() {
       {/* 1000x600 container */}
       <div className="relative" style={{ width: "1000px", height: "600px" }}>
         {/* Main card */}
-        <Card className="relative z-10 flex h-full w-full items-center justify-center rounded-none glass">
+        <Card className="relative z-10 flex h-full w-full items-center justify-center rounded-none">
           {/* Binboy Logo */}
           <div className="flex items-center justify-center">
             <Image

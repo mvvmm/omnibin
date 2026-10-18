@@ -16,7 +16,7 @@ const VANCE_GITHUB_URL = "https://github.com/mvvmm";
 export default function AboutPage() {
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="mx-auto w-full p-8 md:p-12 glass">
+      <Card className="mx-auto w-full p-8 md:p-12">
         <CardHeader className="px-0">
           <div className="flex items-center justify-center mb-4">
             <Image
@@ -36,13 +36,8 @@ export default function AboutPage() {
         <CardContent className="px-0">
           <div className="space-y-8">
             <section className="space-y-3">
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "var(--foreground)" }}
-              >
-                Why omnibin exists
-              </h2>
-              <p className="text-sm" style={{ color: "var(--muted-80)" }}>
+              <h2 className="text-xl font-semibold">Why omnibin exists</h2>
+              <p className="text-sm text-muted-foreground">
                 omnibin was born from frustration with the existing tools for
                 sharing content between your own devices. Emailing yourself or
                 uploading to Google Drive requires too many steps and isn&apos;t
@@ -50,7 +45,7 @@ export default function AboutPage() {
                 do everything, which makes the simple act of moving content from
                 one device to another unnecessarily complicated.
               </p>
-              <p className="text-sm" style={{ color: "var(--muted-80)" }}>
+              <p className="text-sm text-muted-foreground">
                 Most software that offers self-sharing treats it as a secondary
                 feature, which means it&apos;s often inefficient and clunky. I
                 wanted to build a tool where sharing content with yourself is
@@ -60,13 +55,8 @@ export default function AboutPage() {
             </section>
 
             <section className="space-y-3">
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "var(--foreground)" }}
-              >
-                Platform availability
-              </h2>
-              <p className="text-sm" style={{ color: "var(--muted-80)" }}>
+              <h2 className="text-xl font-semibold">Platform availability</h2>
+              <p className="text-sm text-muted-foreground">
                 omnibin is currently available on iOS through the{" "}
                 <Link
                   href={APP_STORE_URL}
@@ -90,13 +80,8 @@ export default function AboutPage() {
             </section>
 
             <section className="space-y-3">
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "var(--foreground)" }}
-              >
-                Help improve omnibin
-              </h2>
-              <p className="text-sm" style={{ color: "var(--muted-80)" }}>
+              <h2 className="text-xl font-semibold">Help improve omnibin</h2>
+              <p className="text-sm text-muted-foreground">
                 Have a feature request or found a bug? Visit our{" "}
                 <Link href={SUPPORT_URL} className="underline">
                   support page
@@ -106,10 +91,7 @@ export default function AboutPage() {
             </section>
           </div>
           <div className="mt-8 pt-6 border-t">
-            <p
-              className="text-xs text-center"
-              style={{ color: "var(--muted-80)" }}
-            >
+            <p className="text-xs text-center text-muted-foreground">
               omnibin was built by{" "}
               <Link
                 href={VANCE_GITHUB_URL}

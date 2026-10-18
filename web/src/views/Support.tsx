@@ -78,7 +78,7 @@ export default function SupportPage() {
 
   return (
     <div className="relative z-10 mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="mx-auto w-full p-8 md:p-12 glass">
+      <Card className="mx-auto w-full p-8 md:p-12">
         <CardHeader className="px-0">
           <CardTitle className="text-3xl">Support</CardTitle>
           <CardDescription className="text-base">
@@ -88,13 +88,8 @@ export default function SupportPage() {
         <CardContent className="px-0">
           <div className="space-y-8">
             <section className="space-y-3">
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "var(--foreground)" }}
-              >
-                Report a bug
-              </h2>
-              <p className="text-sm" style={{ color: "var(--muted-80)" }}>
+              <h2 className="text-xl font-semibold">Report a bug</h2>
+              <p className="text-sm text-muted-foreground">
                 Open a bug report issue on GitHub or send an email.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -103,7 +98,6 @@ export default function SupportPage() {
                     href={BUG_GITHUB_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-gradient-to-r from-omnibin-primary to-omnibin-secondary text-white"
                   >
                     Github Issue
                   </Link>
@@ -115,20 +109,12 @@ export default function SupportPage() {
             </section>
 
             <section className="space-y-3">
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "var(--foreground)" }}
-              >
-                Request a feature
-              </h2>
-              <p className="text-sm" style={{ color: "var(--muted-80)" }}>
+              <h2 className="text-xl font-semibold">Request a feature</h2>
+              <p className="text-sm text-muted-foreground">
                 Open a feature request issue on GitHub or email.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button
-                  asChild
-                  className="bg-gradient-to-r from-omnibin-primary to-omnibin-secondary text-white"
-                >
+                <Button asChild>
                   <Link
                     href={FEATURE_GITHUB_URL}
                     target="_blank"
@@ -144,13 +130,8 @@ export default function SupportPage() {
             </section>
 
             <section className="space-y-3">
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "var(--foreground)" }}
-              >
-                Anything else
-              </h2>
-              <p className="text-sm" style={{ color: "var(--muted-80)" }}>
+              <h2 className="text-xl font-semibold">Anything else</h2>
+              <p className="text-sm text-muted-foreground">
                 You can always email{" "}
                 <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>
                   {SUPPORT_EMAIL}

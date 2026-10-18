@@ -24,16 +24,10 @@ export function PopupA() {
   return (
     <>
       {/* Backdrop overlay - only on small screens */}
-      <div className="fixed inset-0 z-40 backdrop-blur-[1px] bg-black/40 md:hidden" />
+      <div className="fixed inset-0 z-40 backdrop-blur-[1px] bg-black/50 md:hidden" />
 
-      <div className="fixed left-1/2 top-1/2 z-50 w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-gradient-to-r from-omnibin-primary to-omnibin-secondary p-[4px] shadow-2xl md:w-auto md:max-w-md md:bottom-4 md:right-4 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0">
-        <div
-          className="rounded-md p-6 backdrop-blur-md"
-          style={{
-            backgroundColor: "var(--card-bg-opaque)",
-            borderColor: "var(--border)",
-          }}
-        >
+      <div className="fixed left-1/2 top-1/2 z-50 w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-popover text-popover-foreground shadow-xl md:w-auto md:max-w-md md:bottom-4 md:right-4 md:left-auto md:top-auto md:translate-x-0 md:translate-y-0">
+        <div className="p-6">
           <button
             type="button"
             onClick={handleClose}
@@ -45,16 +39,10 @@ export function PopupA() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <h3
-                className="text-lg font-semibold"
-                style={{ color: "var(--foreground)" }}
-              >
+              <h3 className="text-lg font-semibold">
                 Download omnibin on the App Store
               </h3>
-              <p
-                className="text-sm"
-                style={{ color: "var(--muted-foreground)" }}
-              >
+              <p className="text-sm text-muted-foreground">
                 omnibin works even better when you pair the web app with the iOS
                 app. Seamlessly sync between your Desktop, iPhone, and iPad for
                 the ultimate cross-platform clipboard experience!

@@ -1,6 +1,6 @@
 import AppShell from "./AppShell";
 import { ContextMenu } from "./context-menu";
-import { HomeLogo } from "./home-logo";
+import { SiteHeader } from "./site-header";
 import Home from "@/views/Home";
 import About from "@/views/About";
 import Support from "@/views/Support";
@@ -24,10 +24,9 @@ export default function PageApp({
     <AppShell>
       {Page ? (
         <>
-          <div className="flex justify-between items-center p-4">
-            <HomeLogo />
+          <SiteHeader className="max-w-3xl">
             <ContextMenu loggedIn={loggedIn} />
-          </div>
+          </SiteHeader>
           <Page />
         </>
       ) : (

@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "@auth0/auth0-server-js": "1.16.1",
-    "@fontsource-variable/comfortaa": "^5.2.8",
     "@fontsource-variable/geist": "^5.2.8",
     "@fontsource-variable/geist-mono": "^5.2.8",
     "@prisma/adapter-d1": "6.19.2",

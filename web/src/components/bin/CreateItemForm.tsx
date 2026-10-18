@@ -139,8 +139,16 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
-      <div className="mb-4">
+      <div
+        className={`flex items-end gap-2 rounded-lg border bg-card py-1.5 pr-1.5 pl-3.5 transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/25 ${
+          isDragOver ? "border-ring ring-[3px] ring-ring/25" : "border-input"
+        }`}
+      >
+        <label htmlFor="bin-input" className="sr-only">
+          Add to bin
+        </label>
         <Textarea
+          id="bin-input"
           ref={textareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -150,34 +158,26 @@ export function CreateItemForm({ numItems }: { numItems: number }) {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           placeholder={
-            isDragOver ? "Drop files here..." : "Paste or drag here..."
+            isDragOver ? "Drop files here…" : "Paste or drop anything…"
           }
-          rows={3}
-          className={`mb-1 transition-all duration-200 glass ${
-            isDragOver
-              ? "border-omnibin-primary bg-omnibin-primary/5 ring-2 ring-omnibin-primary/20"
-              : ""
-          }`}
+          rows={1}
+          className="min-h-0 resize-none rounded-none border-0 bg-transparent px-0 py-[7px] text-[15px] leading-[22px] shadow-none focus-visible:ring-0 md:text-[15px] dark:bg-transparent"
         />
-        {error && <div className="ml-2 text-sm text-red-600">{error}</div>}
+        <Button disabled={isPending} type="submit" className="h-9 px-4">
+          {isPending ? "Adding…" : "Add"}
+        </Button>
       </div>
 
-      <div className="flex items-end gap-3 justify-between">
-        <Button disabled={isPending} type="submit" className="btn-omnibin">
-          {isPending ? "Adding..." : "Add"}
-        </Button>
-
-        <div className="flex flex-col items-end col-gap-1 mr-1">
-          <div
-            className={`text-xs text-muted-foreground ${numItems >= BIN_ITEMS_LIMIT && "text-red-600"}`}
-          >
-            Items: {numItems} / {BIN_ITEMS_LIMIT}
-          </div>
-          {numItems >= BIN_ITEMS_LIMIT && (
-            <div className="text-xs text-red-600">
-              Oldest item will be deleted on next add.
-            </div>
-          )}
+      <div className="flex items-start justify-between gap-4 px-0.5 text-xs">
+        <div className="text-destructive">
+          {error ??
+            (numItems >= BIN_ITEMS_LIMIT &&
+              "Oldest item will be deleted on next add.")}
+        </div>
+        <div
+          className={`font-mono text-[11px] ${numItems >= BIN_ITEMS_LIMIT ? "text-destructive" : "text-faint"}`}
+        >
+          {numItems} / {BIN_ITEMS_LIMIT}
         </div>
       </div>
     </form>

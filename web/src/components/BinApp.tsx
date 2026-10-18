@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import AppShell from "./AppShell";
-import { HomeLogo } from "./home-logo";
+import { SiteHeader } from "./site-header";
 import { ContextMenu } from "./context-menu";
 import { PopupA } from "./popupA";
 import { CreateItemForm } from "./bin/CreateItemForm";
@@ -74,17 +74,18 @@ export default function BinApp() {
   }, [refresh]);
   return (
     <AppShell>
-      <div className="flex justify-between items-center p-4">
-        <HomeLogo />
+      <SiteHeader className="max-w-[672px]">
         <ContextMenu loggedIn />
-      </div>
-      <div className="mx-auto flex max-w-6xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-3xl space-y-4">
-          <h1 className="text-2xl font-semibold text-foreground">Your Bin</h1>
-          <CreateItemForm numItems={items.length} />
-          {error && <p role="alert">{error}</p>}
-          {loading ? <BinListLoading /> : <BinList items={items} />}
-        </div>
+      </SiteHeader>
+      <div className="mx-auto w-full max-w-[672px] space-y-6 px-4 pt-4 pb-16">
+        <h1 className="sr-only">Your bin</h1>
+        <CreateItemForm numItems={items.length} />
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        {loading ? <BinListLoading /> : <BinList items={items} />}
       </div>
       {popup && <PopupA />}
     </AppShell>
