@@ -47,6 +47,7 @@ class ShareViewController: UIViewController {
     private var ogData: OGData?
     private var isOGLoading = false
     private var titleLeadingConstraint: NSLayoutConstraint?
+    private var urlPreviewImageHeightConstraint: NSLayoutConstraint?
     
     private enum SharedContent {
         case text(String)
@@ -260,8 +261,8 @@ class ShareViewController: UIViewController {
         // Layout
         NSLayoutConstraint.activate([
             // Drawer fills width, pinned to bottom like a sheet
-            drawerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            drawerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            drawerContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            drawerContainer.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             drawerContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             drawerContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
 
@@ -316,7 +317,6 @@ class ShareViewController: UIViewController {
             urlPreviewImageView.topAnchor.constraint(equalTo: urlPreviewContainer.topAnchor),
             urlPreviewImageView.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor),
             urlPreviewImageView.trailingAnchor.constraint(equalTo: urlPreviewContainer.trailingAnchor),
-            urlPreviewImageView.heightAnchor.constraint(equalToConstant: 200),
             
             // URL Preview Icon constraints
             urlPreviewIconImageView.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12),
@@ -361,6 +361,9 @@ class ShareViewController: UIViewController {
             bottomLogoImageView.heightAnchor.constraint(equalToConstant: 64),
             bottomLogoImageView.bottomAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.bottomAnchor, constant: -24)
         ])
+
+        urlPreviewImageHeightConstraint = urlPreviewImageView.heightAnchor.constraint(equalToConstant: 0)
+        urlPreviewImageHeightConstraint?.isActive = true
         
         // Set up initial title constraint (will be updated dynamically)
         titleLeadingConstraint = urlPreviewTitleLabel.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12)
@@ -664,17 +667,17 @@ class ShareViewController: UIViewController {
                 urlPreviewTitleLabel.isHidden = false
                 urlPreviewDescriptionLabel.isHidden = true
                 urlPreviewSiteLabel.isHidden = true
-                urlPreviewImageView.isHidden = true
+                setURLPreviewImageVisible(false)
                 urlPreviewIconImageView.isHidden = true
             } else if let ogData = ogData {
                 // Show OpenGraph data
                 let hasImage = ogData.image != nil
                 
                 if let imageURLString = ogData.image, let imageURL = URL(string: imageURLString) {
-                    urlPreviewImageView.isHidden = false
+                    setURLPreviewImageVisible(true)
                     loadImage(from: imageURL, into: urlPreviewImageView)
                 } else {
-                    urlPreviewImageView.isHidden = true
+                    setURLPreviewImageVisible(false)
                 }
                 
                 // Only show favicon if there's no image (same as web and iOS)
@@ -712,7 +715,7 @@ class ShareViewController: UIViewController {
                 urlPreviewDescriptionLabel.isHidden = true
                 urlPreviewSiteLabel.text = url.host ?? ""
                 urlPreviewSiteLabel.isHidden = false
-                urlPreviewImageView.isHidden = true
+                setURLPreviewImageVisible(false)
                 urlPreviewIconImageView.isHidden = true
                 // Title should be left-aligned when no favicon
                 titleLeadingConstraint?.isActive = false
@@ -1126,6 +1129,11 @@ class ShareViewController: UIViewController {
         self.addImageToBin(image, completion: completion)
     }
     
+    private func setURLPreviewImageVisible(_ visible: Bool) {
+        urlPreviewImageView.isHidden = !visible
+        urlPreviewImageHeightConstraint?.constant = visible ? 200 : 0
+    }
+
     private func loadImage(from url: URL, into imageView: UIImageView) {
         Task {
             do {
