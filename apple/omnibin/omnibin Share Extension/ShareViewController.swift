@@ -74,6 +74,11 @@ class ShareViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = UIColor.systemGroupedBackground
+        view.tintColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(red: 0xF2 / 255, green: 0xBA / 255, blue: 0x5C / 255, alpha: 1)
+                : UIColor(red: 0x8F / 255, green: 0x5A / 255, blue: 0x0B / 255, alpha: 1)
+        }
 
         // Drawer container styling
         drawerContainer.translatesAutoresizingMaskIntoConstraints = false

@@ -15,15 +15,15 @@ struct BinItemsListView: View {
         Group {
             if isLoading {
                 if isTwoColumn {
-                    HStack(alignment: .top, spacing: 12) {
-                        VStack(spacing: 12) {
+                    HStack(alignment: .top, spacing: 8) {
+                        VStack(spacing: 8) {
                             ForEach(0..<2, id: \.self) { _ in
                                 BinItemSkeletonView(isDarkMode: isDarkMode, isTwoColumn: true)
                                     .padding(.horizontal, 1)
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        VStack(spacing: 12) {
+                        VStack(spacing: 8) {
                             ForEach(0..<2, id: \.self) { _ in
                                 BinItemSkeletonView(isDarkMode: isDarkMode, isTwoColumn: true)
                                     .padding(.horizontal, 1)
@@ -32,32 +32,23 @@ struct BinItemsListView: View {
                         .frame(maxWidth: .infinity)
                     }
                 } else {
-                    VStack(spacing: 12) {
+                    VStack(spacing: 8) {
                         ForEach(0..<3, id: \.self) { _ in
                             BinItemSkeletonView(isDarkMode: isDarkMode, isTwoColumn: false)
                         }
                     }
                 }
             } else if binItems.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "tray")
-                        .font(.system(size: isIPad ? 72 : 48))
-                        .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                    
-                    Text("No items yet")
-                        .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
-                        .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                    
-                    Text("Paste text or files to get started")
-                        .font(isIPad ? .system(size: 18) : .subheadline)
-                        .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                }
-                .padding(.top, 60)
+                Text("Nothing here yet. Paste something above.")
+                    .font(.system(size: isIPad ? 17 : 14))
+                    .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 48)
             } else {
                 if isTwoColumn {
-                    HStack(alignment: .top, spacing: 12) {
+                    HStack(alignment: .top, spacing: 8) {
                         // First column - even indices
-                        VStack(spacing: 12) {
+                        VStack(spacing: 8) {
                             ForEach(Array(binItems.enumerated().filter { $0.offset % 2 == 0 }), id: \.element.id) { _, item in
                                 BinItemRow(item: item, accessToken: accessToken, onDelete: {
                                     onDeleteItem(item.id)
@@ -69,7 +60,7 @@ struct BinItemsListView: View {
                         }
                         .frame(maxWidth: .infinity)
                         // Second column - odd indices
-                        VStack(spacing: 12) {
+                        VStack(spacing: 8) {
                             ForEach(Array(binItems.enumerated().filter { $0.offset % 2 == 1 }), id: \.element.id) { _, item in
                                 BinItemRow(item: item, accessToken: accessToken, onDelete: {
                                     onDeleteItem(item.id)
@@ -82,7 +73,7 @@ struct BinItemsListView: View {
                         .frame(maxWidth: .infinity)
                     }
                 } else {
-                    VStack(spacing: 12) {
+                    VStack(spacing: 8) {
                         ForEach(binItems, id: \.id) { item in
                             BinItemRow(item: item, accessToken: accessToken, onDelete: {
                                 onDeleteItem(item.id)
@@ -105,74 +96,35 @@ struct BinItemsListView: View {
 struct BinItemSkeletonView: View {
     let isDarkMode: Bool
     let isTwoColumn: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header section
             HStack {
-                // Title skeleton
                 RoundedRectangle(cornerRadius: 4)
                     .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                    .frame(width: isIPad ? 240 : 280, height: isIPad ? 24 : 20)
-                
+                    .frame(width: isIPad ? 240 : 200, height: isIPad ? 18 : 14)
                 Spacer()
-                
-                // Chevron button skeleton
                 RoundedRectangle(cornerRadius: 4)
                     .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                    .frame(width: isIPad ? 24 : 14, height: isIPad ? 24 : 14)
+                    .frame(width: 14, height: 14)
+                    .padding(.trailing, 13)
             }
-            .padding(16)
-            .padding(.bottom, 8)
-            
-            // Image/preview skeleton - matching actual item height
-            RoundedRectangle(cornerRadius: 0)
-                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+            .padding(.leading, 14)
+            .frame(height: 46)
+
+            Rectangle()
+                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                 .frame(maxWidth: .infinity)
-                .frame(height: isIPad ? 350 : 200)
-                .padding(.bottom, 0)
-            
-            // URL preview text section - matching URLPreviewView structure
-            VStack(alignment: .leading, spacing: 0) {
-                // Title skeleton - matching top title width
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                    .frame(width: isIPad ? 336 : 260, height: isIPad ? 20 : 18)
-                
-                // site url skeleton - slightly shorter than title
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                    .frame(width: isIPad && !isTwoColumn ? 460 : 300, height: isIPad ? 16 : 14)
-                    .padding(.top, 6)
-                
-                // metadata skeleton - much wider, with extra space above
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                    .frame(width: isIPad ? 280 : 120, height: isIPad ? 14 : 12)
-                    .padding(.top, 20)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 0)
+                .frame(height: isIPad ? 320 : 180)
         }
-        .padding(.bottom, 16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+            RoundedRectangle(cornerRadius: 10)
+                .fill(AppColors.surface(isDarkMode: isDarkMode))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .inset(by: 0.5)
-                .stroke(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(AppColors.border(isDarkMode: isDarkMode), lineWidth: 1)
         )
-        .shadow(
-            color: AppColors.cardShadow(isDarkMode: isDarkMode),
-            radius: 8,
-            x: 0,
-            y: 4
-        )
-       
     }
 }
-

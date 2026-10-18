@@ -44,282 +44,74 @@ struct BinItemRow: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header section with tap gesture
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    if item.isText, let textItem = item.textItem, let _ = firstURL(in: textItem.content), isOGLoading && urlOG?.title == nil {
-                        // Show skeleton when loading OG data for URL and OG title not yet loaded
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                            .frame(width: isIPad ? 240 : 280, height: isIPad ? 24 : 20)
-                    } else {
-                        Text(itemTitle)
-                            .font(isIPad ? .system(size: 24, weight: .semibold) : .headline)
-                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                            .lineLimit(item.isText ? 5 : 1)
-                    }
-                }
-                
-                Spacer()
-                
-                // Chevron indicator
+            HStack(alignment: item.isText && !isLink ? .top : .center, spacing: 8) {
+                BinItemHeader(content: headerKind, isDarkMode: isDarkMode)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 Image(systemName: "chevron.down")
-                    .font(.system(size: isIPad ? 24 : 14, weight: .medium))
+                    .font(.system(size: isIPad ? 17 : 14, weight: .medium))
                     .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                    .animation(.easeInOut(duration: 0.2), value: isExpanded)
+                    .frame(width: 40, height: 44)
             }
-            .padding(16)
+            .padding(.leading, 14)
+            .padding(.trailing, 4)
             .contentShape(Rectangle())
             .onTapGesture {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded.toggle()
                 }
             }
-            
-            // Action buttons section (only visible when expanded) - moved above images
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(isExpanded ? "Hides actions" : "Shows actions")
+
             if isExpanded {
-                let hasDownloadButton = item.isFile && item.fileItem != nil
-                
-                if hasDownloadButton {
-                    // 4 buttons: 2x2 grid
-                    VStack(spacing: 8) {
-                        // First row: Copy and Share
-                        HStack(spacing: 8) {
-                            // Copy button
-                            Button(action: copyItem) {
-                                HStack {
-                                    if isCopying {
-                                        ProgressView()
-                                            .frame(width: isIPad ? 23 : 18, height: isIPad ? 23 : 18)
-                                            .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
-                                    } else {
-                                        Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
-                                            .font(.system(size: isIPad ? 23 : 18, weight: .medium))
-                                    }
-                                    Text(isCopied ? "Copied" : "Copy")
-                                        .font(.system(size: isIPad ? 24 : 14, weight: .medium))
-                                }
-                                .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
-                                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(isCopied ? 
-                                            Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
-                                            AppColors.Button.accentPrimary.opacity(isDarkMode ? 0.25 : 0.15)
-                                        )
-                                )
-                            }
-                            .disabled(isDownloading || isCopying)
-                            
-                            // Share button
-                            Button(action: { Task { await shareItem() } }) {
-                                HStack {
-                                    if isSharing {
-                                        ProgressView()
-                                            .frame(width: isIPad ? 23 : 18, height: isIPad ? 23 : 18)
-                                            .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
-                                    } else {
-                                        Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: isIPad ? 23 : 18, weight: .medium))
-                                    }
-                                    Text("Share")
-                                        .font(.system(size: isIPad ? 24 : 14, weight: .medium))
-                                }
-                                .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
-                                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(AppColors.blob6Color(isDarkMode: isDarkMode).opacity(isDarkMode ? 0.25 : 0.15))
-                                )
-                            }
-                            .disabled(isSharing)
-                        }
-                        
-                        // Second row: Download and Delete
-                        HStack(spacing: 8) {
-                            // Download/Save button
-                            Button(action: { Task { await downloadItem() } }) {
-                                HStack {
-                                    if isDownloading {
-                                        ProgressView()
-                                            .frame(width: isIPad ? 23 : 18, height: isIPad ? 23 : 18)
-                                            .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
-                                    } else {
-                                        if let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                                            Image(systemName: isSaved ? "checkmark.circle.fill" : "square.and.arrow.down")
-                                                .font(.system(size: isIPad ? 23 : 18, weight: .medium))
-                                        } else {
-                                            Image(systemName: "arrow.down.doc")
-                                                .font(.system(size: isIPad ? 23 : 18, weight: .medium))
-                                        }
-                                    }
-                                    Text(isSaved ? "Saved" : "Save")
-                                        .font(.system(size: isIPad ? 24 : 14, weight: .medium))
-                                }
-                                .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
-                                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(isSaved ? 
-                                            Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
-                                            (isDownloading ? 
-                                                Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
-                                                AppColors.Button.accentSecondary.opacity(isDarkMode ? 0.25 : 0.15)
-                                            )
-                                        )
-                                )
-                            }
-                            .disabled(isDownloading)
-                            
-                            // Delete button
-                            Button(action: deleteItem) {
-                                HStack {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: isIPad ? 23 : 18, weight: .medium))
-                                    Text("Delete")
-                                        .font(.system(size: isIPad ? 24 : 14, weight: .medium))
-                                }
-                                .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
-                                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.red.opacity(isDarkMode ? 0.25 : 0.15))
-                                )
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 4)
-                    .padding(.bottom, 16)
+                BinItemActionRow(
+                    isCopied: isCopied,
+                    isCopying: isCopying,
+                    isSharing: isSharing,
+                    showsSave: item.isFile && item.fileItem != nil,
+                    isSaved: isSaved,
+                    isDownloading: isDownloading,
+                    isDarkMode: isDarkMode,
+                    onCopy: copyItem,
+                    onShare: { Task { await shareItem() } },
+                    onSave: { Task { await downloadItem() } },
+                    onDelete: deleteItem
+                )
+                    .padding(.horizontal, 12)
+                    .padding(.top, 2)
+                    .padding(.bottom, 12)
                     .transition(.opacity.combined(with: .move(edge: .top)))
-                } else {
-                    // 3 buttons: single row
-                    HStack(spacing: 8) {
-                        // Copy button
-                        Button(action: copyItem) {
-                            HStack {
-                                if isCopying {
-                                    ProgressView()
-                                        .frame(width: isIPad ? 23 : 18, height: isIPad ? 23 : 18)
-                                        .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
-                                } else {
-                                    Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
-                                        .font(.system(size: isIPad ? 23 : 18, weight: .medium))
-                                }
-                                Text(isCopied ? "Copied" : "Copy")
-                                    .font(.system(size: isIPad ? 24 : 14, weight: .medium))
-                            }
-                            .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
-                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(isCopied ? 
-                                        Color.green.opacity(isDarkMode ? 0.3 : 0.2) : 
-                                        AppColors.Button.accentPrimary.opacity(isDarkMode ? 0.25 : 0.15)
-                                    )
-                            )
-                        }
-                        .disabled(isDownloading || isCopying)
-                        
-                        // Share button
-                        Button(action: { Task { await shareItem() } }) {
-                            HStack {
-                                if isSharing {
-                                    ProgressView()
-                                        .frame(width: isIPad ? 23 : 18, height: isIPad ? 23 : 18)
-                                        .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primaryText(isDarkMode: isDarkMode)))
-                                } else {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: isIPad ? 23 : 18, weight: .medium))
-                                }
-                                Text("Share")
-                                    .font(.system(size: isIPad ? 24 : 14, weight: .medium))
-                            }
-                            .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
-                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(AppColors.blob6Color(isDarkMode: isDarkMode).opacity(isDarkMode ? 0.25 : 0.15))
-                            )
-                        }
-                        .disabled(isSharing)
-                        
-                        // Delete button
-                        Button(action: deleteItem) {
-                            HStack {
-                                Image(systemName: "trash")
-                                    .font(.system(size: isIPad ? 23 : 18, weight: .medium))
-                                Text("Delete")
-                                    .font(.system(size: isIPad ? 24 : 14, weight: .medium))
-                            }
-                            .frame(maxWidth: .infinity, minHeight: isIPad ? 66 : 44, maxHeight: isIPad ? 66 : 44)
-                            .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.red.opacity(isDarkMode ? 0.25 : 0.15))
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 4)
-                    .padding(.bottom, 16)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-            }
-            
-            // Image preview for image files (separate from tappable header) - full width, no padding
-            if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
-                    .padding(.horizontal, 1) // Inset from card border
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle()) // Define tappable area to match visual bounds
-                    .padding(.top, 8) // mt-2 from web
-                    .padding(.bottom, 16) // mb-4 from web
             }
 
-            // URL preview for text items - OG data now comes from API
+            if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
+                ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+            }
+
             if item.isText, let textItem = item.textItem {
-                let ogData = convertTextItemToOGData(textItem)
                 URLPreviewView(
-                    text: textItem.content, 
-                    accessToken: accessToken, 
-                    isDarkMode: isDarkMode, 
-                    ogData: ogData,
+                    text: textItem.content,
+                    accessToken: accessToken,
+                    isDarkMode: isDarkMode,
+                    ogData: convertTextItemToOGData(textItem),
                     ogDataFetched: textItem.ogDataFetched ?? false,
-                    ogOut: $urlOG, 
+                    ogOut: $urlOG,
                     isOGLoading: $isOGLoading
                 )
-                    .padding(.horizontal, 1) // Inset from card border
-                    .padding(.top, 8) // mt-2 from web
-                    .padding(.bottom, (isOGLoading || urlOG?.image == nil) ? 16 : 0) // Keep consistent padding when loading
             }
-            
-            // Metadata section - displayed below image/preview like web
-            Text(itemSubtitle)
-                .font(isIPad ? .system(size: 17) : .caption)
-                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                .padding(.horizontal, 16)
-                .padding(.top, 4) // mt-1 from web
-                .padding(.bottom, 0)
-            
         }
-        .padding(.bottom, 16) // Add bottom spacing to entire card
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
+            RoundedRectangle(cornerRadius: 10)
+                .fill(AppColors.surface(isDarkMode: isDarkMode))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .inset(by: 0.5)
-                .stroke(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-        )
-        .shadow(
-            color: AppColors.cardShadow(isDarkMode: isDarkMode),
-            radius: 8,
-            x: 0,
-            y: 4
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(AppColors.border(isDarkMode: isDarkMode), lineWidth: 1)
         )
         .alert("Photos Permission Required", isPresented: $showPermissionAlert) {
             Button("Settings") {
@@ -390,19 +182,31 @@ struct BinItemRow: View {
         return "https://" + s
     }
     
-    private var itemSubtitle: String {
-        var parts: [String] = [item.formattedCreatedAt()]
-        
-        if item.isText, let textItem = item.textItem {
-            parts.append("\(textItem.content.count) chars")
-        } else if item.isFile, let fileItem = item.fileItem {
-            parts.append(fileItem.contentType)
-            parts.append(fileItem.formattedSize())
-        }
-        
-        return parts.joined(separator: " · ")
+    private var isLink: Bool {
+        guard item.isText, let textItem = item.textItem else { return false }
+        return firstURL(in: textItem.content) != nil
     }
-    
+
+    private var linkHost: String? {
+        guard item.isText, let textItem = item.textItem, let raw = firstURL(in: textItem.content) else { return nil }
+        return URL(string: normalizeURLString(raw))?.host
+    }
+
+    private var headerKind: BinItemHeader.Content {
+        if isLink && isOGLoading && urlOG?.title == nil {
+            return .loadingLink
+        }
+        if isLink {
+            return .link(title: itemTitle, host: linkHost == itemTitle ? nil : linkHost)
+        }
+        if item.isFile, let fileItem = item.fileItem {
+            return fileItem.contentType.hasPrefix("image/")
+                ? .imageFile(name: fileItem.originalName)
+                : .file(name: fileItem.originalName)
+        }
+        return .text(itemTitle)
+    }
+
     private func copyItem() {
         isCopying = true
         Task {
@@ -535,5 +339,167 @@ struct BinItemRow: View {
             icon: textItem.ogIcon,
             siteName: textItem.ogSiteName
         )
+    }
+}
+
+// MARK: - Bin Item Header
+private struct BinItemHeader: View {
+    enum Content: Equatable {
+        case loadingLink
+        case link(title: String, host: String?)
+        case imageFile(name: String)
+        case file(name: String)
+        case text(String)
+    }
+
+    let content: Content
+    let isDarkMode: Bool
+
+    var body: some View {
+        switch content {
+        case .loadingLink:
+            VStack(alignment: .leading, spacing: 6) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
+                    .frame(width: 200, height: 14)
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
+                    .frame(width: 90, height: 11)
+            }
+            .padding(.vertical, 12)
+        case .link(let title, let host):
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.system(size: isIPad ? 19 : 16))
+                    .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                    .lineLimit(1)
+                if let host {
+                    Text(host)
+                        .font(.system(size: isIPad ? 16 : 13))
+                        .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
+                        .lineLimit(1)
+                }
+            }
+            .padding(.vertical, 9)
+        case .imageFile(let name):
+            Text(name)
+                .font(.system(size: isIPad ? 17 : 14))
+                .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
+                .lineLimit(1)
+                .padding(.vertical, 12)
+        case .file(let name):
+            HStack(spacing: 10) {
+                Image(systemName: "doc")
+                    .font(.system(size: isIPad ? 19 : 16))
+                    .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
+                Text(name)
+                    .font(.system(size: isIPad ? 19 : 16))
+                    .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                    .lineLimit(1)
+            }
+            .padding(.vertical, 12)
+        case .text(let text):
+            Text(text)
+                .font(.system(size: isIPad ? 19 : 16))
+                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+                .lineLimit(5)
+                .padding(.vertical, 12)
+        }
+    }
+}
+
+// MARK: - Bin Item Action Row
+private struct BinItemActionRow: View {
+    let isCopied: Bool
+    let isCopying: Bool
+    let isSharing: Bool
+    let showsSave: Bool
+    let isSaved: Bool
+    let isDownloading: Bool
+    let isDarkMode: Bool
+    let onCopy: () -> Void
+    let onShare: () -> Void
+    let onSave: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ItemActionButton(
+                title: isCopied ? "Copied" : "Copy",
+                systemImage: isCopied ? "checkmark" : "doc.on.doc",
+                isLoading: isCopying,
+                foreground: isCopied ? AppColors.accentInk(isDarkMode: isDarkMode) : AppColors.primaryText(isDarkMode: isDarkMode),
+                background: isCopied ? AppColors.copiedBackground(isDarkMode: isDarkMode) : AppColors.actionBackground(isDarkMode: isDarkMode),
+                action: onCopy
+            )
+            .disabled(isDownloading || isCopying)
+
+            ItemActionButton(
+                title: "Share",
+                systemImage: "square.and.arrow.up",
+                isLoading: isSharing,
+                foreground: AppColors.primaryText(isDarkMode: isDarkMode),
+                background: AppColors.actionBackground(isDarkMode: isDarkMode),
+                action: onShare
+            )
+            .disabled(isSharing)
+
+            if showsSave {
+                ItemActionButton(
+                    title: isSaved ? "Saved" : "Save",
+                    systemImage: isSaved ? "checkmark" : "square.and.arrow.down",
+                    isLoading: isDownloading,
+                    foreground: isSaved ? AppColors.accentInk(isDarkMode: isDarkMode) : AppColors.primaryText(isDarkMode: isDarkMode),
+                    background: isSaved ? AppColors.copiedBackground(isDarkMode: isDarkMode) : AppColors.actionBackground(isDarkMode: isDarkMode),
+                    action: onSave
+                )
+                .disabled(isDownloading)
+            }
+
+            ItemActionButton(
+                title: "Delete",
+                systemImage: "trash",
+                isLoading: false,
+                foreground: AppColors.danger(isDarkMode: isDarkMode),
+                background: AppColors.dangerBackground(isDarkMode: isDarkMode),
+                action: onDelete
+            )
+        }
+    }
+}
+
+// MARK: - Item Action Button
+private struct ItemActionButton: View {
+    let title: String
+    let systemImage: String
+    let isLoading: Bool
+    let foreground: Color
+    let background: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                if isLoading {
+                    ProgressView()
+                        .tint(foreground)
+                        .frame(height: 18)
+                } else {
+                    Image(systemName: systemImage)
+                        .font(.system(size: isIPad ? 20 : 17, weight: .medium))
+                        .frame(height: 18)
+                }
+                Text(title)
+                    .font(.system(size: isIPad ? 15 : 13, weight: .medium))
+            }
+            .foregroundColor(foreground)
+            .frame(maxWidth: .infinity)
+            .frame(height: isIPad ? 64 : 52)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(background)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }

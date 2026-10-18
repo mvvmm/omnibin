@@ -13,11 +13,3 @@ func firstURL(in text: String) -> String? {
     return nil
 }
 
-func faviconURL(for pageURL: URL, og: OGData?) -> URL? {
-    // Only show a favicon when the OG response explicitly provides one.
-    // Do NOT synthesize /favicon.ico to avoid showing blank placeholders.
-    if let icon = og?.icon, let iconURL = URL(string: icon) {
-        return iconURL
-    }
-    return nil
-}

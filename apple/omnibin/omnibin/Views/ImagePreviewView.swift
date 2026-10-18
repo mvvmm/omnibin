@@ -26,7 +26,7 @@ struct ImagePreviewView: View {
                                 .clipped()
                         } placeholder: {
                             RoundedRectangle(cornerRadius: 0)
-                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                                 .frame(width: geometry.size.width, height: calculatedHeight)
                         }
                         .onAppear {
@@ -78,7 +78,7 @@ struct ImagePreviewView: View {
                     }
                 } else if hasError {
                     Rectangle()
-                        .fill(AppColors.mutedText(isDarkMode: isDarkMode).opacity(0.3))
+                        .fill(AppColors.media(isDarkMode: isDarkMode))
                         .frame(maxWidth: .infinity)
                         .frame(height: calculatedHeight)
                         .overlay(
@@ -93,7 +93,7 @@ struct ImagePreviewView: View {
                         )
                 } else {
                     RoundedRectangle(cornerRadius: 0)
-                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                         .frame(maxWidth: .infinity)
                         .frame(height: calculatedHeight)
                 }
