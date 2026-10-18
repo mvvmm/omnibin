@@ -54,7 +54,7 @@ struct BinView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
+        GeometryReader { _ in
             ScrollView {
                 VStack(spacing: 0) {
                     // Header
@@ -65,9 +65,10 @@ struct BinView: View {
                         },
                         isDarkMode: isDarkMode
                     )
-                    .padding(.top, 20)
-                    .padding(.bottom, 16)
-                    .padding(.horizontal, min(24, geometry.size.width * 0.05))
+                    .padding(.top, 4)
+                    .padding(.bottom, 12)
+                    .padding(.leading, 16)
+                    .padding(.trailing, 6)
                     
                     // Content
                     VStack(spacing: 16) {
@@ -101,9 +102,8 @@ struct BinView: View {
                             onRestoreItem: viewModel.restoreItem,
                         )
                     }
-                    .padding(.top, 8)
                     .padding(.bottom, 20)
-                    .padding(.horizontal, min(24, geometry.size.width * 0.05))
+                    .padding(.horizontal, 16)
                 }
             }
             .refreshable {

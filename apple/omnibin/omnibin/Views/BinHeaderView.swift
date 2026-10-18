@@ -8,10 +8,19 @@ struct BinHeaderView: View {
     
     var body: some View {
         HStack {
-            Text("Your Bin")
-                .font(isIPad ? .system(size: 36, weight: .bold) : .largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+            HStack(spacing: 8) {
+                Image("binboy")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: isIPad ? 34 : 28, height: isIPad ? 34 : 28)
+                    .accessibilityHidden(true)
+                Text("omnibin")
+                    .font(.system(size: isIPad ? 22 : 18, weight: .semibold))
+                    .tracking(-0.2)
+                    .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
             
             Spacer()
             
@@ -66,12 +75,11 @@ struct BinHeaderView: View {
                 
                 Divider()
                 
-                Button(action: {
+                Button(role: .destructive, action: {
                     onDeleteAccount()
                 }) {
                     Label("Delete account", systemImage: "trash")
                 }
-                .foregroundColor(.red)
                 
                 Button(action: {
                     onLogout()
@@ -80,25 +88,12 @@ struct BinHeaderView: View {
                 }
             } label: {
                 Image(systemName: "gearshape")
-                    .font(.system(size: isIPad ? 24 : 16, weight: .medium))
-                    .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                    .frame(width: isIPad ? 70 : 46, height: isIPad ? 70 : 46)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-                            )
-                            .shadow(
-                                color: AppColors.cardShadow(isDarkMode: isDarkMode),
-                                radius: 4,
-                                x: 0,
-                                y: 2
-                            )
-                    )
+                    .font(.system(size: isIPad ? 22 : 19, weight: .regular))
+                    .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
-            .compositingGroup()
+            .accessibilityLabel("Settings")
         }
     }
 }

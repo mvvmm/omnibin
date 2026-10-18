@@ -15,127 +15,104 @@ struct BinFormView: View {
     let onPasteFromClipboard: () -> Void
     
     var body: some View {
-        VStack(spacing: 12) {
-            // Paste from Clipboard button (full width)
+        VStack(spacing: 8) {
             Button(action: onPasteFromClipboard) {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     if isSubmitting {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .tint(AppColors.onAccent)
                     } else {
                         Image(systemName: "doc.on.clipboard")
-                            .font(.system(size: isIPad ? 27 : 18, weight: .medium))
+                            .font(.system(size: isIPad ? 22 : 17, weight: .semibold))
                     }
-                    
-                    Text(isSubmitting ? "Pasting..." : "Paste from Clipboard")
-                        .font(.system(size: isIPad ? 24 : 16, weight: .semibold))
+                    Text(isSubmitting ? "Pasting…" : "Paste from clipboard")
+                        .font(.system(size: isIPad ? 20 : 16, weight: .semibold))
                 }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .foregroundColor(AppColors.onAccent)
+                .frame(maxWidth: .infinity)
+                .frame(height: isIPad ? 64 : 52)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                gradient: Gradient(colors: [
-                                    AppColors.Button.accentPrimary,
-                                    AppColors.Button.accentSecondary
-                                ]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .shadow(
-                            color: AppColors.Button.accentPrimary.opacity(0.3),
-                            radius: 8,
-                            x: 0,
-                            y: 4
-                        )
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(AppColors.accent)
                 )
-                .scaleEffect(isSubmitting ? 0.95 : 1.0)
-                .animation(.easeInOut(duration: 0.1), value: isSubmitting)
+                .opacity(isSubmitting ? 0.7 : 1)
             }
+            .buttonStyle(.plain)
             .disabled(isSubmitting)
-            .frame(maxWidth: .infinity)
-            .frame(height: isIPad ? 78 : 52)
-            
-            // Text, Photos, and Files buttons row
+
             HStack(spacing: 0) {
-                // Add Text button
-                Button(action: { showTextInputDialog = true }) {
-                    Image(systemName: "textformat")
-                        .font(.system(size: isIPad ? 27 : 18, weight: .medium))
-                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                sourceButton("Text", systemImage: "textformat") {
+                    showTextInputDialog = true
                 }
-                .disabled(isSubmitting)
-                .frame(maxWidth: .infinity)
-                
-                // Vertical separator
-                Rectangle()
-                    .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
-                    .frame(width: 1)
-                    .padding(.vertical, 12)
-                
-                // Upload from Photos button
+                divider
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                    Image(systemName: "photo")
-                        .font(.system(size: isIPad ? 27 : 18, weight: .medium))
-                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    sourceLabel("Photos", systemImage: "photo")
                 }
                 .disabled(isSubmitting)
-                .frame(maxWidth: .infinity)
-                
-                // Vertical separator
-                Rectangle()
-                    .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
-                    .frame(width: 1)
-                    .padding(.vertical, 12)
-                
-                // Upload from Files button
-                Button(action: { showFileImporter = true }) {
-                    Image(systemName: "folder")
-                        .font(.system(size: isIPad ? 27 : 18, weight: .medium))
-                        .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                divider
+                sourceButton("Files", systemImage: "folder") {
+                    showFileImporter = true
                 }
-                .disabled(isSubmitting)
-                .frame(maxWidth: .infinity)
             }
-            .frame(height: isIPad ? 78 : 52)
+            .frame(height: isIPad ? 60 : 48)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(AppColors.featureCardBackground(isDarkMode: isDarkMode))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(AppColors.featureCardBorder(isDarkMode: isDarkMode), lineWidth: 1)
-                    )
-                    .shadow(
-                        color: AppColors.cardShadow(isDarkMode: isDarkMode),
-                        radius: 4,
-                        x: 0,
-                        y: 2
-                    )
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(AppColors.surface(isDarkMode: isDarkMode))
             )
-            
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("Items: \(min(binItemsCount, binItemsLimit)) / \(binItemsLimit)")
-                    .font(isIPad ? .system(size: 23) : .caption)
-                    .foregroundColor(binItemsCount >= binItemsLimit ? .red : AppColors.mutedText(isDarkMode: isDarkMode))
-                
-                if binItemsCount >= binItemsLimit {
-                    Text("Oldest item will be deleted on next add.")
-                        .font(isIPad ? .system(size: 12) : .caption2)
-                        .foregroundColor(.red)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(AppColors.border(isDarkMode: isDarkMode), lineWidth: 1)
+            )
+
+            HStack(alignment: .top) {
+                Group {
+                    if let error = errorMessage {
+                        Text(error)
+                    } else if binItemsCount >= binItemsLimit {
+                        Text("Oldest item will be deleted on next add.")
+                    }
                 }
+                .font(.system(size: isIPad ? 15 : 12))
+                .foregroundColor(AppColors.danger(isDarkMode: isDarkMode))
+
+                Spacer()
+
+                Text("\(min(binItemsCount, binItemsLimit)) / \(binItemsLimit)")
+                    .font(.system(size: isIPad ? 14 : 11, design: .monospaced))
+                    .foregroundColor(
+                        binItemsCount >= binItemsLimit
+                            ? AppColors.danger(isDarkMode: isDarkMode)
+                            : AppColors.mutedText(isDarkMode: isDarkMode)
+                    )
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            
-            if let error = errorMessage {
-                Text(error)
-                    .font(isIPad ? .system(size: 15) : .caption)
-                    .foregroundColor(.red)
-            }
+            .padding(.horizontal, 2)
         }
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(AppColors.border(isDarkMode: isDarkMode))
+            .frame(width: 1)
+    }
+
+    private func sourceButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            sourceLabel(title, systemImage: systemImage)
+        }
+        .buttonStyle(.plain)
+        .disabled(isSubmitting)
+    }
+
+    private func sourceLabel(_ title: String, systemImage: String) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: systemImage)
+                .font(.system(size: isIPad ? 18 : 15, weight: .medium))
+                .foregroundColor(AppColors.secondaryText(isDarkMode: isDarkMode))
+            Text(title)
+                .font(.system(size: isIPad ? 17 : 14, weight: .medium))
+                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
     }
 }

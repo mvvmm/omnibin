@@ -30,35 +30,12 @@ struct URLPreviewView: View {
                 let imageURL = (httpsImage?.isEmpty == false) ? URL(string: httpsImage!) : nil
                 
                 if isLoading || isOGLoading {
-                    // Skeleton loading state - matching BinItemsListView skeleton
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Image skeleton
-                        RoundedRectangle(cornerRadius: 0)
-                            .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: calculatedHeight)
-                            .padding(.bottom, 0)
-                        
-                        // URL preview text section - matching BinItemsListView structure
-                        VStack(alignment: .leading, spacing: 0) {
-                            // Title skeleton
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                                .frame(width: isIPad ? 336 : 260, height: isIPad ? 20 : 18)
-
-                            // site url skeleton - slightly shorter than title
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
-                                .frame(width: isIPad && !isTwoColumn ? 460 : 300, height: isIPad ? 16 : 14)
-                                .padding(.top, 6)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 12)
-                        .padding(.bottom, 0) // Match "has image" case - BinItemRow will add padding when urlOG?.image is nil
-                    }
+                    RoundedRectangle(cornerRadius: 0)
+                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: calculatedHeight)
                 } else {
-                    // Main content - works with or without OG data
-                    VStack(alignment: .leading, spacing: 0) {
+                    Group {
                         if let imageURL = imageURL {
                             GeometryReader { geometry in
                                 AsyncImage(url: imageURL) { image in
@@ -69,7 +46,7 @@ struct URLPreviewView: View {
                                         .clipped()
                                 } placeholder: {
                                     RoundedRectangle(cornerRadius: 0)
-                                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
+                                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                                         .frame(width: geometry.size.width)
                                         .frame(height: calculatedHeight)
                                 }
@@ -82,56 +59,11 @@ struct URLPreviewView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: calculatedHeight)
                             .clipped()
-                            .contentShape(Rectangle())
+                        } else {
+                            // Keeps a view in the tree so onAppear still clears isOGLoading
+                            Color.clear.frame(height: 0)
                         }
-                        // Title/description row. Only show favicon when there is no image and icon URL exists
-                        HStack(alignment: .center, spacing: 10) {
-                            if imageURL == nil, let iconURL = faviconURL(for: url, og: og) {
-                                AsyncImage(url: iconURL) { image in
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 20, height: 20)
-                                        .cornerRadius(4)
-                                } placeholder: {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(AppColors.skeletonColor(isDarkMode: isDarkMode).opacity(0.5))
-                                        .frame(width: 20, height: 20)
-                                }
-                            }
-
-                            VStack(alignment: .leading, spacing: 6) {
-                            Text((og?.title?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 } ?? (url.host ?? url.absoluteString))
-                                .font(isIPad ? .system(size: 21, weight: .semibold) : .headline)
-                                .foregroundColor(AppColors.primaryText(isDarkMode: isDarkMode))
-                                .lineLimit(2)
-                            Text(url.absoluteString)
-                                .font(isIPad ? .system(size: 15) : .caption)
-                                .foregroundColor(AppColors.mutedText(isDarkMode: isDarkMode))
-                                .lineLimit(1)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, imageURL != nil ? 12 : 16)
-                        .padding(.bottom, 16)
                     }
-                    .overlay(
-                        // Add top and bottom borders when there's no image
-                        Group {
-                            if imageURL == nil {
-                                VStack(spacing: 0) {
-                                    Rectangle()
-                                        .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
-                                        .frame(height: 1)
-                                    Spacer()
-                                    Rectangle()
-                                        .fill(AppColors.featureCardBorder(isDarkMode: isDarkMode))
-                                        .frame(height: 1)
-                                }
-                            }
-                        }
-                    )
                     .contentShape(Rectangle())
                     .onTapGesture {
                         UIApplication.shared.open(url)
