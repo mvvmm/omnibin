@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct BinItemRow: View {
     let item: BinItem
     let accessToken: String?
+    let columnWidth: CGFloat
     let onDelete: () -> Void
     let onRestore: (() -> Void)?
     
@@ -30,9 +31,10 @@ struct BinItemRow: View {
     
     private let itemId: String
     
-    init(item: BinItem, accessToken: String?, onDelete: @escaping () -> Void, onRestore: (() -> Void)? = nil) {
+    init(item: BinItem, accessToken: String?, columnWidth: CGFloat, onDelete: @escaping () -> Void, onRestore: (() -> Void)? = nil) {
         self.item = item
         self.accessToken = accessToken
+        self.columnWidth = columnWidth
         self.onDelete = onDelete
         self.onRestore = onRestore
         self.itemId = item.id
@@ -87,7 +89,7 @@ struct BinItemRow: View {
             }
 
             if item.isFile, let fileItem = item.fileItem, fileItem.contentType.hasPrefix("image/") {
-                ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode)
+                ImagePreviewView(item: item, accessToken: accessToken, isDarkMode: isDarkMode, availableWidth: columnWidth)
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
             }
@@ -97,6 +99,7 @@ struct BinItemRow: View {
                     text: textItem.content,
                     accessToken: accessToken,
                     isDarkMode: isDarkMode,
+                    availableWidth: columnWidth,
                     ogData: convertTextItemToOGData(textItem),
                     ogDataFetched: textItem.ogDataFetched ?? false,
                     ogOut: $urlOG,

@@ -5,13 +5,12 @@ struct ImagePreviewView: View {
     let item: BinItem
     let accessToken: String?
     let isDarkMode: Bool
+    let availableWidth: CGFloat
     
     @State private var imageURL: String?
     @State private var hasError = false
     @State private var downloadedImage: UIImage?
     @State private var calculatedHeight: CGFloat = defaultImageHeight
-    @State private var containerWidth: CGFloat?
-    @State private var screenWidth: CGFloat = UIScreen.main.bounds.width
     
     var body: some View {
         VStack(spacing: 0) {
@@ -28,11 +27,6 @@ struct ImagePreviewView: View {
                             RoundedRectangle(cornerRadius: 0)
                                 .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                                 .frame(width: geometry.size.width, height: calculatedHeight)
-                        }
-                        .onAppear {
-                            if containerWidth == nil {
-                                containerWidth = geometry.size.width
-                            }
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -104,12 +98,8 @@ struct ImagePreviewView: View {
             calculateHeightFromDimensions()
             loadImageURL()
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-            // Update screen width and recalculate height when orientation changes
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                screenWidth = UIScreen.main.bounds.width
-                calculateHeightFromDimensions()
-            }
+        .onChange(of: availableWidth) {
+            calculateHeightFromDimensions()
         }
     }
     
@@ -123,21 +113,7 @@ struct ImagePreviewView: View {
             return
         }
         
-        // Calculate available width accounting for two-column layout
-        let basePadding: CGFloat = 32 // Horizontal padding
-        
-        // Check if two-column layout based on current screen width
-        let shouldUseTwoColumn = isIPad && screenWidth >= 900
-        
-        let availableWidth: CGFloat
-        if shouldUseTwoColumn {
-            // In two-column mode: divide width by 2 and account for spacing between columns
-            let columnSpacing: CGFloat = 12
-            availableWidth = (screenWidth - basePadding - columnSpacing) / 2
-        } else {
-            // Single column mode
-            availableWidth = screenWidth - basePadding
-        }
+        guard availableWidth > 0 else { return }
         
         let aspectRatio = CGFloat(imageHeight) / CGFloat(imageWidth)
         let desiredHeight = availableWidth * aspectRatio

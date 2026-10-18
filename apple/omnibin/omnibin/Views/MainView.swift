@@ -3,7 +3,6 @@ import SwiftUI
 struct MainView: View {
     @StateObject private var authService = MainViewAuthService()
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     private var isDarkMode: Bool {
         colorScheme == .dark
@@ -19,7 +18,7 @@ struct MainView: View {
                     .tint(AppColors.secondaryText(isDarkMode: isDarkMode))
             } else if authService.user != nil {
                 BinView(accessToken: authService.accessToken, onLogout: authService.logout, authService: authService)
-                    .padding(.top, horizontalSizeClass == .regular ? 48 : 0)
+                    .padding(.top, isIPad ? 48 : 0)
             } else {
                 LoginView(onLogin: authService.login, isDarkMode: isDarkMode)
             }

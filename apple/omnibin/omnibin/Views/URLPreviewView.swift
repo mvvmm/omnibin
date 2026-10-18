@@ -6,6 +6,7 @@ struct URLPreviewView: View {
     let text: String
     let accessToken: String?
     let isDarkMode: Bool
+    let availableWidth: CGFloat
     let ogData: OGData? // OG data from API
     let ogDataFetched: Bool // Whether OG data has been fetched
     @Binding var ogOut: OGData?
@@ -15,8 +16,6 @@ struct URLPreviewView: View {
     @State private var isLoading = false
     @State private var calculatedHeight: CGFloat = defaultImageHeight
     @State private var downloadedImage: UIImage?
-    @State private var containerWidth: CGFloat?
-    @State private var screenWidth: CGFloat = UIScreen.main.bounds.width
 
     var body: some View {
         Group {
@@ -49,11 +48,6 @@ struct URLPreviewView: View {
                                         .fill(AppColors.skeletonColor(isDarkMode: isDarkMode))
                                         .frame(width: geometry.size.width)
                                         .frame(height: calculatedHeight)
-                                }
-                                .onAppear {
-                                    if containerWidth == nil {
-                                        containerWidth = geometry.size.width
-                                    }
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -114,13 +108,9 @@ struct URLPreviewView: View {
                 self.isOGLoading = false
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-            // Update screen width and recalculate height when orientation changes
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                screenWidth = UIScreen.main.bounds.width
-                if let ogData = og {
-                    calculateHeightFromOGDimensions(ogData)
-                }
+        .onChange(of: availableWidth) {
+            if let ogData = og {
+                calculateHeightFromOGDimensions(ogData)
             }
         }
     }
@@ -156,21 +146,7 @@ struct URLPreviewView: View {
             return
         }
         
-        // Calculate available width accounting for two-column layout
-        let basePadding: CGFloat = 32 // Horizontal padding
-        
-        // Check if two-column layout based on current screen width
-        let shouldUseTwoColumn = isIPad && screenWidth >= 900
-        
-        let availableWidth: CGFloat
-        if shouldUseTwoColumn {
-            // In two-column mode: divide width by 2 and account for spacing between columns
-            let columnSpacing: CGFloat = 12
-            availableWidth = (screenWidth - basePadding - columnSpacing) / 2
-        } else {
-            // Single column mode
-            availableWidth = screenWidth - basePadding
-        }
+        guard availableWidth > 0 else { return }
         
         let aspectRatio = CGFloat(imageHeight) / CGFloat(imageWidth)
         let desiredHeight = availableWidth * aspectRatio
