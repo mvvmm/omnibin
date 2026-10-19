@@ -266,8 +266,8 @@ class ShareViewController: UIViewController {
         // Layout
         NSLayoutConstraint.activate([
             // Drawer fills width, pinned to bottom like a sheet
-            drawerContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            drawerContainer.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            drawerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            drawerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             drawerContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             // Header
