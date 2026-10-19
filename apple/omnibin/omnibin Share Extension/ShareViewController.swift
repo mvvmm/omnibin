@@ -79,7 +79,7 @@ class ShareViewController: UIViewController {
     
     
     private func setupUI() {
-        view.backgroundColor = UIColor.systemGroupedBackground
+        view.backgroundColor = .clear
         view.tintColor = UIColor { traits in
             traits.userInterfaceStyle == .dark
                 ? UIColor(red: 0xF2 / 255, green: 0xBA / 255, blue: 0x5C / 255, alpha: 1)
@@ -268,7 +268,7 @@ class ShareViewController: UIViewController {
             // Drawer fills width, pinned to bottom like a sheet
             drawerContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             drawerContainer.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            drawerContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            drawerContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             // Header
             headerContainer.topAnchor.constraint(equalTo: drawerContainer.topAnchor),
