@@ -104,7 +104,6 @@ class ShareViewController: UIViewController {
         let closeConfig = UIImage.SymbolConfiguration(pointSize: 18, weight: .semibold)
         closeButton.setImage(UIImage(systemName: "xmark", withConfiguration: closeConfig), for: .normal)
         closeButton.tintColor = UIColor.label
-        closeButton.contentHorizontalAlignment = .leading
         closeButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
         headerContainer.addSubview(closeButton)
 
@@ -169,6 +168,7 @@ class ShareViewController: UIViewController {
         urlPreviewContainer.translatesAutoresizingMaskIntoConstraints = false
         urlPreviewContainer.backgroundColor = UIColor.secondarySystemBackground
         urlPreviewContainer.layer.cornerRadius = 8
+        urlPreviewContainer.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         urlPreviewContainer.isHidden = true
         previewContainer.addSubview(urlPreviewContainer)
         
@@ -276,12 +276,12 @@ class ShareViewController: UIViewController {
             headerContainer.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor),
             headerContainer.heightAnchor.constraint(equalToConstant: 56),
 
-            closeButton.leadingAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            closeButton.leadingAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 12),
             closeButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
             closeButton.widthAnchor.constraint(equalToConstant: 36),
             closeButton.heightAnchor.constraint(equalToConstant: 36),
 
-            addButton.trailingAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            addButton.trailingAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -12),
             addButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
 
             titleStack.centerXAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.centerXAnchor),
