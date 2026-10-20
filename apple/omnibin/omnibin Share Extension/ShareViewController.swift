@@ -46,7 +46,10 @@ class ShareViewController: UIViewController {
     // URL Preview properties
     private var ogData: OGData?
     private var isOGLoading = false
+    private var ogFetchedURL: URL?
     private var titleLeadingConstraint: NSLayoutConstraint?
+    private var urlPreviewImageHeightConstraint: NSLayoutConstraint?
+    private var drawerTopConstraint: NSLayoutConstraint?
     
     private enum SharedContent {
         case text(String)
@@ -59,6 +62,10 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        updateDrawerForPresentation()
+        registerForTraitChanges([UITraitHorizontalSizeClass.self]) { (self: Self, _: UITraitCollection) in
+            self.updateDrawerForPresentation()
+        }
         loadSharedContentForPreview()
         Task { await self.checkAndShowBinLimitWarning() }
     }
@@ -260,10 +267,9 @@ class ShareViewController: UIViewController {
         // Layout
         NSLayoutConstraint.activate([
             // Drawer fills width, pinned to bottom like a sheet
-            drawerContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            drawerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            drawerContainer.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            drawerContainer.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             drawerContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            drawerContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
 
             // Header
             headerContainer.topAnchor.constraint(equalTo: drawerContainer.topAnchor),
@@ -271,15 +277,15 @@ class ShareViewController: UIViewController {
             headerContainer.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor),
             headerContainer.heightAnchor.constraint(equalToConstant: 56),
 
-            closeButton.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 12),
+            closeButton.leadingAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 12),
             closeButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
             closeButton.widthAnchor.constraint(equalToConstant: 36),
             closeButton.heightAnchor.constraint(equalToConstant: 36),
 
-            addButton.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -12),
+            addButton.trailingAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -12),
             addButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
 
-            titleStack.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor),
+            titleStack.centerXAnchor.constraint(equalTo: headerContainer.safeAreaLayoutGuide.centerXAnchor),
             titleStack.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
 
             logoImageView.widthAnchor.constraint(equalToConstant: 20),
@@ -287,8 +293,8 @@ class ShareViewController: UIViewController {
 
             // Preview container
             previewContainer.topAnchor.constraint(equalTo: headerContainer.bottomAnchor, constant: 12),
-            previewContainer.leadingAnchor.constraint(equalTo: drawerContainer.leadingAnchor, constant: 16),
-            previewContainer.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+            previewContainer.leadingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            previewContainer.trailingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             previewContainer.bottomAnchor.constraint(equalTo: countLabel.topAnchor, constant: -8),
 
             // Image preview constraints (height wraps content; avoid extra space)
@@ -316,7 +322,6 @@ class ShareViewController: UIViewController {
             urlPreviewImageView.topAnchor.constraint(equalTo: urlPreviewContainer.topAnchor),
             urlPreviewImageView.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor),
             urlPreviewImageView.trailingAnchor.constraint(equalTo: urlPreviewContainer.trailingAnchor),
-            urlPreviewImageView.heightAnchor.constraint(equalToConstant: 200),
             
             // URL Preview Icon constraints
             urlPreviewIconImageView.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12),
@@ -340,27 +345,30 @@ class ShareViewController: UIViewController {
             urlPreviewSiteLabel.bottomAnchor.constraint(equalTo: urlPreviewContainer.bottomAnchor, constant: -12),
 
             // Count below preview (right aligned)
-            countLabel.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.leadingAnchor, constant: 16),
-            countLabel.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+            countLabel.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            countLabel.trailingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
 
             // Warning right below count
             warningLabel.topAnchor.constraint(equalTo: countLabel.bottomAnchor, constant: 6),
-            warningLabel.leadingAnchor.constraint(equalTo: drawerContainer.leadingAnchor, constant: 16),
-            warningLabel.trailingAnchor.constraint(equalTo: drawerContainer.trailingAnchor, constant: -16),
+            warningLabel.leadingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            warningLabel.trailingAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
 
             // Activity + status stack now below warning
             statusStack.topAnchor.constraint(equalTo: warningLabel.bottomAnchor, constant: 6),
-            statusStack.centerXAnchor.constraint(equalTo: drawerContainer.centerXAnchor),
-            statusStack.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.leadingAnchor, constant: 16),
-            statusStack.trailingAnchor.constraint(lessThanOrEqualTo: drawerContainer.trailingAnchor, constant: -16),
+            statusStack.centerXAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.centerXAnchor),
+            statusStack.leadingAnchor.constraint(greaterThanOrEqualTo: drawerContainer.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            statusStack.trailingAnchor.constraint(lessThanOrEqualTo: drawerContainer.safeAreaLayoutGuide.trailingAnchor, constant: -16),
 
             // Bottom logo fills remaining space
             bottomLogoImageView.topAnchor.constraint(equalTo: statusStack.bottomAnchor, constant: 8),
-            bottomLogoImageView.centerXAnchor.constraint(equalTo: drawerContainer.centerXAnchor),
+            bottomLogoImageView.centerXAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.centerXAnchor),
             bottomLogoImageView.widthAnchor.constraint(lessThanOrEqualToConstant: 160),
             bottomLogoImageView.heightAnchor.constraint(equalToConstant: 64),
             bottomLogoImageView.bottomAnchor.constraint(equalTo: drawerContainer.safeAreaLayoutGuide.bottomAnchor, constant: -24)
         ])
+
+        urlPreviewImageHeightConstraint = urlPreviewImageView.heightAnchor.constraint(equalToConstant: 0)
+        urlPreviewImageHeightConstraint?.isActive = true
         
         // Set up initial title constraint (will be updated dynamically)
         titleLeadingConstraint = urlPreviewTitleLabel.leadingAnchor.constraint(equalTo: urlPreviewContainer.leadingAnchor, constant: 12)
@@ -653,9 +661,12 @@ class ShareViewController: UIViewController {
             previewTextView.isHidden = true
             urlPreviewContainer.isHidden = false
             
-            // Start fetching OpenGraph data
-            Task {
-                await fetchOpenGraphData(for: url)
+            // fetchOpenGraphData calls updatePreview on completion, so fetch only once per URL
+            if ogFetchedURL != url {
+                ogFetchedURL = url
+                Task {
+                    await fetchOpenGraphData(for: url)
+                }
             }
             
             // Show loading state
@@ -664,17 +675,17 @@ class ShareViewController: UIViewController {
                 urlPreviewTitleLabel.isHidden = false
                 urlPreviewDescriptionLabel.isHidden = true
                 urlPreviewSiteLabel.isHidden = true
-                urlPreviewImageView.isHidden = true
+                setURLPreviewImageVisible(false)
                 urlPreviewIconImageView.isHidden = true
             } else if let ogData = ogData {
                 // Show OpenGraph data
                 let hasImage = ogData.image != nil
                 
                 if let imageURLString = ogData.image, let imageURL = URL(string: imageURLString) {
-                    urlPreviewImageView.isHidden = false
+                    setURLPreviewImageVisible(true)
                     loadImage(from: imageURL, into: urlPreviewImageView)
                 } else {
-                    urlPreviewImageView.isHidden = true
+                    setURLPreviewImageVisible(false)
                 }
                 
                 // Only show favicon if there's no image (same as web and iOS)
@@ -712,7 +723,7 @@ class ShareViewController: UIViewController {
                 urlPreviewDescriptionLabel.isHidden = true
                 urlPreviewSiteLabel.text = url.host ?? ""
                 urlPreviewSiteLabel.isHidden = false
-                urlPreviewImageView.isHidden = true
+                setURLPreviewImageVisible(false)
                 urlPreviewIconImageView.isHidden = true
                 // Title should be left-aligned when no favicon
                 titleLeadingConstraint?.isActive = false
@@ -1126,6 +1137,23 @@ class ShareViewController: UIViewController {
         self.addImageToBin(image, completion: completion)
     }
     
+    // In regular width (iPad, open iPhone Duo) the system already shows the extension as a rounded
+    // card, so the drawer fills it from the top instead of insetting below a gap.
+    private func updateDrawerForPresentation() {
+        let isCard = traitCollection.horizontalSizeClass == .regular
+        drawerTopConstraint?.isActive = false
+        drawerTopConstraint = isCard
+            ? drawerContainer.topAnchor.constraint(equalTo: view.topAnchor)
+            : drawerContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16)
+        drawerTopConstraint?.isActive = true
+        drawerContainer.layer.cornerRadius = isCard ? 0 : 16
+    }
+
+    private func setURLPreviewImageVisible(_ visible: Bool) {
+        urlPreviewImageView.isHidden = !visible
+        urlPreviewImageHeightConstraint?.constant = visible ? 200 : 0
+    }
+
     private func loadImage(from url: URL, into imageView: UIImageView) {
         Task {
             do {
