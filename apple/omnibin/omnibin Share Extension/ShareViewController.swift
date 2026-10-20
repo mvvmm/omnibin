@@ -46,6 +46,7 @@ class ShareViewController: UIViewController {
     // URL Preview properties
     private var ogData: OGData?
     private var isOGLoading = false
+    private var ogFetchedURL: URL?
     private var titleLeadingConstraint: NSLayoutConstraint?
     private var urlPreviewImageHeightConstraint: NSLayoutConstraint?
     private var drawerTopConstraint: NSLayoutConstraint?
@@ -660,9 +661,12 @@ class ShareViewController: UIViewController {
             previewTextView.isHidden = true
             urlPreviewContainer.isHidden = false
             
-            // Start fetching OpenGraph data
-            Task {
-                await fetchOpenGraphData(for: url)
+            // fetchOpenGraphData calls updatePreview on completion, so fetch only once per URL
+            if ogFetchedURL != url {
+                ogFetchedURL = url
+                Task {
+                    await fetchOpenGraphData(for: url)
+                }
             }
             
             // Show loading state
