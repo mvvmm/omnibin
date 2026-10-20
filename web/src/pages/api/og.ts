@@ -63,7 +63,6 @@ export async function POST({
         try {
           const oeRes = await fetch(oembed.toString(), {
             method: "GET",
-            cache: "force-cache",
             headers: { "accept-language": "en" },
             redirect: "follow",
             signal: controller.signal,
@@ -224,7 +223,6 @@ export async function POST({
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
       },
       redirect: "follow",
-      cache: "force-cache",
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -262,7 +260,6 @@ export async function POST({
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
           },
           redirect: "follow",
-          cache: "force-cache",
           signal: fallbackController.signal,
         });
         clearTimeout(fallbackTimeoutId);
